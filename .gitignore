@@ -1,0 +1,7 @@
+# python
+py[cod]
+__pycache__/
+venv/
+
+# ide
+.idea/

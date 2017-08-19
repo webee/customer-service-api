@@ -1,0 +1,11 @@
+# dev
+ipython
+
+# flask
+flask
+flask-script
+psycopg2
+flask-sqlalchemy
+flask-migrate
+Flask-API
+markdown

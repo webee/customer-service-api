@@ -1,0 +1,4 @@
+[submodule "submods/pytoolbox"]
+	path = submods/pytoolbox
+	url = git@gitlab.corp.qinqinxiaobao.com:fd/pytoolbox.git
+	branch = master
