@@ -1,5 +1,5 @@
 import enum
-from app import db
+from app import db, bcrypt
 
 
 class Channel(enum.Enum):
@@ -23,15 +23,100 @@ class BaseModel(db.Model):
     updated = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
+class App(BaseModel):
+    """注册app"""
+    __tablename__ = 'app'
+
+    name = db.Column(db.String(32), nullable=False, unique=True)
+    password = db.Column(db.String(128), nullable=False)
+
+    def __init__(self, name, password):
+        self.name = name
+        self.password = bcrypt.generate_password_hash(password).decode()
+
+    @staticmethod
+    def authenticate(name, password):
+        app = App.query.filter_by(name=name).one_or_none()
+        if app and bcrypt.check_password_hash(app.password, password):
+            return app
+
+    def set_password(self, new_password):
+        self.password = bcrypt.generate_password_hash(new_password).decode()
+
+    def change_password(self, password, new_password):
+        if bcrypt.check_password_hash(self.password, password):
+            self.set_password(new_password)
+            return True
+
+    def __repr__(self):
+        return "<App: {}>".format(self.name)
+
+
+class Customer(BaseModel):
+    """客户"""
+    __tablename__ = 'customer'
+
+    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
+    app = db.relationship('App', lazy='joined', backref=db.backref('customers', lazy='dynamic'))
+
+    uid = db.Column(db.String(32), nullable=False, unique=True)
+    name = db.Column(db.String(16), nullable=False)
+
+    # 每个app下面customer唯一
+    __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_customer'),)
+
+    @property
+    def app_uid(self):
+        return '%s.%s' % (self.app.name, self.name)
+
+    @property
+    def ns_uid(self):
+        return '%s:%s.%s' % ('customer', self.app.name, self.name)
+
+    def __repr__(self):
+        return "<Customer: {}>".format(self.uid)
+
+
+class Staff(BaseModel):
+    """客服"""
+    __tablename__ = 'staff'
+
+    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
+    app = db.relationship('App', lazy='joined', backref=db.backref('staffs', lazy='dynamic'))
+
+    uid = db.Column(db.String(32), nullable=False, unique=True)
+    name = db.Column(db.String(16), nullable=False)
+
+    # 每个app下面staff唯一
+    __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_staff'),)
+
+    @property
+    def app_uid(self):
+        return '%s.%s' % (self.app.name, self.name)
+
+    @property
+    def ns_uid(self):
+        return '%s:%s.%s' % ('staff', self.app.name, self.name)
+
+    def __repr__(self):
+        return "<Staff: {}>".format(self.uid)
+
+
 class ProjectDomain(BaseModel):
     """项目域"""
     __tablename__ = 'project_domain'
 
-    # 个人，员工，企业
-    name = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
+    app = db.relationship('App', lazy='joined')
+
+    # eg: 个人，员工，企业
+    name = db.Column(db.String(32), nullable=False, index=True)
     desc = db.Column(db.String(64), nullable=False)
 
     types = db.relationship('ProjectType', lazy='subquery')
+
+    # 每个app下面域唯一
+    __table_args__ = (db.UniqueConstraint('app_id', 'name', name='uniq_app_domain'),)
 
     def to_dict(self):
         return dict(name=self.name, desc=self.desc, types=[t.to_dict() for t in self.types])
@@ -47,12 +132,13 @@ class ProjectType(BaseModel):
     domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
     domain = db.relationship('ProjectDomain', lazy='joined')
 
-    # 咨询，专业业务订单，工单
+    # eg: 咨询，专业业务订单，工单
     name = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
 
     projects = db.relationship('Project', lazy='dynamic')
 
+    # 每个域下面类型唯一
     __table_args__ = (db.UniqueConstraint('domain_id', 'name', name='uniq_domain_type'),)
 
     def to_dict(self):
@@ -62,6 +148,11 @@ class ProjectType(BaseModel):
         return "<ProjectType: {}:{}>".format(self.domain.name, self.name)
 
 
+class ProjectTypeConfigs(BaseModel):
+    """项目类型配置"""
+    __tablename__ = 'project_type_configs'
+
+
 class Project(BaseModel):
     """表示一个客服项目"""
     __tablename__ = 'project'
@@ -69,6 +160,9 @@ class Project(BaseModel):
     # 类型
     type_id = db.Column(db.BigInteger, db.ForeignKey('project_type.id'), index=True, nullable=False)
     type = db.relationship('ProjectType', lazy='joined')
+
+    # 业务id
+    biz_id = db.Column(db.String(32), nullable=False)
 
     # 相关客户
     customers_id = db.Column(db.BigInteger, db.ForeignKey('project_customers.id'), nullable=False)
@@ -88,10 +182,14 @@ class Project(BaseModel):
     ext_data = db.relationship('ProjectExtData')
 
     # xchat
+    xchat = db.relationship('ProjectXChat')
 
     # 项目会话
     sessions = db.relationship('Session', lazy='dynamic')
     messages = db.relationship('Message', lazy='dynamic')
+
+    # 每个项目类型的业务id唯一
+    __table_args__ = (db.UniqueConstraint('type_id', 'biz_id', name='uniq_type_biz'),)
 
     @property
     def current_session(self):
@@ -99,6 +197,15 @@ class Project(BaseModel):
 
     def __repr__(self):
         return "<Project: {}:{}.{}>".format(self.type.domain.name, self.type.name, self.id)
+
+
+class ProjectXChat(BaseModel):
+    __tablename__ = 'project_xchat'
+
+    project_id = db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False)
+    project = db.relationship('Project', lazy='joined')
+
+    chat_id = db.Column(db.String(32), nullable=False, index=True)
 
 
 # many to many helpers
@@ -142,27 +249,12 @@ class ProjectStaffs(BaseModel):
     participants = db.relationship('Staff', secondary=project_staff_participants)
 
 
-class Customer(BaseModel):
-    """客户"""
-    __tablename__ = 'customer'
-
-    uid = db.Column(db.String(32), nullable=False, unique=True)
-    name = db.Column(db.String(16), nullable=False)
-
-
-class Staff(BaseModel):
-    """客服"""
-    __tablename__ = 'staff'
-
-    uid = db.Column(db.String(32), nullable=False, unique=True)
-    name = db.Column(db.String(16), nullable=False)
-
-
 class ProjectMetaData(BaseModel):
     """项目元数据"""
     __tablename__ = 'project_meta_data'
 
     project = db.relationship('Project', uselist=False)
+    # TODO: 怎么组织数据？
     pass
 
 
@@ -171,6 +263,7 @@ class ProjectExtData(BaseModel):
     __tablename__ = 'project_ext_data'
 
     project = db.relationship('Project', uselist=False)
+    # TODO: 怎么组织数据？
     pass
 
 
@@ -201,6 +294,7 @@ class Message(BaseModel):
     session = db.relationship('Session')
 
     channel = db.Column(db.Enum(Channel), default=Channel.cs)
+    is_staff = db.Column(db.Boolean)
     uid = db.Column(db.String(32))
     ts = db.Column(db.DateTime, default=db.func.current_timestamp())
 

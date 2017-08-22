@@ -1,3 +1,4 @@
 from flask import Blueprint
 
-entry = Blueprint('main', __name__)
+name = __package__.rsplit('.', 1)[1]
+entry = Blueprint(name, __name__)

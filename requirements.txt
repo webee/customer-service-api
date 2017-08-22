@@ -9,3 +9,10 @@ flask-sqlalchemy
 flask-migrate
 Flask-API
 markdown
+Flask-Bcrypt
+Flask-Cors
+
+# etc
+requests
+schema
+PyJWT
