@@ -32,3 +32,13 @@ def identity(role, payload):
         return Customer.query.filter(App.name == payload['app_name'], Customer.uid == payload['uid']).one_or_none()
     elif role == 'staff':
         return Staff.query.filter(App.name == payload['app_name'], Staff.uid == payload['uid']).one_or_none()
+
+
+@jwt.as_identity_secret_handler
+def identity_secret(role, identity):
+    if role == 'app':
+        return identity.password
+    elif role == 'customer':
+        return identity.app.password
+    elif role == 'staff':
+        return identity.app.password

@@ -14,7 +14,7 @@ def _fail(code=1, msg='fail', **kwargs):
     return jsonify(ret=False, code=code, msg=msg, **kwargs)
 
 
-def fail(code=1, msg='fail', **kwargs):
+def fail(msg='fail', code=1, **kwargs):
     return _fail(code, msg, **kwargs), 499
 
 

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from app.errors import UnauthorizedError
 import jwt
 from werkzeug.local import LocalProxy
+from hashlib import md5
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,10 +22,11 @@ CONFIG_DEFAULTS = {
 
 
 class JWT(object):
-    def __init__(self, app=None, identity_handler=None, payload_handler=None):
+    def __init__(self, app=None, identity_handler=None, payload_handler=None, identity_secret_handler=None):
         self.app = app
         self.identity_handler = identity_handler
         self.payload_handler = payload_handler
+        self.identity_secret_handler = identity_secret_handler
         if app is not None:
             self.init_app(app)
 
@@ -35,6 +37,9 @@ class JWT(object):
 
     def as_payload_handler(self, f):
         self.payload_handler = f
+
+    def as_identity_secret_handler(self, f):
+        self.identity_secret_handler = f
 
     def init_app(self, app):
         self.app = app
@@ -53,6 +58,8 @@ class JWT(object):
 
         payload = self.payload_handler(role, identity)
         secret = self.app.config['JWT_SECRET_KEY']
+        # append sign
+        payload['_s'] = self._gen_sign(role, identity)
         algorithm = self.app.config['JWT_ALGORITHM']
 
         iat = datetime.utcnow()
@@ -61,6 +68,10 @@ class JWT(object):
         payload = dict(exp=exp, iat=iat, role=role, **payload)
 
         return jwt.encode(payload, secret, algorithm=algorithm).decode('utf-8')
+
+    def _gen_sign(self, role, identity):
+        id_secret = self.identity_secret_handler(role, identity) or self.app.config['JWT_SECRET_KEY']
+        return md5(id_secret.encode('utf-8')).hexdigest()[:7]
 
     def auth_required(self, role=None):
         def wrapper(fn):
@@ -83,10 +94,17 @@ class JWT(object):
         if payload.get('role') != role:
             raise UnauthorizedError('Invalid token', '%s role required' % role)
 
-        _request_ctx_stack.top.current_identity = identity = self.identity_handler(role, payload)
+        identity = self.identity_handler(role, payload)
 
         if identity is None:
             raise UnauthorizedError('Invalid JWT', '%s role does not exist' % role)
+
+        # check sign
+        _s = payload.get('_s')
+        if _s != self._gen_sign(role, identity):
+            raise UnauthorizedError('Invalid JWT', 'token is invalid')
+
+        _request_ctx_stack.top.current_identity = identity
 
     def _get_request_token(self):
         auth_header_value = request.headers.get('Authorization', None)

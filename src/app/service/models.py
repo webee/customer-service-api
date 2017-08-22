@@ -1,5 +1,6 @@
 import enum
-from app import db, bcrypt
+from app import db, dbs, bcrypt
+from app.utils.py import classproperty
 
 
 class Channel(enum.Enum):
@@ -22,6 +23,10 @@ class BaseModel(db.Model):
     created = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
+    @classproperty
+    def t_query(cls):
+        return dbs.session.query(cls)
+
 
 class App(BaseModel):
     """注册app"""
@@ -42,6 +47,8 @@ class App(BaseModel):
 
     def set_password(self, new_password):
         self.password = bcrypt.generate_password_hash(new_password).decode()
+        db.session.add(self)
+        db.session.commit()
 
     def change_password(self, password, new_password):
         if bcrypt.check_password_hash(self.password, password):

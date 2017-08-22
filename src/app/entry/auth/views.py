@@ -1,9 +1,10 @@
-from flask import request
 from app.utils.api import require_data, current_data
 from app.utils import resp
 from app import jwt
+from app.utils.jwt import require_app, current_app_client
 from .entry import entry as mod
 from .schemas import new_app_token_schema, new_customer_token_schema, new_staff_token_schema
+from .schemas import change_app_password_schema
 from app.service.models import App
 from app.errors import UnauthorizedError
 
@@ -40,6 +41,13 @@ def staff_token():
     return _token('staff', lambda app, data: app.staffs.filter_by(uid=data['uid']).one_or_none())
 
 
-@mod.route('/change_password')
-def change_password():
-    data = request.get_json()
+@mod.route('/change_app_password', methods=['POST'])
+@require_app
+@require_data(change_app_password_schema)
+def change_app_password():
+    app = current_app_client
+    data = current_data
+
+    if not app.change_password(data['password'], data['new_password']):
+        return resp.fail('change password failed', 100911)
+    return resp.success()
