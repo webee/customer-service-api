@@ -1,7 +1,6 @@
 from app.service.models import App, Customer, Staff
 from app import jwt
 
-
 require_app = jwt.auth_required('app')
 require_customer = jwt.auth_required('customer')
 require_staff = jwt.auth_required('staff')

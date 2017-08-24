@@ -1,5 +1,4 @@
 import logging
-from flask import jsonify
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +20,4 @@ class BizError(Exception):
 
 def biz_error_handler(error):
     logger.error(error)
-    return jsonify(ret=False,
-                   msg=error.msg, code=error.code, details=error.details), error.status_code, error.headers
-
-
-class UnauthorizedError(BizError):
-    def __init__(self, msg='Unauthorized', details=None, code=None):
-        super().__init__(msg, details, 401, code)
-
-
-class BadRequestError(BizError):
-    def __init__(self, msg='Bad Request', details=None, code=None):
-        super().__init__(msg, details, 400, code)
+    return dict(message=error.msg, code=error.code, details=error.details), error.status_code, error.headers

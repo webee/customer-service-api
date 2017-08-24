@@ -1,6 +1,6 @@
 import enum
-from app import db, dbs, bcrypt
-from app.utils.py import classproperty
+from app import db, bcrypt
+from .model_commons import BaseModel
 
 
 class Channel(enum.Enum):
@@ -13,19 +13,6 @@ class Channel(enum.Enum):
     weixin = 'weixin'
     # 电子邮件
     email = 'email'
-
-
-class BaseModel(db.Model):
-    """基本模型"""
-    __abstract__ = True
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    created = db.Column(db.DateTime, default=db.func.current_timestamp())
-    updated = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
-
-    @classproperty
-    def t_query(cls):
-        return dbs.session.query(cls)
 
 
 class App(BaseModel):

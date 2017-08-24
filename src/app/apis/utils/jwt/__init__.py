@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, _request_ctx_stack
+from flask_restplus import abort
 from datetime import datetime, timedelta
-from app.errors import UnauthorizedError
 import jwt
 from werkzeug.local import LocalProxy
 from hashlib import md5
@@ -15,18 +15,20 @@ current_identity = LocalProxy(lambda: getattr(_request_ctx_stack.top, 'current_i
 CONFIG_DEFAULTS = {
     'JWT_ALGORITHM': 'HS256',
     'JWT_LEEWAY': timedelta(minutes=10),
-    'JWT_AUTH_HEADER_PREFIX': 'JWT',
+    'JWT_AUTH_HEADER_PATTERN': 'X-%s-JWT',
     'JWT_EXPIRATION_DELTA': timedelta(days=2),
     'JWT_DEFAULT_ROLE': 'app'
 }
 
 
 class JWT(object):
-    def __init__(self, app=None, identity_handler=None, payload_handler=None, identity_secret_handler=None):
+    def __init__(self, app=None, identity_handler=None, payload_handler=None, identity_secret_handler=None,
+                 auth_required_hook=None):
         self.app = app
         self.identity_handler = identity_handler
         self.payload_handler = payload_handler
         self.identity_secret_handler = identity_secret_handler
+        self.auth_required_hook = auth_required_hook
         if app is not None:
             self.init_app(app)
 
@@ -41,6 +43,9 @@ class JWT(object):
     def as_identity_secret_handler(self, f):
         self.identity_secret_handler = f
 
+    def as_auth_required_hook(self, f):
+        self.auth_required_hook = f
+
     def init_app(self, app):
         self.app = app
         for k, v in CONFIG_DEFAULTS.items():
@@ -54,7 +59,7 @@ class JWT(object):
 
     def encode_token(self, role, identity):
         if not identity:
-            raise UnauthorizedError(details='% role not found' % role)
+            abort(401, '% role not found' % role)
 
         payload = self.payload_handler(role, identity)
         secret = self.app.config['JWT_SECRET_KEY']
@@ -75,6 +80,8 @@ class JWT(object):
 
     def auth_required(self, role=None):
         def wrapper(fn):
+            fn = self.auth_required_hook(role, fn)
+
             @wraps(fn)
             def decorator(*args, **kwargs):
                 self._auth_required(role)
@@ -83,46 +90,37 @@ class JWT(object):
         return wrapper
 
     def _auth_required(self, role=None):
-        token = self._get_request_token()
+        role = role or self.app.config['JWT_DEFAULT_ROLE']
+        token = self._get_request_token(role)
 
         try:
             payload = self._decode_token(token)
         except jwt.InvalidTokenError as e:
-            raise UnauthorizedError('Invalid token', str(e))
+            abort(401, 'invalid token', details=str(e))
 
-        role = role or self.app.config['JWT_DEFAULT_ROLE']
         if payload.get('role') != role:
-            raise UnauthorizedError('Invalid token', '%s role required' % role)
+            abort(401, 'invalid token', details='%s role required' % role)
 
         identity = self.identity_handler(role, payload)
 
         if identity is None:
-            raise UnauthorizedError('Invalid JWT', '%s role does not exist' % role)
+            abort(401, '%s role does not exist' % role)
 
         # check sign
         _s = payload.get('_s')
         if _s != self._gen_sign(role, identity):
-            raise UnauthorizedError('Invalid JWT', 'token is invalid')
+            abort(401, 'token is invalid')
 
         _request_ctx_stack.top.current_identity = identity
 
-    def _get_request_token(self):
-        auth_header_value = request.headers.get('Authorization', None)
-        auth_header_prefix = self.app.config['JWT_AUTH_HEADER_PREFIX']
+    def _get_request_token(self, role):
+        jwt_header_pattern = self.app.config['JWT_AUTH_HEADER_PATTERN']
+        auth_header_value = request.headers.get(jwt_header_pattern % role.upper(), None)
 
         if not auth_header_value:
-            raise UnauthorizedError('Invalid JWT header', 'Token missing')
+            abort(401, '%s jwt header missing' % role)
 
-        parts = auth_header_value.split()
-
-        if parts[0].lower() != auth_header_prefix.lower():
-            raise UnauthorizedError('Invalid JWT header', 'Unsupported authorization type')
-        elif len(parts) == 1:
-            raise UnauthorizedError('Invalid JWT header', 'Token missing')
-        elif len(parts) > 2:
-            raise UnauthorizedError('Invalid JWT header', 'Token contains spaces')
-
-        return parts[1]
+        return auth_header_value
 
     def _decode_token(self, token):
         secret = self.app.config['JWT_SECRET_KEY']

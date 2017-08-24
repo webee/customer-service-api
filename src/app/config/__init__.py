@@ -16,8 +16,12 @@ class App:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     # jwt
-    JWT_AUTH_HEADER_PREFIX = 'JWT'
+    JWT_AUTH_HEADER_PATTERN = 'X-%s-JWT'
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or '.yek tset'
     JWT_EXPIRATION_DELTA = timedelta(days=2)
     JWT_LEEWAY = timedelta(minutes=10)
     JWT_DEFAULT_ROLE = 'app'
+
+    # restplus
+    RESTPLUS_VALIDATE = True
+    RESTPLUS_MASK_SWAGGER = False

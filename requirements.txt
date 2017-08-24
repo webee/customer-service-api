@@ -7,7 +7,7 @@ flask-script
 psycopg2
 flask-sqlalchemy
 flask-migrate
-Flask-API
+flask-restplus
 markdown
 Flask-Bcrypt
 Flask-Cors
