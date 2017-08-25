@@ -13,7 +13,7 @@ class BucketTestCase(unittest.TestCase):
         self.app.test_client_class = TestClient
         self.app.response_class = Response
         self.client = self.app.test_client()
-        self.bucket = {'name': 'Go to Borabora for vacation'}
+        self.bucket = {'name': 'test bucket'}
 
         # binds the app to the current context
         with self.app.app_context():
@@ -31,7 +31,6 @@ class BucketTestCase(unittest.TestCase):
         """Test API can create a bucket (POST request)"""
         res = self.client.post('/buckets/', json=self.bucket)
         self.assertEqual(res.status_code, 201)
-        self.assertIn('Go to Borabora', str(res.data))
 
     def test_api_can_get_all_bucket(self):
         """Test API can get a bucket (GET request)."""
@@ -39,36 +38,35 @@ class BucketTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
         res = self.client.get('/buckets/')
         self.assertEqual(res.status_code, 200)
-        self.assertIn('Go to Borabora', str(res.data))
+        self.assertEqual(1, res.json['total'])
 
     def test_api_can_get_bucket_by_id(self):
         """Test API can get a single bucket by using it's id."""
         rv = self.client.post('/buckets/', json=self.bucket)
         self.assertEqual(rv.status_code, 201)
-        result_in_json = json.loads(rv.data.decode('utf-8').replace("'", "\""))
-        result = self.client.get(
-            '/buckets/{}'.format(result_in_json['id']))
-        self.assertEqual(result.status_code, 200)
-        self.assertIn('Go to Borabora', str(result.data))
+        result_in_json = rv.json
+        res = self.client.get('/buckets/{}'.format(result_in_json['id']))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(self.bucket['name'], res.json['name'])
 
     def test_bucket_can_be_edited(self):
-        """Test API can edit an existing bucket. (PUT request)"""
-        rv = self.client.post('/buckets/', json={'name': 'Eat, pray and love'})
+        """Test API can edit an existing bucket. (PATCH request)"""
+        rv = self.client.post('/buckets/', json={'name': 'b#0'})
         self.assertEqual(rv.status_code, 201)
-        rv = self.client.patch('/buckets/1', json={"name": "Dont just eat, but also pray and love :-)"})
-        self.assertEqual(rv.status_code, 200)
-        results = self.client.get('/buckets/1')
-        self.assertIn('Dont just eat', str(results.data))
+        rv = self.client.patch('/buckets/1', json={"name": "b#1"})
+        self.assertEqual(rv.status_code, 204)
+        res = self.client.get('/buckets/1')
+        self.assertEqual('b#1', res.json['name'])
 
     def test_bucket_deletion(self):
         """Test API can delete an existing bucket. (DELETE request)."""
-        rv = self.client.post('/buckets/', json={'name': 'Eat, pray and love'})
+        rv = self.client.post('/buckets/', json=self.bucket)
         self.assertEqual(rv.status_code, 201)
         res = self.client.delete('/buckets/1')
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 204)
         # Test to see if it exists, should return a 404
-        result = self.client.get('/buckets/1')
-        self.assertEqual(result.status_code, 404)
+        res = self.client.get('/buckets/1')
+        self.assertEqual(res.status_code, 404)
 
 
 # Make the tests conveniently executable

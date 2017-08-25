@@ -1,5 +1,5 @@
 import enum
-from app import db, bcrypt
+from app import db, dbs, bcrypt
 from .model_commons import BaseModel
 
 
@@ -44,6 +44,49 @@ class App(BaseModel):
 
     def __repr__(self):
         return "<App: {}>".format(self.name)
+
+    # biz
+    @dbs.transactional
+    def create_project_customers(self, data):
+        parties = [self.create_or_update_customer(customer) for customer in data['parties']]
+        pc = ProjectCustomers(parties=parties)
+        dbs.session.add(pc)
+
+        return pc
+
+    @dbs.transactional
+    def create_project_staffs(self, data):
+        leader = self.create_or_update_staff(data['leader'])
+        assistants = [self.create_or_update_staff(staff) for staff in data['assistants']]
+        participants = [self.create_or_update_staff(staff) for staff in data['participants']]
+        ps = ProjectStaffs(leader=leader, assistants=assistants, participants=participants)
+        dbs.session.add(ps)
+
+        return ps
+
+    @dbs.transactional
+    def create_or_update_customer(self, data):
+        uid = data['uid']
+        name = data['name']
+        customer = self.customers.filter_by(uid=uid).one_or_none()
+        if customer is None:
+            customer = Customer(app=self, uid=uid)
+        customer.name = name
+        dbs.session.add(customer)
+
+        return customer
+
+    @dbs.transactional
+    def create_or_update_staff(self, data):
+        uid = data['uid']
+        name = data['name']
+        staff = self.staffs.filter_by(uid=uid).one_or_none()
+        if staff is None:
+            staff = Staff(app=self, uid=uid)
+        staff.name = name
+        dbs.session.add(staff)
+
+        return staff
 
 
 class Customer(BaseModel):
@@ -101,7 +144,7 @@ class ProjectDomain(BaseModel):
     __tablename__ = 'project_domain'
 
     app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
-    app = db.relationship('App', lazy='joined')
+    app = db.relationship('App', lazy='joined', backref=db.backref('project_domains', lazy='dynamic'))
 
     # eg: 个人，员工，企业
     name = db.Column(db.String(32), nullable=False, index=True)
@@ -127,7 +170,7 @@ class ProjectType(BaseModel):
     domain = db.relationship('ProjectDomain', lazy='joined')
 
     # eg: 咨询，专业业务订单，工单
-    name = db.Column(db.String(32), nullable=False)
+    name = db.Column(db.String(32), nullable=False, index=True)
     desc = db.Column(db.String(64), nullable=False)
 
     projects = db.relationship('Project', lazy='dynamic')
@@ -160,23 +203,25 @@ class Project(BaseModel):
 
     # 相关客户
     customers_id = db.Column(db.BigInteger, db.ForeignKey('project_customers.id'), nullable=False)
-    customers = db.relationship('ProjectCustomers')
+    customers = db.relationship('ProjectCustomers', backref=db.backref('project', uselist=False))
 
     # 相关客服
     staffs_id = db.Column(db.BigInteger, db.ForeignKey('project_staffs.id'), nullable=False)
-    staffs = db.relationship('ProjectStaffs')
+    staffs = db.relationship('ProjectStaffs', backref=db.backref('project', uselist=False))
 
     # 项目信息
     # # 元数据
-    meta_data_id = db.Column(db.BigInteger, db.ForeignKey('project_meta_data.id'), nullable=False)
-    meta_data = db.relationship('ProjectMetaData')
+    # FIXME
+    meta_data_id = db.Column(db.BigInteger, db.ForeignKey('project_meta_data.id'), nullable=True)
+    meta_data = db.relationship('ProjectMetaData', backref=db.backref('project', uselist=False))
 
     # # 扩展数据
-    ext_data_id = db.Column(db.BigInteger, db.ForeignKey('project_ext_data.id'), nullable=False)
-    ext_data = db.relationship('ProjectExtData')
+    # FIXME
+    ext_data_id = db.Column(db.BigInteger, db.ForeignKey('project_ext_data.id'), nullable=True)
+    ext_data = db.relationship('ProjectExtData', backref=db.backref('project', uselist=False))
 
     # xchat
-    xchat = db.relationship('ProjectXChat')
+    xchat = db.relationship('ProjectXChat', uselist=False)
 
     # 项目会话
     sessions = db.relationship('Session', lazy='dynamic')
@@ -224,30 +269,27 @@ class ProjectCustomers(BaseModel):
     """项目相关客户"""
     __tablename__ = 'project_customers'
 
-    project = db.relationship('Project', uselist=False)
     # 当事人
-    parties = db.relationship('Customer', secondary=project_customer_parties)
+    parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined')
 
 
 class ProjectStaffs(BaseModel):
     """项目相关客服"""
     __tablename__ = 'project_staffs'
 
-    project = db.relationship('Project', uselist=False)
     # 负责人
     leader_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
-    leader = db.relationship('Staff')
+    leader = db.relationship('Staff', lazy='joined')
     # 协助人
-    assistants = db.relationship('Staff', secondary=project_staff_assistants)
+    assistants = db.relationship('Staff', secondary=project_staff_assistants, lazy='joined')
     # 参与人
-    participants = db.relationship('Staff', secondary=project_staff_participants)
+    participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined')
 
 
 class ProjectMetaData(BaseModel):
     """项目元数据"""
     __tablename__ = 'project_meta_data'
 
-    project = db.relationship('Project', uselist=False)
     # TODO: 怎么组织数据？
     pass
 
@@ -256,7 +298,6 @@ class ProjectExtData(BaseModel):
     """项目扩展数据"""
     __tablename__ = 'project_ext_data'
 
-    project = db.relationship('Project', uselist=False)
     # TODO: 怎么组织数据？
     pass
 

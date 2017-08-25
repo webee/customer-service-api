@@ -13,5 +13,3 @@ class BaseModel(db.Model):
     @classproperty
     def t_query(cls):
         return dbs.session.query(cls)
-
-

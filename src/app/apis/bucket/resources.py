@@ -38,7 +38,7 @@ class BucketItem(Resource):
     def get(self, id):
         """get a bucket.
         """
-        return Bucket.query.get(id)
+        return Bucket.query.get_or_404(id)
 
     @api.response(204, 'Bucket successfully updated.')
     def patch(self, id):

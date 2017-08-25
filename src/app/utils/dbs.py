@@ -15,7 +15,6 @@ def init_app(app):
 def require_transaction_context():
     with db.session.begin(subtransactions=True, nested=False):
         yield db
-        db.session.flush()
 
 
 def transactional(func):

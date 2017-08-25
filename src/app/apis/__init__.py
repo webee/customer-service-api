@@ -16,9 +16,11 @@ def init_api(app):
     # add namespaces
     from .bucket.api import api as bucket_api
     from .auth.api import api as auth_api
+    from .app.api import api as app_api
 
-    api.add_namespace(bucket_api, path='/bucket')
+    api.add_namespace(bucket_api, path='/buckets')
     api.add_namespace(auth_api, path='/auth')
+    api.add_namespace(app_api, path='/app')
 
     # error handlers
     from app.errors import BizError, biz_error_handler
