@@ -25,3 +25,9 @@ class App:
     # restplus
     RESTPLUS_VALIDATE = True
     RESTPLUS_MASK_SWAGGER = False
+
+
+class XChatClient:
+    USER_KEY = 'demo app user key.'
+
+    ROOT_URL = "http://local.xchat.com"

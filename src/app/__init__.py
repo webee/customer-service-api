@@ -10,6 +10,7 @@ from app.apis import api
 from app.apis.utils.jwt import JWT
 from app.utils import dbs
 from pytoolbox.util import pmc_config
+from .utils.xchat_client import XChatClient
 
 # extensions
 jwt = JWT()
@@ -18,6 +19,8 @@ db = SQLAlchemy()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
 bcrypt = Bcrypt()
 cors = CORS()
+
+xchat_client = XChatClient()
 
 
 def create_app(env='dev'):
@@ -67,6 +70,10 @@ def init_extensions(app):
 
     # cors
     cors.init_app(app)
+
+    # xchat client
+    from . import config
+    xchat_client.init_config(config.XChatClient)
 
 
 def init_errors(app):
