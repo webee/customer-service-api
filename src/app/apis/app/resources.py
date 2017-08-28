@@ -9,12 +9,12 @@ from app.utils.jwt import current_app_client, require_app
 
 @api.route('/projects')
 class ProjectCollection(Resource):
+    """项目相关"""
     @require_app
     @api.expect(raw_project)
     @api.marshal_with(resource_id)
     def post(self):
-        """create a new project.
-        """
+        """创建项目"""
         app = current_app_client
         data = request.get_json()
         project = biz.create_project(app.id, data)
@@ -27,8 +27,7 @@ class ProjectCustomers(Resource):
     @api.expect(raw_project_customers)
     @api.response(204, 'successfully replaced')
     def put(self, id):
-        """replace project customers
-        """
+        """替换项目客户"""
         app = current_app_client
         data = request.get_json()
         # TODO
@@ -38,8 +37,7 @@ class ProjectCustomers(Resource):
     @api.expect(raw_project_customers)
     @api.response(204, 'successfully updated')
     def patch(self, id):
-        """update project customers
-        """
+        """更新项目客户"""
         app = current_app_client
         data = request.get_json()
         # TODO
@@ -52,8 +50,7 @@ class ProjectStaffs(Resource):
     @api.expect(raw_project_staffs)
     @api.response(204, 'successfully replaced')
     def put(self, id):
-        """replace project staffs
-        """
+        """替换项目客服"""
         app = current_app_client
         data = request.get_json()
         # TODO
@@ -63,8 +60,7 @@ class ProjectStaffs(Resource):
     @api.expect(raw_project_staffs)
     @api.response(204, 'successfully updated')
     def patch(self, id):
-        """update project staffs
-        """
+        """更新项目客服"""
         app = current_app_client
         data = request.get_json()
         # TODO

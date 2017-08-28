@@ -23,8 +23,10 @@ class App:
     JWT_DEFAULT_ROLE = 'app'
 
     # restplus
+    ERROR_404_HELP = False
     RESTPLUS_VALIDATE = True
     RESTPLUS_MASK_SWAGGER = False
+    SWAGGER_UI_JSONEDITOR = False
 
 
 class XChatClient:

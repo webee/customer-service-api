@@ -16,6 +16,7 @@ staff_auth_data = api.inherit('Staff auth data', app_auth_data, {
 })
 
 app_change_password_data = api.model('App change password data', {
+    'name': fields.String(required=True, min_length=1, description='app name'),
     'password': fields.String(required=True, min_length=1, description='current password'),
     'new_password': fields.String(required=True, min_length=1, description='new password')
 })
