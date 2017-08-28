@@ -48,8 +48,7 @@ class App(BaseModel):
     # biz
     @dbs.transactional
     def create_project_customers(self, data):
-        parties = [self.create_or_update_customer(customer) for customer in data['parties']]
-        pc = ProjectCustomers(parties=parties)
+        pc = ProjectCustomers(parties=self.create_project_customers(data['parties']))
         dbs.session.add(pc)
 
         return pc
@@ -57,8 +56,8 @@ class App(BaseModel):
     @dbs.transactional
     def create_project_staffs(self, data):
         leader = self.create_or_update_staff(data['leader'])
-        assistants = [self.create_or_update_staff(staff) for staff in data['assistants']]
-        participants = [self.create_or_update_staff(staff) for staff in data['participants']]
+        assistants = self.create_or_update_staffs(data['assistants'])
+        participants = self.create_or_update_staffs(data['participants'])
         ps = ProjectStaffs(leader=leader, assistants=assistants, participants=participants)
         dbs.session.add(ps)
 
@@ -77,6 +76,10 @@ class App(BaseModel):
         return customer
 
     @dbs.transactional
+    def create_or_update_customers(self, customers_data):
+        return [self.create_or_update_customer(customer) for customer in customers_data]
+
+    @dbs.transactional
     def create_or_update_staff(self, data):
         uid = data['uid']
         name = data['name']
@@ -87,6 +90,10 @@ class App(BaseModel):
         dbs.session.add(staff)
 
         return staff
+
+    @dbs.transactional
+    def create_or_update_staffs(self, staffs_data):
+        return [self.create_or_update_staff(staff) for staff in staffs_data]
 
 
 class Customer(BaseModel):
@@ -103,12 +110,8 @@ class Customer(BaseModel):
     __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_customer'),)
 
     @property
-    def app_uid(self):
-        return '%s.%s' % (self.app.name, self.name)
-
-    @property
-    def ns_uid(self):
-        return '%s:%s.%s' % ('customer', self.app.name, self.name)
+    def ns_app_uid(self):
+        return '%s:%s.%s' % ('cust', self.app.name, self.uid)
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
@@ -128,12 +131,8 @@ class Staff(BaseModel):
     __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_staff'),)
 
     @property
-    def app_uid(self):
-        return '%s.%s' % (self.app.name, self.name)
-
-    @property
-    def ns_uid(self):
-        return '%s:%s.%s' % ('staff', self.app.name, self.name)
+    def ns_app_uid(self):
+        return '%s:%s.%s' % ('staff', self.app.name, self.uid)
 
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
@@ -158,6 +157,10 @@ class ProjectDomain(BaseModel):
     def to_dict(self):
         return dict(name=self.name, desc=self.desc, types=[t.to_dict() for t in self.types])
 
+    @property
+    def app_biz_id(self):
+        return '%s.%s' % (self.app.name, self.name)
+
     def __repr__(self):
         return "<ProjectDomain: {}>".format(self.name)
 
@@ -180,6 +183,10 @@ class ProjectType(BaseModel):
 
     def to_dict(self):
         return dict(name=self.name, desc=self.desc)
+
+    @property
+    def app_biz_id(self):
+        return '%s.%s' % (self.domain.app_biz_id, self.name)
 
     def __repr__(self):
         return "<ProjectType: {}:{}>".format(self.domain.name, self.name)
@@ -234,8 +241,12 @@ class Project(BaseModel):
     def current_session(self):
         return self.sessions.filter_by(closed=True).one_or_none()
 
+    @property
+    def app_biz_id(self):
+        return '%s.%s' % (self.type.app_biz_id, self.biz_id)
+
     def __repr__(self):
-        return "<Project: {}:{}.{}>".format(self.type.domain.name, self.type.name, self.id)
+        return "<Project: {}>".format(self.app_biz_id)
 
 
 class ProjectXChat(BaseModel):
@@ -244,7 +255,10 @@ class ProjectXChat(BaseModel):
     project_id = db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False)
     project = db.relationship('Project', lazy='joined')
 
-    chat_id = db.Column(db.String(32), nullable=False, index=True)
+    chat_id = db.Column(db.String(32), nullable=False, unique=True)
+
+    def __repr__(self):
+        return "<ProjectXChat: {}<->{}>".format(self.project.app_biz_id, self.chat_id)
 
 
 # many to many helpers
@@ -272,6 +286,12 @@ class ProjectCustomers(BaseModel):
     # 当事人
     parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined')
 
+    @dbs.transactional
+    def update_members(self, app, data):
+        self.parties = app.create_or_update_customers(data['parties'])
+
+        dbs.session.add(self)
+
 
 class ProjectStaffs(BaseModel):
     """项目相关客服"""
@@ -284,6 +304,14 @@ class ProjectStaffs(BaseModel):
     assistants = db.relationship('Staff', secondary=project_staff_assistants, lazy='joined')
     # 参与人
     participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined')
+
+    @dbs.transactional
+    def update_members(self, app, data):
+        self.leader = app.create_or_update_staff(data['leader'])
+        self.assistants = app.create_or_update_staffs(data['assistants'])
+        self.participants = app.create_or_update_staffs(data['participants'])
+
+        dbs.session.add(self)
 
 
 class ProjectMetaData(BaseModel):

@@ -48,8 +48,8 @@ class AppPassword(Resource):
     def post(self):
         """修改app密码"""
         data = request.get_json()
-        app_name = data['name']
-        app_password = data['password']
+        app_name = data['app_name']
+        app_password = data['app_password']
         app = App.authenticate(app_name, app_password)
 
         if app is None:

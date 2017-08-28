@@ -4,8 +4,8 @@ from ..serializers import pagination, base_resource
 
 # customer
 _raw_customer_specs = {
-    'uid': fields.String(required=True, min_length=1, max_length=32),
-    'name': fields.String(required=True, min_length=1, max_length=16)
+    'uid': fields.String(required=True, min_length=1, max_length=32, example='test_001'),
+    'name': fields.String(required=True, min_length=1, max_length=16, example='测试客户#1')
 }
 
 raw_customer = api.model('Raw Customer', _raw_customer_specs)
@@ -16,8 +16,8 @@ page_of_customers = api.inherit('Page of customers', pagination, {
 
 # staff
 _raw_staff_specs = {
-    'uid': fields.String(required=True, min_length=1, max_length=32),
-    'name': fields.String(required=True, min_length=1, max_length=16)
+    'uid': fields.String(required=True, min_length=1, max_length=32, example='test_01'),
+    'name': fields.String(required=True, min_length=1, max_length=16, example='测试客服#1')
 }
 
 raw_staff = api.model('Raw Staff', _raw_staff_specs)
@@ -37,8 +37,8 @@ project_customers = api.inherit('Project Customers', base_resource, _raw_project
 # project staffs
 _raw_project_staffs = {
     'leader': fields.Nested(raw_staff),
-    'assistants': fields.List(fields.Nested(raw_customer)),
-    'participants': fields.List(fields.Nested(raw_customer))
+    'assistants': fields.List(fields.Nested(raw_staff)),
+    'participants': fields.List(fields.Nested(raw_staff))
 }
 
 raw_project_staffs = api.model('Raw Project Staffs', _raw_project_staffs)
@@ -46,9 +46,9 @@ project_staffs = api.inherit('Project Staffs', base_resource, _raw_project_staff
 
 # project
 _raw_project = {
-    'domain': fields.String(required=True, min_length=1, max_length=32),
-    'type': fields.String(required=True, min_length=1, max_length=32),
-    'biz_id': fields.String(required=True, min_length=1, max_length=32),
+    'domain': fields.String(required=True, min_length=1, max_length=32, example='test'),
+    'type': fields.String(required=True, min_length=1, max_length=32, example='test'),
+    'biz_id': fields.String(required=True, min_length=1, max_length=32, example='biz#0001'),
     'customers': fields.Nested(raw_project_customers),
     'staffs': fields.Nested(raw_project_staffs),
 }

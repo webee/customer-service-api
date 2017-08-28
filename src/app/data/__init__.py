@@ -39,14 +39,14 @@ def init_prod_data():
     app = create_app('qqxb', 'qqxb1234')
     project_domain = create_project_domain(app.id, 'personal', '个人')
     create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'special_biz_order', '专项业务订单')
+    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
 
     project_domain = create_project_domain(app.id, 'employee', '员工')
     create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'special_biz_order', '专项业务订单')
+    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
 
     project_domain = create_project_domain(app.id, 'enterprise', '企业')
     create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'special_biz_order', '专项业务订单')
+    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
     create_project_type(project_domain.id, 'work_order', '工单')
 
