@@ -1,1 +1,1 @@
-from . import resources
+from . import project_resources

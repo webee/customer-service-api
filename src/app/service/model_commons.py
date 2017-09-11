@@ -1,5 +1,6 @@
 from app import db, dbs
-from app.utils.py import classproperty
+from pytoolbox.util.py import classproperty
+from sqlalchemy.ext.declarative import declared_attr
 
 
 class BaseModel(db.Model):
@@ -13,3 +14,17 @@ class BaseModel(db.Model):
     @classproperty
     def t_query(cls):
         return dbs.session.query(cls)
+
+
+def app_resource(name):
+    class AppResource(object):
+        """属于app的资源"""
+        @declared_attr
+        def app_id(cls):
+            return db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
+
+        @declared_attr
+        def app(cls):
+            return db.relationship('App', lazy='joined', backref=db.backref(name, lazy='dynamic'))
+
+    return AppResource

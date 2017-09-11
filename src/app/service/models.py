@@ -1,6 +1,6 @@
 import enum
 from app import db, dbs, bcrypt
-from .model_commons import BaseModel
+from .model_commons import BaseModel, app_resource
 
 
 class Channel(enum.Enum):
@@ -16,15 +16,20 @@ class Channel(enum.Enum):
 
 
 class App(BaseModel):
-    """注册app"""
+    """系统应用"""
     __tablename__ = 'app'
 
     name = db.Column(db.String(32), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
+    desc = db.Column(db.String(64), nullable=False)
 
-    def __init__(self, name, password):
+    def __init__(self, name, password, desc):
         self.name = name
         self.password = bcrypt.generate_password_hash(password).decode()
+        self.desc = desc
+
+    def __repr__(self):
+        return "<App: {}>".format(self.name)
 
     @staticmethod
     def authenticate(name, password):
@@ -42,13 +47,10 @@ class App(BaseModel):
             self.set_password(new_password)
             return True
 
-    def __repr__(self):
-        return "<App: {}>".format(self.name)
-
     # biz
     @dbs.transactional
     def create_project_customers(self, data):
-        pc = ProjectCustomers(parties=self.create_project_customers(data['parties']))
+        pc = ProjectCustomers(parties=self.create_or_update_customers(data['parties']))
         dbs.session.add(pc)
 
         return pc
@@ -96,12 +98,9 @@ class App(BaseModel):
         return [self.create_or_update_staff(staff) for staff in staffs_data]
 
 
-class Customer(BaseModel):
+class Customer(BaseModel, app_resource('customers')):
     """客户"""
     __tablename__ = 'customer'
-
-    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
-    app = db.relationship('App', lazy='joined', backref=db.backref('customers', lazy='dynamic'))
 
     uid = db.Column(db.String(32), nullable=False, unique=True)
     name = db.Column(db.String(16), nullable=False)
@@ -117,12 +116,9 @@ class Customer(BaseModel):
         return "<Customer: {}>".format(self.uid)
 
 
-class Staff(BaseModel):
+class Staff(BaseModel, app_resource('staffs')):
     """客服"""
     __tablename__ = 'staff'
-
-    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
-    app = db.relationship('App', lazy='joined', backref=db.backref('staffs', lazy='dynamic'))
 
     uid = db.Column(db.String(32), nullable=False, unique=True)
     name = db.Column(db.String(16), nullable=False)
@@ -138,7 +134,7 @@ class Staff(BaseModel):
         return "<Staff: {}>".format(self.uid)
 
 
-class ProjectDomain(BaseModel):
+class ProjectDomain(BaseModel, app_resource('project_domains')):
     """项目域"""
     __tablename__ = 'project_domain'
 
@@ -149,8 +145,6 @@ class ProjectDomain(BaseModel):
     name = db.Column(db.String(32), nullable=False, index=True)
     desc = db.Column(db.String(64), nullable=False)
 
-    types = db.relationship('ProjectType', lazy='subquery')
-
     # 每个app下面域唯一
     __table_args__ = (db.UniqueConstraint('app_id', 'name', name='uniq_app_domain'),)
 
@@ -159,24 +153,22 @@ class ProjectDomain(BaseModel):
 
     @property
     def app_biz_id(self):
-        return '%s.%s' % (self.app.name, self.name)
+        return '%s:%s' % (self.app.name, self.name)
 
     def __repr__(self):
         return "<ProjectDomain: {}>".format(self.name)
 
 
-class ProjectType(BaseModel):
+class ProjectType(BaseModel, app_resource('project_types')):
     """项目类型"""
     __tablename__ = 'project_type'
 
     domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
-    domain = db.relationship('ProjectDomain', lazy='joined')
+    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('types', lazy='subquery'))
 
     # eg: 咨询，专业业务订单，工单
     name = db.Column(db.String(32), nullable=False, index=True)
     desc = db.Column(db.String(64), nullable=False)
-
-    projects = db.relationship('Project', lazy='dynamic')
 
     # 每个域下面类型唯一
     __table_args__ = (db.UniqueConstraint('domain_id', 'name', name='uniq_domain_type'),)
@@ -186,7 +178,7 @@ class ProjectType(BaseModel):
 
     @property
     def app_biz_id(self):
-        return '%s.%s' % (self.domain.app_biz_id, self.name)
+        return '%s:%s' % (self.domain.app_biz_id, self.name)
 
     def __repr__(self):
         return "<ProjectType: {}:{}>".format(self.domain.name, self.name)
@@ -197,13 +189,16 @@ class ProjectTypeConfigs(BaseModel):
     __tablename__ = 'project_type_configs'
 
 
-class Project(BaseModel):
+class Project(BaseModel, app_resource('projects')):
     """表示一个客服项目"""
     __tablename__ = 'project'
 
+    # 域
+    domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
+    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('projects', lazy='dynamic'))
     # 类型
     type_id = db.Column(db.BigInteger, db.ForeignKey('project_type.id'), index=True, nullable=False)
-    type = db.relationship('ProjectType', lazy='joined')
+    type = db.relationship('ProjectType', lazy='joined', backref=db.backref('projects', lazy='dynamic'))
 
     # 业务id
     biz_id = db.Column(db.String(32), nullable=False)
@@ -243,7 +238,7 @@ class Project(BaseModel):
 
     @property
     def app_biz_id(self):
-        return '%s.%s' % (self.type.app_biz_id, self.biz_id)
+        return '%s:%s' % (self.type.app_biz_id, self.biz_id)
 
     def __repr__(self):
         return "<Project: {}>".format(self.app_biz_id)

@@ -1,5 +1,5 @@
 from flask_restplus import fields
-from .api import api
+from .. import api
 
 
 app_auth_data = api.model('App auth data', {

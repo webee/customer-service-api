@@ -4,8 +4,8 @@ from .models import Customer, Staff
 from .models import ProjectDomain, ProjectType
 
 
-def create_app(name, password):
-    app = App(name=name, password=password)
+def create_app(name, password, desc):
+    app = App(name=name, password=password, desc=desc)
     db.session.add(app)
     db.session.commit()
 
@@ -38,9 +38,9 @@ def create_project_domain(app_id, name, desc):
     return project_domain
 
 
-def create_project_type(domain_id, name, desc):
+def create_project_type(app_id, domain_id, name, desc):
     """创建项目类型"""
-    project_type = ProjectType(domain_id=domain_id, name=name, desc=desc)
+    project_type = ProjectType(app_id=app_id, domain_id=domain_id, name=name, desc=desc)
     db.session.add(project_type)
     db.session.commit()
 

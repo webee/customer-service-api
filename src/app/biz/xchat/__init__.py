@@ -1,13 +1,13 @@
 from app import dbs, xchat_client
 from app.service.models import ProjectXChat
-from .constant import XCHAT_MSG_TOPIC, XCHAT_CHAT_TAG
+from .constant import XCHAT_DOMAIN, XCHAT_MSG_TOPIC, XCHAT_CHAT_TAG
 
 
 @dbs.transactional
 def create_project_chat(project):
-    biz_id = 'cs:%s' % project.app_biz_id
+    biz_id = '%s:%s' % (XCHAT_DOMAIN, project.app_biz_id)
     users = [c.ns_app_uid for c in project.customers.parties]
-    title = '%s/%s' % (project.type.domain.name, project.type.name)
+    title = '%s/%s' % (project.domain.name, project.type.name)
     chat_id = xchat_client.new_chat(xchat_client.constant.ChatType.GROUP,
                                     users=users,
                                     biz_id=biz_id,

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from flask_restplus import fields
 from flask_restplus import Api
 
 
@@ -24,8 +26,55 @@ def init_api(app):
 
     # error handlers
     from app.errors import BizError, biz_error_handler
+    from sqlalchemy.orm.exc import NoResultFound
+    from app.errors import db_not_found_error_handler
 
     api.errorhandler(BizError)(biz_error_handler)
+    api.errorhandler(NoResultFound)(db_not_found_error_handler)
 
     # init app
     api.init_app(app)
+
+
+def raw_model(model):
+    """
+    remove readonly fields
+    :param model: complete model
+    :return: raw model without readonly fields
+    """
+    raw_name = 'Raw %s' % model.name
+    if raw_name in api.models:
+        return api.models[raw_name]
+
+    parents = []
+    for p in model.__parents__:
+        m = raw_model(p)
+        if m:
+            parents.append(m)
+
+    def raw_field(f):
+        if f.readonly:
+            return
+
+        if isinstance(f, fields.List):
+            m = raw_field(f.container)
+            if m:
+                return fields.List(m)
+        elif isinstance(f, fields.Nested):
+            m = raw_model(f.model)
+            if m:
+                return fields.Nested(m)
+        return f
+
+    raw_specs = OrderedDict()
+    for n, f in model.items():
+        rf = raw_field(f)
+        if rf:
+            raw_specs[n] = rf
+
+    if len(parents) > 0:
+        parents.append(raw_specs)
+        return api.model(raw_name, *parents)
+    else:
+        if len(raw_specs):
+            return api.model(raw_name, raw_specs)

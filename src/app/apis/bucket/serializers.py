@@ -1,5 +1,5 @@
 from flask_restplus import fields
-from .api import api
+from .. import api
 from ..serializers import pagination, base_resource
 
 _raw_bucket_specs = {

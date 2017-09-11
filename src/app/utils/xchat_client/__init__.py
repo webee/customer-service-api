@@ -2,10 +2,13 @@ import os
 import threading
 import requests
 import jwt
+import logging
 from datetime import datetime, timedelta
 from pytoolbox.util import pmc_config
 from .config import Config
 from . import constant
+
+logger = logging.getLogger(__name__)
 
 
 class RequestResult(object):
@@ -52,6 +55,7 @@ class XChatClient(object):
         pmc_config.merge_config(self.config, env_config)
 
     def _new_token(self):
+        logger.info('new token')
         exp = datetime.utcnow() + timedelta(days=30)
         payload = dict(
             ns='',
@@ -77,6 +81,7 @@ class XChatClient(object):
         return os.path.join(self.config.ROOT_URL, url.format(**kwargs))
 
     def _request(self, method, url, data=None, **kwargs):
+        logger.debug('request: %s, %s, %s', method, url, data)
         headers = {'Authorization': 'Bearer ' + self.token}
         resp = requests.request(method, url, json=data, headers=headers, **kwargs)
         return RequestResult(resp)

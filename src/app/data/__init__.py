@@ -13,7 +13,7 @@ def init_data():
 
 
 def init_test_data():
-    app = create_app('test', 'test1234')
+    app = create_app('test', 'test1234', '测试应用')
 
     # customer
     create_customer(app.id, 'test_001', '测试客户#1')
@@ -29,24 +29,24 @@ def init_test_data():
 
     # domain/type
     project_domain = create_project_domain(app.id, 'test', '测试')
-    create_project_type(project_domain.id, 'test', '测试')
+    create_project_type(app.id, project_domain.id, 'test', '测试')
 
     # projects
     pass
 
 
 def init_prod_data():
-    app = create_app('qqxb', 'qqxb1234')
+    app = create_app('qqxb', 'qqxb1234', '亲亲小保')
     project_domain = create_project_domain(app.id, 'personal', '个人')
-    create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
+    create_project_type(app.id, project_domain.id, 'consultation', '咨询')
+    create_project_type(app.id, project_domain.id, 'biz_order', '专项业务订单')
 
     project_domain = create_project_domain(app.id, 'employee', '员工')
-    create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
+    create_project_type(app.id, project_domain.id, 'consultation', '咨询')
+    create_project_type(app.id, project_domain.id, 'biz_order', '专项业务订单')
 
     project_domain = create_project_domain(app.id, 'enterprise', '企业')
-    create_project_type(project_domain.id, 'consultation', '咨询')
-    create_project_type(project_domain.id, 'biz_order', '专项业务订单')
-    create_project_type(project_domain.id, 'work_order', '工单')
+    create_project_type(app.id, project_domain.id, 'consultation', '咨询')
+    create_project_type(app.id, project_domain.id, 'biz_order', '专项业务订单')
+    create_project_type(app.id, project_domain.id, 'work_order', '工单')
 
