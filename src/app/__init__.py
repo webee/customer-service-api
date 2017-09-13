@@ -6,15 +6,11 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from app.apis import api
-from app.apis.utils.jwt import JWT
 from app.utils import dbs
 from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
 
 # extensions
-jwt = JWT()
-
 db = SQLAlchemy()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
 bcrypt = Bcrypt()
@@ -28,9 +24,9 @@ def create_app(env='dev'):
     # 最先初始化配置
     init_config(app, env)
 
-    register_mods(app)
     init_extensions(app)
     init_errors(app)
+    register_mods(app)
 
     return app
 
@@ -45,15 +41,13 @@ def init_config(app, env):
 
 
 def register_mods(app):
-    pass
+    from .apis import blueprint as api
+
+    app.register_blueprint(api, url_prefix='/api')
 
 
 def init_extensions(app):
-    # jwt
-    jwt.init_app(app)
-    jwt.auth_required_hook = lambda role, func: api.doc(security=role + '-jwt')(func)
-
-    # api
+    # apis
     from .apis import init_api
     init_api(app)
 

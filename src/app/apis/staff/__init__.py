@@ -1,1 +1,2 @@
-from . import views
+from . import project_resources
+from . import session_resources

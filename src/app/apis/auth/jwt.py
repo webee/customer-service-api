@@ -1,5 +1,11 @@
-from app import jwt
+from .. import jwt
+from .. import api
 from app.service.models import App, Customer, Staff
+
+
+@jwt.as_auth_required_hook
+def auth_required_hook(role, func):
+    api.doc(security=role + '-jwt')(func)
 
 
 def app_token_payload(app):
@@ -42,3 +48,13 @@ def identity_secret(role, identity):
         return identity.app.password
     elif role == 'staff':
         return identity.app.password
+
+
+require_app = jwt.auth_required('app')
+require_customer = jwt.auth_required('customer')
+require_staff = jwt.auth_required('staff')
+
+
+current_app_client: App = jwt.current_identity
+current_customer: Customer = jwt.current_identity
+current_staff: Staff = jwt.current_identity

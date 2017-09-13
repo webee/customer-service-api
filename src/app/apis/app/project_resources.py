@@ -5,7 +5,7 @@ from .serializers import raw_project, raw_project_customers, raw_project_staffs
 from . import serializers as ser
 from ..serializers import resource_id
 from app.biz import app as biz
-from app.utils.jwt import current_app_client, require_app
+from ..auth.jwt import current_app_client, require_app
 
 
 @api.route('/projects')
