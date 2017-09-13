@@ -1,11 +1,12 @@
 from flask import request
 from flask_restplus import Resource, abort
 from app.service.models import App
-from .. import jwt
-from ..auth.jwt import current_app_client, require_app
-from ..auth.jwt import current_customer, require_customer
-from ..auth.jwt import current_staff, require_staff
+from app import jwt
+from ..jwt import current_app_client, require_app
+from ..jwt import current_customer, require_customer
+from ..jwt import current_staff, require_staff
 from .api import api
+from . import serializers as ser
 from .serializers import app_auth_data, customer_auth_data, staff_auth_data, app_change_password_data
 
 
@@ -25,6 +26,7 @@ def _token(role, data, get_identity_from_app):
 @api.route('/app_token')
 class AppToken(Resource):
     @api.expect(app_auth_data)
+    @api.marshal_with(ser.token_data)
     @api.response(401, 'invalid credentials')
     @api.response(200, 'token successfully generated')
     def post(self):
@@ -35,6 +37,7 @@ class AppToken(Resource):
 @api.route('/refresh_app_token')
 class RefreshAppToken(Resource):
     @require_app
+    @api.marshal_with(ser.token_data)
     def post(self):
         """刷新app token"""
         return dict(token=jwt.encode_token('app', current_app_client))
@@ -43,6 +46,7 @@ class RefreshAppToken(Resource):
 @api.route('/change_app_password')
 class AppPassword(Resource):
     @api.expect(app_change_password_data)
+    @api.marshal_with(ser.token_data)
     @api.response(204, 'password changed')
     @api.response(401, 'change password failed')
     def post(self):
@@ -64,6 +68,7 @@ class AppPassword(Resource):
 @api.route('/customer_token')
 class CustomerToken(Resource):
     @api.expect(customer_auth_data)
+    @api.marshal_with(ser.token_data)
     @api.response(401, 'invalid credentials')
     @api.response(200, 'token successfully generated')
     def post(self):
@@ -74,6 +79,7 @@ class CustomerToken(Resource):
 @api.route('/refresh_customer_token')
 class RefreshCustomerToken(Resource):
     @require_customer
+    @api.marshal_with(ser.token_data)
     def post(self):
         """刷新customer token"""
         return dict(token=jwt.encode_token('customer', current_customer))
@@ -82,6 +88,7 @@ class RefreshCustomerToken(Resource):
 @api.route('/staff_token')
 class StaffToken(Resource):
     @api.expect(staff_auth_data)
+    @api.marshal_with(ser.token_data)
     @api.response(401, 'invalid credentials')
     @api.response(200, 'token successfully generated')
     def post(self):
@@ -92,6 +99,7 @@ class StaffToken(Resource):
 @api.route('/refresh_staff_token')
 class RefreshStaffToken(Resource):
     @require_staff
+    @api.marshal_with(ser.token_data)
     def post(self):
         """刷新staff token"""
         return dict(token=jwt.encode_token('staff', current_staff))

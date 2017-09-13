@@ -5,12 +5,14 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from .apis.utils.jwt import JWT
 
 from app.utils import dbs
 from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
 
 # extensions
+jwt = JWT()
 db = SQLAlchemy()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
 bcrypt = Bcrypt()
@@ -41,15 +43,15 @@ def init_config(app, env):
 
 
 def register_mods(app):
-    from .apis import blueprint as api
+    from .apis import init_api, blueprint as api
 
+    init_api()
     app.register_blueprint(api, url_prefix='/api')
 
 
 def init_extensions(app):
-    # apis
-    from .apis import init_api
-    init_api(app)
+    # jwt
+    jwt.init_app(app)
 
     # db
     from .service import test_models

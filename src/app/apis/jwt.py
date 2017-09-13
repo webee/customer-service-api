@@ -1,11 +1,11 @@
-from .. import jwt
-from .. import api
+from app import jwt
 from app.service.models import App, Customer, Staff
+from . import api
 
 
 @jwt.as_auth_required_hook
 def auth_required_hook(role, func):
-    api.doc(security=role + '-jwt')(func)
+    return api.doc(security=role + '-jwt')(func)
 
 
 def app_token_payload(app):

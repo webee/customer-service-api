@@ -18,3 +18,7 @@ staff_auth_data = api.inherit('Staff auth data', app_auth_data, {
 app_change_password_data = api.inherit('App change password data', app_auth_data, {
     'new_password': fields.String(required=True, min_length=1, description='new password')
 })
+
+token_data = api.model('Token data', {
+    'token': fields.String(readonly=True, descrption='jwt')
+})

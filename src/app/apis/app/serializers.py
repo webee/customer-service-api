@@ -1,6 +1,7 @@
 from flask_restplus import fields
 from .. import api
-from ..serializers import raw_model, pagination, base_resource
+from ..serializers import raw_model, raw_field, raw_specs
+from ..serializers import pagination, base_resource
 
 
 # customer
@@ -63,13 +64,13 @@ project_type = api.inherit('Project Type', base_resource, _project_type_specs)
 
 
 # project
-_raw_project_specs = {
+_raw_project_specs = raw_specs({
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
     'biz_id': fields.String(required=True, min_length=1, max_length=32),
-    'customers': fields.Nested(raw_model(project_customers)),
-    'staffs': fields.Nested(raw_model(project_staffs))
-}
+    'customers': fields.Nested(project_customers),
+    'staffs': fields.Nested(project_staffs)
+})
 
 _project_specs = {
     'type': fields.Nested(project_type),

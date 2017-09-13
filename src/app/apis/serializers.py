@@ -3,6 +3,27 @@ from flask_restplus import fields
 from . import api
 
 
+def raw_field(f):
+    """
+    ignore readonly fields
+    :param f:
+    :return:
+    """
+    if f.readonly:
+        return
+
+    if isinstance(f, fields.List):
+        m = raw_field(f.container)
+        if m:
+            return fields.List(m)
+    elif isinstance(f, fields.Nested):
+        m = raw_model(f.model)
+        if m:
+            return fields.Nested(m)
+    else:
+        return f
+
+
 def raw_model(model):
     """
     remove readonly fields
@@ -19,20 +40,6 @@ def raw_model(model):
         if m:
             parents.append(m)
 
-    def raw_field(f):
-        if f.readonly:
-            return
-
-        if isinstance(f, fields.List):
-            m = raw_field(f.container)
-            if m:
-                return fields.List(m)
-        elif isinstance(f, fields.Nested):
-            m = raw_model(f.model)
-            if m:
-                return fields.Nested(m)
-        return f
-
     raw_specs = OrderedDict()
     for n, f in model.items():
         rf = raw_field(f)
@@ -45,6 +52,15 @@ def raw_model(model):
     else:
         if len(raw_specs):
             return api.model(raw_name, raw_specs)
+
+
+def raw_specs(specs):
+    res = {}
+    for n, f in specs.items():
+        rf = raw_field(f)
+        if rf:
+            res[n] = rf
+    return res
 
 
 # 分页结果
