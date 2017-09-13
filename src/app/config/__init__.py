@@ -12,7 +12,7 @@ class App:
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs:cs1234@localhost/custom_service'
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = not os.environ.get('DISABLE_SQLALCHEMY_ECHO', False)
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     # jwt

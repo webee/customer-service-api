@@ -28,3 +28,37 @@ def app_resource(name):
             return db.relationship('App', lazy='joined', backref=db.backref(name, lazy='dynamic'))
 
     return AppResource
+
+
+def project_resource(name, uselist=False):
+    class ProjectResource(object):
+        """属于project的资源"""
+        @declared_attr
+        def project_id(cls):
+            return db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False, unique=not uselist)
+
+        @declared_attr
+        def project(cls):
+            kwargs = dict(uselist=uselist)
+            if uselist:
+                kwargs['lazy'] = 'dynamic'
+            return db.relationship('Project', lazy='joined', backref=db.backref(name, **kwargs))
+
+    return ProjectResource
+
+
+def session_resource(name, uselist=False):
+    class SessionResource(object):
+        """属于session的资源"""
+        @declared_attr
+        def session_id(cls):
+            return db.Column(db.BigInteger, db.ForeignKey('session.id'), index=True, nullable=False, unique=not uselist)
+
+        @declared_attr
+        def session(cls):
+            kwargs = dict(uselist=uselist)
+            if uselist:
+                kwargs['lazy'] = 'dynamic'
+            return db.relationship('Session', lazy='joined', backref=db.backref(name, **kwargs))
+
+    return SessionResource

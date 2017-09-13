@@ -1,6 +1,6 @@
 import enum
 from app import db, dbs, bcrypt
-from .model_commons import BaseModel, app_resource
+from .model_commons import BaseModel, app_resource, project_resource, session_resource
 
 
 class Channel(enum.Enum):
@@ -48,23 +48,6 @@ class App(BaseModel):
             return True
 
     # biz
-    @dbs.transactional
-    def create_project_customers(self, data):
-        pc = ProjectCustomers(parties=self.create_or_update_customers(data['parties']))
-        dbs.session.add(pc)
-
-        return pc
-
-    @dbs.transactional
-    def create_project_staffs(self, data):
-        leader = self.create_or_update_staff(data['leader'])
-        assistants = self.create_or_update_staffs(data['assistants'])
-        participants = self.create_or_update_staffs(data['participants'])
-        ps = ProjectStaffs(leader=leader, assistants=assistants, participants=participants)
-        dbs.session.add(ps)
-
-        return ps
-
     @dbs.transactional
     def create_or_update_customer(self, data):
         uid = data['uid']
@@ -203,32 +186,6 @@ class Project(BaseModel, app_resource('projects')):
     # 业务id
     biz_id = db.Column(db.String(32), nullable=False)
 
-    # 相关客户
-    customers_id = db.Column(db.BigInteger, db.ForeignKey('project_customers.id'), nullable=False)
-    customers = db.relationship('ProjectCustomers', backref=db.backref('project', uselist=False))
-
-    # 相关客服
-    staffs_id = db.Column(db.BigInteger, db.ForeignKey('project_staffs.id'), nullable=False)
-    staffs = db.relationship('ProjectStaffs', backref=db.backref('project', uselist=False))
-
-    # 项目信息
-    # # 元数据
-    # FIXME
-    meta_data_id = db.Column(db.BigInteger, db.ForeignKey('project_meta_data.id'), nullable=True)
-    meta_data = db.relationship('ProjectMetaData', backref=db.backref('project', uselist=False))
-
-    # # 扩展数据
-    # FIXME
-    ext_data_id = db.Column(db.BigInteger, db.ForeignKey('project_ext_data.id'), nullable=True)
-    ext_data = db.relationship('ProjectExtData', backref=db.backref('project', uselist=False))
-
-    # xchat
-    xchat = db.relationship('ProjectXChat', uselist=False)
-
-    # 项目会话
-    sessions = db.relationship('Session', lazy='dynamic')
-    messages = db.relationship('Message', lazy='dynamic')
-
     # 每个项目类型的业务id唯一
     __table_args__ = (db.UniqueConstraint('type_id', 'biz_id', name='uniq_type_biz'),)
 
@@ -243,17 +200,45 @@ class Project(BaseModel, app_resource('projects')):
     def __repr__(self):
         return "<Project: {}>".format(self.app_biz_id)
 
+    # biz
+    @dbs.transactional
+    def create_customers(self, data):
+        pc = ProjectCustomers(project=self, parties=self.app.create_or_update_customers(data['parties']))
+        dbs.session.add(pc)
 
-class ProjectXChat(BaseModel):
+        return pc
+
+    @dbs.transactional
+    def create_staffs(self, data):
+        leader = self.app.create_or_update_staff(data['leader'])
+        assistants = self.app.create_or_update_staffs(data['assistants'])
+        participants = self.app.create_or_update_staffs(data['participants'])
+        ps = ProjectStaffs(project=self, leader=leader, assistants=assistants, participants=participants)
+        dbs.session.add(ps)
+
+        return ps
+
+    @dbs.transactional
+    def create_xchat(self, chat_id):
+        xchat = ProjectXChat(project=self, chat_id=chat_id)
+        dbs.session.add(xchat)
+
+        return xchat
+
+
+class ProjectXChat(BaseModel, project_resource('xchat')):
     __tablename__ = 'project_xchat'
-
-    project_id = db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False)
-    project = db.relationship('Project', lazy='joined')
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
 
     def __repr__(self):
         return "<ProjectXChat: {}<->{}>".format(self.project.app_biz_id, self.chat_id)
+
+    @dbs.transactional
+    def update(self, chat_id):
+        self.chat_id = chat_id
+
+        dbs.session.add(self)
 
 
 # many to many helpers
@@ -274,7 +259,7 @@ project_staff_participants = db.Table('project_staff_participants',
                                       )
 
 
-class ProjectCustomers(BaseModel):
+class ProjectCustomers(BaseModel, project_resource('customers')):
     """项目相关客户"""
     __tablename__ = 'project_customers'
 
@@ -282,13 +267,14 @@ class ProjectCustomers(BaseModel):
     parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined')
 
     @dbs.transactional
-    def update_members(self, app, data):
+    def update(self, data):
+        app = self.project.app
         self.parties = app.create_or_update_customers(data['parties'])
 
         dbs.session.add(self)
 
 
-class ProjectStaffs(BaseModel):
+class ProjectStaffs(BaseModel, project_resource('staffs')):
     """项目相关客服"""
     __tablename__ = 'project_staffs'
 
@@ -301,7 +287,8 @@ class ProjectStaffs(BaseModel):
     participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined')
 
     @dbs.transactional
-    def update_members(self, app, data):
+    def update(self, data):
+        app = self.project.app
         self.leader = app.create_or_update_staff(data['leader'])
         self.assistants = app.create_or_update_staffs(data['assistants'])
         self.participants = app.create_or_update_staffs(data['participants'])
@@ -309,7 +296,7 @@ class ProjectStaffs(BaseModel):
         dbs.session.add(self)
 
 
-class ProjectMetaData(BaseModel):
+class ProjectMetaData(BaseModel, project_resource('meta_data')):
     """项目元数据"""
     __tablename__ = 'project_meta_data'
 
@@ -317,7 +304,7 @@ class ProjectMetaData(BaseModel):
     pass
 
 
-class ProjectExtData(BaseModel):
+class ProjectExtData(BaseModel, project_resource('ext_data')):
     """项目扩展数据"""
     __tablename__ = 'project_ext_data'
 
@@ -325,12 +312,9 @@ class ProjectExtData(BaseModel):
     pass
 
 
-class Session(BaseModel):
+class Session(BaseModel, project_resource('sessions', uselist=True)):
     """表示一个客服项目的一次会话"""
     __tablename__ = 'session'
-
-    project_id = db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False)
-    project = db.relationship('Project', lazy='joined')
 
     opened_time = db.Column(db.DateTime, default=db.func.current_timestamp())
     closed = db.Column(db.Boolean, default=False)
@@ -339,17 +323,9 @@ class Session(BaseModel):
     # 接待者
     handler = db.Column(db.String(32), nullable=False)
 
-    messages = db.relationship('Message', lazy='dynamic')
 
-
-class Message(BaseModel):
+class Message(BaseModel, project_resource('messages', uselist=True), session_resource('messages', uselist=True)):
     __tablename__ = 'message'
-
-    project_id = db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False)
-    project = db.relationship('Project')
-
-    session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), index=True, nullable=False)
-    session = db.relationship('Session')
 
     channel = db.Column(db.Enum(Channel), default=Channel.cs)
     is_staff = db.Column(db.Boolean)

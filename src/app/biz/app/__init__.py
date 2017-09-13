@@ -14,20 +14,17 @@ def create_project(app_id, data):
     biz_id = data['biz_id']
     project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()
     if project is None:
-        project = Project(app=app, domain_id=project_type.domain_id, type_id=project_type.id, biz_id=biz_id,
-                          customers=app.create_project_customers(data['customers']),
-                          staffs=app.create_project_staffs(data['staffs'])
-                          )
-
+        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id)
+        project.create_customers(data['customers'])
+        project.create_staffs(data['staffs'])
+        chat_id = xchat_biz.create_chat(project)
+        project.create_xchat(chat_id)
     else:
-        project.customers.update_members(app, data['customers'])
-        project.staffs.update_members(app, data['staffs'])
+        project.customers.update(data['customers'])
+        project.staffs.update(data['staffs'])
+        chat_id = xchat_biz.create_chat(project)
+        project.xchat.update(chat_id)
 
     dbs.session.add(project)
-    if project.id is None:
-        dbs.session.flush()
-
-    # create xchat chat
-    xchat_biz.create_project_chat(project)
 
     return project

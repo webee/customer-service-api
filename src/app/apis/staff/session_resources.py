@@ -4,7 +4,7 @@ from .api import api
 from . import serializers as ser
 from ..serializers import resource_id
 from app.biz import app as biz
-from ..jwt import current_app_client, require_app
+from ..jwt import current_application, require_app
 
 
 @api.route('/sessions')
@@ -15,7 +15,7 @@ class SessionCollection(Resource):
     @api.marshal_with(resource_id)
     def post(self):
         """创建项目"""
-        app = current_app_client
+        app = current_application
         data = request.get_json()
         project = biz.create_project(app.id, data)
         return project, 201

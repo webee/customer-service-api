@@ -5,7 +5,7 @@ from .serializers import raw_project, raw_project_customers, raw_project_staffs
 from . import serializers as ser
 from ..serializers import resource_id
 from app.biz import app as biz
-from ..jwt import current_app_client, require_app
+from ..jwt import current_application, require_app
 
 
 @api.route('/projects')
@@ -16,7 +16,7 @@ class ProjectCollection(Resource):
     @api.marshal_with(resource_id)
     def post(self):
         """创建项目"""
-        app = current_app_client
+        app = current_application
         data = request.get_json()
         project = biz.create_project(app.id, data)
         return project, 201
@@ -30,7 +30,7 @@ class ProjectItem(Resource):
     @api.response(404, 'project not found')
     def get(self, id):
         """获取项目"""
-        app = current_app_client
+        app = current_application
         return app.projects.filter_by(id=id).one()
 
 
@@ -41,7 +41,7 @@ class ProjectCustomers(Resource):
     @api.response(204, 'successfully added')
     def post(self, id):
         """添加项目客户"""
-        app = current_app_client
+        app = current_application
         project = app.projects.filter_by(id=id).one()
         data = request.get_json()
         # TODO
@@ -52,7 +52,7 @@ class ProjectCustomers(Resource):
     @api.response(204, 'successfully deleted')
     def delete(self, id):
         """删除项目客户"""
-        app = current_app_client
+        app = current_application
         project = app.projects.filter_by(id=id).one()
         data = request.get_json()
         # TODO
@@ -63,7 +63,7 @@ class ProjectCustomers(Resource):
     @api.response(204, 'successfully replaced')
     def put(self, id):
         """替换项目客户"""
-        app = current_app_client
+        app = current_application
         project = app.projects.filter_by(id=id).one()
         data = request.get_json()
         # TODO
@@ -77,7 +77,7 @@ class ProjectStaffs(Resource):
     @api.response(204, 'successfully replaced')
     def put(self, id):
         """替换项目客服"""
-        app = current_app_client
+        app = current_application
         project = app.projects.filter_by(id=id).one()
         data = request.get_json()
         # TODO
@@ -88,7 +88,7 @@ class ProjectStaffs(Resource):
     @api.response(204, 'successfully updated')
     def patch(self, id):
         """更新项目客服"""
-        app = current_app_client
+        app = current_application
         project = app.projects.filter_by(id=id).one()
         data = request.get_json()
         # TODO

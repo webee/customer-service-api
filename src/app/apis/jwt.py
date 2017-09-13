@@ -55,6 +55,6 @@ require_customer = jwt.auth_required('customer')
 require_staff = jwt.auth_required('staff')
 
 
-current_app_client: App = jwt.current_identity
+current_application: App = jwt.current_identity
 current_customer: Customer = jwt.current_identity
 current_staff: Staff = jwt.current_identity
