@@ -1,6 +1,7 @@
 
 class Config:
-    USER_KEY = ''
+    NS = ''
+    KEY = ''
 
     ROOT_URL = "https://xchat.qinqinxiaobao.com"
 

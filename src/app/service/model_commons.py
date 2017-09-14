@@ -30,6 +30,22 @@ def app_resource(name):
     return AppResource
 
 
+def app_user(user_type, resource_name):
+    class AppUser(app_resource(resource_name)):
+        __tablename__ = user_type
+
+        uid = db.Column(db.String(32), nullable=False, unique=True)
+        name = db.Column(db.String(16), nullable=False)
+
+        __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_%s' % user_type),)
+
+        @property
+        def app_uid(self):
+            return '%s:%s:%s' % (self.app.name, user_type, self.uid)
+
+    return AppUser
+
+
 def project_resource(name, uselist=False):
     class ProjectResource(object):
         """属于project的资源"""

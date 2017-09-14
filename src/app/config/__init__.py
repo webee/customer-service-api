@@ -30,6 +30,7 @@ class App:
 
 
 class XChatClient:
-    USER_KEY = 'demo app user key.'
+    NS = 'cs'
+    KEY = 'demo app cs key.'
 
     ROOT_URL = "http://local.xchat.com"

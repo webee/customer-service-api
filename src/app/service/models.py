@@ -1,11 +1,19 @@
 import enum
 from app import db, dbs, bcrypt
-from .model_commons import BaseModel, app_resource, project_resource, session_resource
+from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
+from . import constant
 
 
-class Channel(enum.Enum):
-    """消息通道"""
-    # cs, 由客服系统产生
+class UserType(enum.Enum):
+    """用户类型"""
+    customer = 'customer'
+    staff = 'staff'
+    app = 'app'
+
+
+class MessageChannel(enum.Enum):
+    """消息通道, 表示消息的来源"""
+    # 客服系统
     cs = 'cs'
     # xchat
     xchat = 'xchat'
@@ -81,38 +89,14 @@ class App(BaseModel):
         return [self.create_or_update_staff(staff) for staff in staffs_data]
 
 
-class Customer(BaseModel, app_resource('customers')):
+class Customer(BaseModel, app_user(UserType.customer.value, 'customers')):
     """客户"""
-    __tablename__ = 'customer'
-
-    uid = db.Column(db.String(32), nullable=False, unique=True)
-    name = db.Column(db.String(16), nullable=False)
-
-    # 每个app下面customer唯一
-    __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_customer'),)
-
-    @property
-    def ns_app_uid(self):
-        return '%s:%s.%s' % ('cust', self.app.name, self.uid)
-
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
 
 
-class Staff(BaseModel, app_resource('staffs')):
+class Staff(BaseModel, app_user(UserType.staff.value, 'staffs')):
     """客服"""
-    __tablename__ = 'staff'
-
-    uid = db.Column(db.String(32), nullable=False, unique=True)
-    name = db.Column(db.String(16), nullable=False)
-
-    # 每个app下面staff唯一
-    __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_staff'),)
-
-    @property
-    def ns_app_uid(self):
-        return '%s:%s.%s' % ('staff', self.app.name, self.uid)
-
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
 
@@ -196,6 +180,10 @@ class Project(BaseModel, app_resource('projects')):
     @property
     def app_biz_id(self):
         return '%s:%s' % (self.type.app_biz_id, self.biz_id)
+
+    @property
+    def xchat_biz_id(self):
+        return '%s:%s' % (constant.XCHAT_DOMAIN, self.app_biz_id)
 
     def __repr__(self):
         return "<Project: {}>".format(self.app_biz_id)
@@ -327,17 +315,34 @@ class Session(BaseModel, project_resource('sessions', uselist=True)):
 class Message(BaseModel, project_resource('messages', uselist=True), session_resource('messages', uselist=True)):
     __tablename__ = 'message'
 
-    channel = db.Column(db.Enum(Channel), default=Channel.cs)
-    is_staff = db.Column(db.Boolean)
-    uid = db.Column(db.String(32))
-    ts = db.Column(db.DateTime, default=db.func.current_timestamp())
+    # 消息通道
+    channel = db.Column(db.Enum(MessageChannel), default=MessageChannel.cs, nullable=False)
 
-    # cs域的消息不会发送到外部通道
-    domain = db.Column(db.String(32), nullable=True)
+    # 来自xchat的消息相关
+    xchat_id = db.Column(db.BigInteger, nullable=True)
+    xchat_uid = db.Column(db.String(100), nullable=True)
 
-    # cs:text, cs:img, cs:file, cs:voice, xx:yy
+    # 发送者
+    user_type = db.Column(db.Enum(UserType), nullable=False)
+    customer_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=True)
+    customer = db.relationship('Customer', lazy='joined')
+    staff_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=True)
+    staff = db.relationship('Staff', lazy='joined')
+
+    @property
+    def user(self):
+        if self.user_type == UserType.customer:
+            return self.customer
+        elif self.user_type == UserType.staff:
+            return self.staff
+
+    # 消息域和类型
+    # cs: text, file, img, voice
+    # qqxb: payment, result
+    domain = db.Column(db.String(16), nullable=False, default='cs')
     type = db.Column(db.String(24))
     content = db.Column(db.Text)
+    ts = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def __repr__(self):
         return "<Message: {}>".format(self.id)

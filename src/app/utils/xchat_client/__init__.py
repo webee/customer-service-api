@@ -58,12 +58,12 @@ class XChatClient(object):
         logger.info('new token')
         exp = datetime.utcnow() + timedelta(days=30)
         payload = dict(
-            ns='',
+            ns=self.config.NS,
             is_admin=True,
             exp=exp
         )
 
-        return jwt.encode(payload, self.config.USER_KEY).decode('utf-8'), exp
+        return jwt.encode(payload, self.config.KEY).decode('utf-8'), exp
 
     def _is_current_token_valid(self):
         return self._token and self._token_exp > datetime.utcnow() + timedelta(minutes=30)
