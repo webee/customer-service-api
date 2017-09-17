@@ -57,25 +57,17 @@ class App(BaseModel):
 
     # biz
     @dbs.transactional
-    def create_or_update_customer(self, data):
-        uid = data['uid']
-        name = data['name']
+    def create_customer(self, uid, name):
         customer = self.customers.filter_by(uid=uid).one_or_none()
         if customer is None:
             customer = Customer(app=self, uid=uid)
         customer.name = name
-        dbs.session.add(customer)
+        db.session.add(customer)
 
         return customer
 
     @dbs.transactional
-    def create_or_update_customers(self, customers_data):
-        return [self.create_or_update_customer(customer) for customer in customers_data]
-
-    @dbs.transactional
-    def create_or_update_staff(self, data):
-        uid = data['uid']
-        name = data['name']
+    def create_staff(self, uid, name):
         staff = self.staffs.filter_by(uid=uid).one_or_none()
         if staff is None:
             staff = Staff(app=self, uid=uid)
@@ -84,9 +76,29 @@ class App(BaseModel):
 
         return staff
 
+    def create_or_update_customer(self, data):
+        uid = data['uid']
+        name = data['name']
+        return self.create_customer(uid, name)
+
+    @dbs.transactional
+    def create_or_update_customers(self, customers_data):
+        return [self.create_or_update_customer(customer) for customer in customers_data]
+
+    def create_or_update_staff(self, data):
+        uid = data['uid']
+        name = data['name']
+        return self.create_staff(uid, name)
+
     @dbs.transactional
     def create_or_update_staffs(self, staffs_data):
         return [self.create_or_update_staff(staff) for staff in staffs_data]
+
+    @dbs.transactional
+    def create_project_domain(self, name, desc):
+        project_domain = ProjectDomain(app=self, name=name, desc=desc)
+        db.session.add(project_domain)
+        return project_domain
 
 
 class Customer(BaseModel, app_user(UserType.customer.value, 'customers')):
@@ -105,9 +117,6 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
     """项目域"""
     __tablename__ = 'project_domain'
 
-    app_id = db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
-    app = db.relationship('App', lazy='joined', backref=db.backref('project_domains', lazy='dynamic'))
-
     # eg: 个人，员工，企业
     name = db.Column(db.String(32), nullable=False, index=True)
     desc = db.Column(db.String(64), nullable=False)
@@ -124,6 +133,12 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
 
     def __repr__(self):
         return "<ProjectDomain: {}>".format(self.name)
+
+    @dbs.transactional
+    def create_project_type(self, name, desc):
+        project_type = ProjectType(app=self.app, domain=self, name=name, desc=desc)
+        db.session.add(project_type)
+        return project_type
 
 
 class ProjectType(BaseModel, app_resource('project_types')):
@@ -173,9 +188,11 @@ class Project(BaseModel, app_resource('projects')):
     # 每个项目类型的业务id唯一
     __table_args__ = (db.UniqueConstraint('type_id', 'biz_id', name='uniq_type_biz'),)
 
-    @property
-    def current_session(self):
-        return self.sessions.filter_by(closed=True).one_or_none()
+    # 会话
+    current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
+    current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
+    # 消息id
+    msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
     @property
     def app_biz_id(self):
@@ -213,8 +230,35 @@ class Project(BaseModel, app_resource('projects')):
 
         return xchat
 
+    @dbs.transactional
+    def new_session(self):
+        if self.current_session is None:
+            self.current_session = Session(project=self, handler=self.staffs.leader)
+            dbs.session.add(self)
 
-class ProjectXChat(BaseModel, project_resource('xchat')):
+        return self.current_session
+
+    @dbs.transactional
+    def next_msg_id(self):
+        if self.current_session is None:
+            self.new_session()
+
+        self.msg_id = Project.msg_id + 1
+        dbs.session.add(self)
+        dbs.session.flush()
+
+        self.current_session.msg_id = self.msg_id
+        dbs.session.add(self.current_session)
+
+        return self.msg_id
+
+    @dbs.transactional
+    def close_current_session(self):
+        if self.current_session:
+            self.current_session.close()
+
+
+class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
@@ -300,19 +344,32 @@ class ProjectExtData(BaseModel, project_resource('ext_data')):
     pass
 
 
-class Session(BaseModel, project_resource('sessions', uselist=True)):
+class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     """表示一个客服项目的一次会话"""
     __tablename__ = 'session'
 
-    opened_time = db.Column(db.DateTime, default=db.func.current_timestamp())
-    closed = db.Column(db.Boolean, default=False)
-    closed_time = db.Column(db.DateTime, nullable=True)
+    # 是否接待中
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # 关闭时间
+    closed = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
 
     # 接待者
-    handler = db.Column(db.String(32), nullable=False)
+    handler_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
+    handler = db.relationship('Staff', lazy='joined')
+    # 消息id, 0表示未指向任何消息
+    msg_id = db.Column(db.BigInteger, nullable=False, default=0)
+
+    @dbs.transactional
+    def close(self):
+        self.is_active = False
+        self.closed = db.func.current_timestamp()
+        dbs.session.add(self)
+
+        self.project.current_session_id = None
+        dbs.session.add(self.project)
 
 
-class Message(BaseModel, project_resource('messages', uselist=True), session_resource('messages', uselist=True)):
+class Message(BaseModel, project_resource('messages', backref_uselist=True), session_resource('messages', backref_uselist=True)):
     __tablename__ = 'message'
 
     # 消息通道
@@ -320,7 +377,6 @@ class Message(BaseModel, project_resource('messages', uselist=True), session_res
 
     # 来自xchat的消息相关
     xchat_id = db.Column(db.BigInteger, nullable=True)
-    xchat_uid = db.Column(db.String(100), nullable=True)
 
     # 发送者
     user_type = db.Column(db.Enum(UserType), nullable=False)
@@ -336,13 +392,15 @@ class Message(BaseModel, project_resource('messages', uselist=True), session_res
         elif self.user_type == UserType.staff:
             return self.staff
 
+    # 消息id
+    msg_id = db.Column(db.BigInteger, nullable=False, index=True)
     # 消息域和类型
     # cs: text, file, img, voice
     # qqxb: payment, result
     domain = db.Column(db.String(16), nullable=False, default='cs')
-    type = db.Column(db.String(24))
+    type = db.Column(db.String(24), nullable=False)
     content = db.Column(db.Text)
-    ts = db.Column(db.DateTime, default=db.func.current_timestamp())
+    ts = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp())
 
     def __repr__(self):
-        return "<Message: {}>".format(self.id)
+        return "<Message: {0}: {1}, {2}, {3}>".format(self.channel.value, self.msg_id, self.domain, self.type)

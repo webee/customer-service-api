@@ -1,13 +1,11 @@
 from app import dbs
-from app.service.models import App
 from app.service.models import ProjectDomain, ProjectType
 from app.service.models import Project
 from app.biz import xchat as xchat_biz
 
 
 @dbs.transactional
-def create_project(app_id, data):
-    app = App.t_query.get(app_id)
+def create_project(app, data):
     project_type = app.project_types.filter(ProjectType.name == data['type'],
                                             ProjectDomain.name == data['domain']).one()
 

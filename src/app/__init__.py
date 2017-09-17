@@ -10,6 +10,7 @@ from .apis.utils.jwt import JWT
 from app.utils import dbs
 from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
+from .task.xchat import XChatMsgsConsumer
 
 # extensions
 jwt = JWT()
@@ -19,6 +20,7 @@ bcrypt = Bcrypt()
 cors = CORS()
 
 xchat_client = XChatClient()
+xchat_msgs_consumer = XChatMsgsConsumer()
 
 
 def create_app(env='dev'):
@@ -34,11 +36,13 @@ def create_app(env='dev'):
 
 
 def init_config(app, env):
+    from logging.config import dictConfig
     from . import config
 
     os.environ['ENV'] = env
     pmc_config.register_config(config, env=env)
 
+    dictConfig(config.LOGGING)
     app.config.from_object(config.App)
 
 
@@ -58,7 +62,7 @@ def init_extensions(app):
     from .service import models
 
     db.init_app(app)
-    dbs.init_app(app)
+    dbs.init_app(app, db)
     migrate.init_app(app, db)
 
     # bcrypt
@@ -70,6 +74,9 @@ def init_extensions(app):
     # xchat client
     from . import config
     xchat_client.init_config(config.XChatClient)
+
+    # xchat msgs consumer
+    xchat_msgs_consumer.init_app(app, config.XChatKafka)
 
 
 def init_errors(app):

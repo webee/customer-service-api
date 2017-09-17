@@ -18,7 +18,7 @@ class ProjectCollection(Resource):
         """创建项目"""
         app = current_application
         data = request.get_json()
-        project = biz.create_project(app.id, data)
+        project = biz.create_project(app, data)
         return project, 201
 
 

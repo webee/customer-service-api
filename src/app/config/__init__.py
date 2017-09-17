@@ -34,3 +34,35 @@ class XChatClient:
     KEY = 'demo app cs key.'
 
     ROOT_URL = "http://local.xchat.com"
+
+
+class XChatKafka:
+    BOOTSTRAP_SERVERS = ['localhost:9092', 'localhost:9093', 'localhost:9094']
+
+    CS_MSGS_TOPIC = 'xchat_cs_msgs'
+    CONSUMER_GROUP = 'xchat_cs_msgs'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True
+        },
+    },
+}

@@ -1,2 +1,5 @@
+XCHAT_NS = 'cs'
 XCHAT_MSG_TOPIC = 'xchat_cs_msgs'
 XCHAT_CHAT_TAG = 'cs'
+CHAT_MSG_KIND = 'chat'
+CHAT_NOTIFY_MSG_KIND = 'chat_notify'
