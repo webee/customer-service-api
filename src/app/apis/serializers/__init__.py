@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from flask_restplus import fields
-from . import api
+from .. import api
 
 
 def raw_field(f):

@@ -1,10 +1,10 @@
-from app import db
+from app import db, dbs
 from .models import App
 
 
-def create_app(name, password, desc):
-    app = App(name=name, password=password, desc=desc)
+@dbs.transactional
+def create_app(name, password, title, desc):
+    app = App(name=name, password=password, title=title, desc=desc)
     db.session.add(app)
-    db.session.commit()
 
     return app

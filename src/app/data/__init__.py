@@ -13,7 +13,7 @@ def init_data():
 
 
 def init_test_data():
-    app = create_app('test', 'test1234', '测试应用')
+    app = create_app('test', 'test1234', '测试应用', '测试应用客服')
 
     # customer
     app.create_customer('test_001', '测试客户#1')
@@ -28,25 +28,25 @@ def init_test_data():
     app.create_staff('test_05', '测试客服#5')
 
     # domain/type
-    project_domain = app.create_project_domain('test', '测试')
-    project_domain.create_project_type('test', '测试')
+    project_domain = app.create_project_domain('test', '测试', '测试域')
+    project_domain.create_project_type('test', '测试', '测试类型')
 
     # projects
     app_biz.create_project(app, sample_data.test_project_data)
 
 
 def init_prod_data():
-    app = create_app('qqxb', 'qqxb1234', '亲亲小保')
-    project_domain = app.create_project_domain('personal', '个人')
-    project_domain.create_project_type('consultation', '咨询')
-    project_domain.create_project_type('biz_order', '专项业务订单')
+    app = create_app('qqxb', 'qqxb1234', '亲亲小保', '亲亲小保客服')
+    project_domain = app.create_project_domain('personal', '个人', '个人域')
+    project_domain.create_project_type('consultation', '咨询', '咨询类型')
+    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
 
-    project_domain = app.create_project_domain('employee', '员工')
-    project_domain.create_project_type('consultation', '咨询')
-    project_domain.create_project_type('biz_order', '专项业务订单')
+    project_domain = app.create_project_domain('employee', '员工', '员工域')
+    project_domain.create_project_type('consultation', '咨询', '咨询类型')
+    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
 
-    project_domain = app.create_project_domain('enterprise', '企业')
-    project_domain.create_project_type('consultation', '咨询')
-    project_domain.create_project_type('biz_order', '专项业务订单')
-    project_domain.create_project_type('work_order', '工单')
+    project_domain = app.create_project_domain('enterprise', '企业', '企业域')
+    project_domain.create_project_type('consultation', '咨询', '咨询类型')
+    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
+    project_domain.create_project_type('work_order', '工单', '工单类型')
 

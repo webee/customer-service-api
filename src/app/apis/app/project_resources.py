@@ -1,18 +1,19 @@
 from flask import request
 from flask_restplus import Resource
 from .api import api
-from .serializers import raw_project, raw_project_customers, raw_project_staffs
-from . import serializers as ser
-from ..serializers import resource_id
 from app.biz import app as biz
 from ..jwt import current_application, require_app
+from ..serializers import resource_id
+from ..serializers.project import project, new_project
+from ..serializers.project_customers import raw_project_customers
+from ..serializers.project_staffs import raw_project_staffs
 
 
 @api.route('/projects')
 class ProjectCollection(Resource):
     """项目相关"""
     @require_app
-    @api.expect(ser.raw_project)
+    @api.expect(new_project)
     @api.marshal_with(resource_id)
     def post(self):
         """创建项目"""
@@ -26,7 +27,7 @@ class ProjectCollection(Resource):
 class ProjectItem(Resource):
     """项目相关"""
     @require_app
-    @api.marshal_with(ser.project)
+    @api.marshal_with(project)
     @api.response(404, 'project not found')
     def get(self, id):
         """获取项目"""

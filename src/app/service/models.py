@@ -29,11 +29,13 @@ class App(BaseModel):
 
     name = db.Column(db.String(32), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
+    title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
 
-    def __init__(self, name, password, desc):
+    def __init__(self, name, password, title, desc):
         self.name = name
         self.password = bcrypt.generate_password_hash(password).decode()
+        self.title = title
         self.desc = desc
 
     def __repr__(self):
@@ -95,8 +97,8 @@ class App(BaseModel):
         return [self.create_or_update_staff(staff) for staff in staffs_data]
 
     @dbs.transactional
-    def create_project_domain(self, name, desc):
-        project_domain = ProjectDomain(app=self, name=name, desc=desc)
+    def create_project_domain(self, name, title, desc):
+        project_domain = ProjectDomain(app=self, name=name, title=title, desc=desc)
         db.session.add(project_domain)
         return project_domain
 
@@ -117,15 +119,13 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
     """项目域"""
     __tablename__ = 'project_domain'
 
-    # eg: 个人，员工，企业
     name = db.Column(db.String(32), nullable=False, index=True)
+    # eg: 个人，员工，企业
+    title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
 
     # 每个app下面域唯一
     __table_args__ = (db.UniqueConstraint('app_id', 'name', name='uniq_app_domain'),)
-
-    def to_dict(self):
-        return dict(name=self.name, desc=self.desc, types=[t.to_dict() for t in self.types])
 
     @property
     def app_biz_id(self):
@@ -135,8 +135,8 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
         return "<ProjectDomain: {}>".format(self.name)
 
     @dbs.transactional
-    def create_project_type(self, name, desc):
-        project_type = ProjectType(app=self.app, domain=self, name=name, desc=desc)
+    def create_project_type(self, name, title, desc):
+        project_type = ProjectType(app=self.app, domain=self, name=name, title=title, desc=desc)
         db.session.add(project_type)
         return project_type
 
@@ -148,15 +148,13 @@ class ProjectType(BaseModel, app_resource('project_types')):
     domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
     domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('types', lazy='subquery'))
 
-    # eg: 咨询，专业业务订单，工单
     name = db.Column(db.String(32), nullable=False, index=True)
+    # eg: 咨询，专业业务订单，工单
+    title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
 
     # 每个域下面类型唯一
     __table_args__ = (db.UniqueConstraint('domain_id', 'name', name='uniq_domain_type'),)
-
-    def to_dict(self):
-        return dict(name=self.name, desc=self.desc)
 
     @property
     def app_biz_id(self):

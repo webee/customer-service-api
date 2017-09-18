@@ -8,12 +8,12 @@ from ..jwt import current_staff, require_staff
 
 
 @api.route('/project_types')
-class ProjectTypeCollection(Resource):
-    """项目类型集合"""
+class ProjectDomainCollection(Resource):
+    """项目域集合"""
     @require_staff
     @api.marshal_with(resource_id)
     def get(self):
-        """获取所有项目类型"""
+        """获取所有项目域"""
         staff = current_staff
         app = staff.app
 
@@ -23,7 +23,7 @@ class ProjectTypeCollection(Resource):
 
 
 @api.route('/project_types')
-class ProjectTypeItem(Resource):
+class ProjectDomainItem(Resource):
     """项目类型集合"""
     @require_staff
     @api.marshal_with(resource_id)
