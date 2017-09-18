@@ -2,8 +2,7 @@ from flask import request
 from flask_restplus import Resource
 from app.service.test_models import Bucket
 from .api import api
-from ..parsers import pagination_arguments
-from ..serializers import resource_id
+from app.apis.parsers import pagination_arguments
 from .serializers import page_of_buckets, raw_bucket, bucket
 from app.biz import bucket as biz
 

@@ -2,9 +2,9 @@ from flask import request
 from flask_restplus import Resource, abort
 from app.service.models import App
 from app import jwt
-from ..jwt import current_application, require_app
-from ..jwt import current_customer, require_customer
-from ..jwt import current_staff, require_staff
+from app.apis.jwt import current_application, require_app
+from app.apis.jwt import current_customer, require_customer
+from app.apis.jwt import current_staff, require_staff
 from .api import api
 from . import serializers as ser
 from .serializers import app_auth_data, customer_auth_data, staff_auth_data, app_change_password_data

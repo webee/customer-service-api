@@ -1,5 +1,6 @@
 from flask_restplus import fields
-from .. import api
+from app.apis import api
+from app.apis.serializers import raw_model, raw_field, raw_specs
 
 
 app_auth_data = api.model('App auth data', {

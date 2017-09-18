@@ -2,11 +2,11 @@ from flask import request
 from flask_restplus import Resource
 from .api import api
 from app.biz import app as biz
-from ..jwt import current_application, require_app
-from ..serializers import resource_id
-from ..serializers.project import project, new_project
-from ..serializers.project_customers import raw_project_customers
-from ..serializers.project_staffs import raw_project_staffs
+from app.apis.jwt import current_application, require_app
+from app.apis.serializers import resource_id
+from app.apis.serializers.project import project, new_project
+from app.apis.serializers.project_customers import raw_project_customers
+from app.apis.serializers.project_staffs import raw_project_staffs
 
 
 @api.route('/projects')

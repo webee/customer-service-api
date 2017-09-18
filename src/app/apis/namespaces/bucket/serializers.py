@@ -1,6 +1,6 @@
 from flask_restplus import fields
-from .. import api
-from ..serializers import pagination, base_resource
+from app.apis import api
+from app.apis.serializers import pagination, base_resource
 
 _raw_bucket_specs = {
     'name': fields.String(required=True, min_length=1, description='bucket name')

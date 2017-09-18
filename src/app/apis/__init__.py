@@ -20,13 +20,13 @@ def init_api():
     from . import jwt
 
     # add namespaces
-    from .bucket.api import api as bucket_api
+    from .namespaces.bucket.api import api as bucket_api
     api.add_namespace(bucket_api, path='/buckets')
 
-    from .auth.api import api as auth_api
+    from .namespaces.auth.api import api as auth_api
     api.add_namespace(auth_api, path='/auth')
 
-    from .app.api import api as app_api
+    from .namespaces.app.api import api as app_api
     api.add_namespace(app_api, path='/app')
 
     # from .staff.api import api as staff_api
