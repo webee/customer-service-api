@@ -31,8 +31,11 @@ def new_xchat_msg(xchat_msg: ds.XChatMessage):
         return
 
     proj = proj_xchat.project
-    app = proj.app
+    if proj.messages.filter_by(xchat_id=xchat_msg.id).count() > 0:
+        # 忽略已经添加过的
+        return
 
+    app = proj.app
     app_name, user_type, uid = xchat_msg.app_user_id
     assert app.name == app_name, 'app_user_id and app_name are mismatched'
 
@@ -50,7 +53,7 @@ def new_xchat_msg(xchat_msg: ds.XChatMessage):
     message_data: ds.MessageData = xchat_msg.message_data
     message = Message(channel=MessageChannel.xchat,
                       project=proj, session=session, msg_id=msg_id,
-                      xchat_id=id,
+                      xchat_id=xchat_msg.id,
                       user_type=user_type, customer=customer, staff=staff,
                       domain=message_data.domain, type=message_data.type, content=message_data.type,
                       ts=xchat_msg.ts)

@@ -376,7 +376,7 @@ class Message(BaseModel, project_resource('messages', backref_uselist=True), ses
     channel = db.Column(db.Enum(MessageChannel), default=MessageChannel.cs, nullable=False)
 
     # 来自xchat的消息相关
-    xchat_id = db.Column(db.BigInteger, nullable=True)
+    xchat_id = db.Column(db.BigInteger, nullable=True, index=True)
 
     # 发送者
     user_type = db.Column(db.Enum(UserType), nullable=False)

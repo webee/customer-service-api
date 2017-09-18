@@ -41,6 +41,7 @@ class XChatKafka:
 
     CS_MSGS_TOPIC = 'xchat_cs_msgs'
     CONSUMER_GROUP = 'xchat_cs_msgs'
+    AUTO_OFFSET_RESET = os.environ.get('KAFKA_AUTO_OFFSET_RESET', 'latest')
 
 
 LOGGING = {
