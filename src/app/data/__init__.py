@@ -16,11 +16,13 @@ def init_test_data():
     app = create_app('test', 'test1234', '测试应用', '测试应用客服')
 
     # customer
+    app.create_customer('test', '测试客户')
     app.create_customer('test_001', '测试客户#1')
     app.create_customer('test_002', '测试客户#2')
     app.create_customer('test_003', '测试客户#3')
 
     # staff
+    app.create_staff('test', '测试客服')
     app.create_staff('test_01', '测试客服#1')
     app.create_staff('test_02', '测试客服#2')
     app.create_staff('test_03', '测试客服#3')

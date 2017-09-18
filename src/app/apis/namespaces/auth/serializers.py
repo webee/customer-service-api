@@ -9,11 +9,11 @@ app_auth_data = api.model('App auth data', {
 })
 
 customer_auth_data = api.inherit('Customer auth data', app_auth_data, {
-    'uid': fields.String(required=True, min_length=1, description='customer uid')
+    'uid': fields.String(required=True, min_length=1, example='test', description='customer uid')
 })
 
 staff_auth_data = api.inherit('Staff auth data', app_auth_data, {
-    'uid': fields.String(required=True, min_length=1, description='staff uid')
+    'uid': fields.String(required=True, min_length=1, example='test', description='staff uid')
 })
 
 app_change_password_data = api.inherit('App change password data', app_auth_data, {

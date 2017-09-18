@@ -29,8 +29,8 @@ def init_api():
     from .namespaces.app.api import api as app_api
     api.add_namespace(app_api, path='/app')
 
-    # from .staff.api import api as staff_api
-    # api.add_namespace(staff_api, path='/staff')
+    from .namespaces.staff.api import api as staff_api
+    api.add_namespace(staff_api, path='/staff')
 
     # error handlers
     from app.errors import BizError, biz_error_handler

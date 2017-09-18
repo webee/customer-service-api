@@ -1,2 +1,1 @@
-from . import project_resources
-from . import session_resources
+from . import project_domain_type_resources
