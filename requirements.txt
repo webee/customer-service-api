@@ -11,6 +11,7 @@ flask-restplus
 markdown
 Flask-Bcrypt
 Flask-Cors
+kafka-python
 
 # etc
 arrow
