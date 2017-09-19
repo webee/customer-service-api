@@ -5,22 +5,24 @@ test_project_data = {
     "customers": {
         "parties": [
             {
-                "uid": "u#001",
-                "name": "用户001"
-            },
-            {
                 "uid": "test",
                 "name": "测试用户"
+            },
+            {
+                "uid": "u#001",
+                "name": "用户001"
             }
         ]
     },
     "staffs": {
         "leader": {
-            "uid": "test_01",
-            "name": "测试客服#1"
+            "uid": "test"
         },
         "assistants": [
             {
+                "uid": "test_01",
+                "name": "测试客服#1"
+            }, {
                 "uid": "test_02",
                 "name": "小二"
             }, {

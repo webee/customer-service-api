@@ -23,4 +23,4 @@ _new_project_specs = raw_specs({
     'staffs': fields.Nested(project_staffs)
 })
 
-new_project = api.model('Raw Project', _new_project_specs)
+new_project = api.model('New Project', _new_project_specs)

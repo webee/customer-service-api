@@ -31,5 +31,5 @@ raw_project_type = api.model('Raw Project Type', {
 })
 
 raw_project_domain_tree = api.inherit('Raw Project Domain Type Tree', raw_project_domain, {
-    'types': fields.List(fields.Nested(raw_project_type)),
+    'types': fields.List(fields.Nested(raw_project_type), attribute='ordered_types'),
 })

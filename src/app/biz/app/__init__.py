@@ -6,8 +6,8 @@ from app.biz import xchat as xchat_biz
 
 @dbs.transactional
 def create_project(app, data):
-    project_type = app.project_types.filter(ProjectType.name == data['type'],
-                                            ProjectDomain.name == data['domain']).one()
+    project_domain = app.project_domains.filter_by(name=data['domain']).one()
+    project_type = project_domain.types.filter_by(name=data['type']).one()
 
     biz_id = data['biz_id']
     project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()

@@ -33,6 +33,10 @@ def init_test_data():
     project_domain = app.create_project_domain('test', '测试', '测试域')
     project_domain.create_project_type('test', '测试', '测试类型')
 
+    project_domain = app.create_project_domain('test2', '测试2', '测试域2')
+    project_domain.create_project_type('test', '测试', '测试类型')
+    project_domain.create_project_type('test2', '测试2', '测试类型2')
+
     # projects
     app_biz.create_project(app, sample_data.test_project_data)
 

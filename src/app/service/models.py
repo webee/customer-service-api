@@ -1,4 +1,5 @@
 import enum
+from sqlalchemy import desc
 from app import db, dbs, bcrypt
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from . import constant
@@ -57,13 +58,17 @@ class App(BaseModel):
             self.set_password(new_password)
             return True
 
+    @property
+    def ordered_project_domains(self):
+        return self.project_domains.order_by(ProjectDomain.id)
+
     # biz
     @dbs.transactional
     def create_customer(self, uid, name):
         customer = self.customers.filter_by(uid=uid).one_or_none()
         if customer is None:
             customer = Customer(app=self, uid=uid)
-        customer.name = name
+        customer.name = name or customer.name
         db.session.add(customer)
 
         return customer
@@ -73,14 +78,14 @@ class App(BaseModel):
         staff = self.staffs.filter_by(uid=uid).one_or_none()
         if staff is None:
             staff = Staff(app=self, uid=uid)
-        staff.name = name
+        staff.name = name or staff.name
         dbs.session.add(staff)
 
         return staff
 
     def create_or_update_customer(self, data):
-        uid = data['uid']
-        name = data['name']
+        uid = data.get('uid')
+        name = data.get('name')
         return self.create_customer(uid, name)
 
     @dbs.transactional
@@ -88,8 +93,8 @@ class App(BaseModel):
         return [self.create_or_update_customer(customer) for customer in customers_data]
 
     def create_or_update_staff(self, data):
-        uid = data['uid']
-        name = data['name']
+        uid = data.get('uid')
+        name = data.get('name')
         return self.create_staff(uid, name)
 
     @dbs.transactional
@@ -114,6 +119,10 @@ class Staff(BaseModel, app_user(UserType.staff.value, 'staffs')):
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
 
+    @property
+    def handling_sessions(self):
+        return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.updated))
+
 
 class ProjectDomain(BaseModel, app_resource('project_domains')):
     """项目域"""
@@ -134,6 +143,10 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
     def __repr__(self):
         return "<ProjectDomain: {}>".format(self.name)
 
+    @property
+    def ordered_types(self):
+        return self.types.order_by(ProjectType.id)
+
     @dbs.transactional
     def create_project_type(self, name, title, desc):
         project_type = ProjectType(app=self.app, domain=self, name=name, title=title, desc=desc)
@@ -146,7 +159,7 @@ class ProjectType(BaseModel, app_resource('project_types')):
     __tablename__ = 'project_type'
 
     domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
-    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('types', lazy='subquery'))
+    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('types', lazy='dynamic'))
 
     name = db.Column(db.String(32), nullable=False, index=True)
     # eg: 咨询，专业业务订单，工单
@@ -294,7 +307,8 @@ class ProjectCustomers(BaseModel, project_resource('customers')):
     __tablename__ = 'project_customers'
 
     # 当事人
-    parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined')
+    parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined',
+                              backref=db.backref('as_party_projects', lazy='dynamic'))
 
     @dbs.transactional
     def update(self, data):
@@ -310,11 +324,14 @@ class ProjectStaffs(BaseModel, project_resource('staffs')):
 
     # 负责人
     leader_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
-    leader = db.relationship('Staff', lazy='joined')
+    leader = db.relationship('Staff', lazy='joined',
+                             backref=db.backref('as_leader_projects', lazy='dynamic'))
     # 协助人
-    assistants = db.relationship('Staff', secondary=project_staff_assistants, lazy='joined')
+    assistants = db.relationship('Staff', secondary=project_staff_assistants, lazy='joined',
+                                 backref=db.backref('as_assistant_projects', lazy='dynamic'))
     # 参与人
-    participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined')
+    participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined',
+                                   backref=db.backref('as_participant_projects', lazy='dynamic'))
 
     @dbs.transactional
     def update(self, data):
@@ -347,13 +364,13 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     __tablename__ = 'session'
 
     # 是否接待中
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
     # 关闭时间
     closed = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
 
     # 接待者
     handler_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
-    handler = db.relationship('Staff', lazy='joined')
+    handler = db.relationship('Staff', lazy='joined', backref=db.backref('as_handler_sessions', lazy='dynamic'))
     # 消息id, 0表示未指向任何消息
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 

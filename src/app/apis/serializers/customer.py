@@ -5,7 +5,7 @@ from . import pagination, base_resource
 
 _raw_customer_specs = {
     'uid': fields.String(required=True, min_length=1, max_length=32, example='test_001'),
-    'name': fields.String(required=True, min_length=1, max_length=16, example='测试客户#1')
+    'name': fields.String(required=False, min_length=1, max_length=16, example='测试客户#1')
 }
 
 customer = api.inherit('Customer', base_resource, _raw_customer_specs)
