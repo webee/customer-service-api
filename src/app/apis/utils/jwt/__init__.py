@@ -59,7 +59,7 @@ class JWT(object):
 
     def encode_token(self, role, identity):
         if not identity:
-            abort(401, '% role not found' % role)
+            abort(403, '% role not found' % role)
 
         payload = self.payload_handler(role, identity)
         secret = self.app.config['JWT_SECRET_KEY']
@@ -93,6 +93,7 @@ class JWT(object):
         role = role or self.app.config['JWT_DEFAULT_ROLE']
         token = self._get_request_token(role)
 
+        payload = {}
         try:
             payload = self._decode_token(token)
         except jwt.InvalidTokenError as e:
@@ -116,6 +117,11 @@ class JWT(object):
     def _get_request_token(self, role):
         jwt_header_pattern = self.app.config['JWT_AUTH_HEADER_PATTERN']
         auth_header_value = request.headers.get(jwt_header_pattern % role.upper(), None)
+        if not auth_header_value:
+            jwt_header = self.app.config['JWT_AUTH_HEADER']
+            auth_header_value = request.headers.get(jwt_header, None)
+        if not auth_header_value:
+            auth_header_value = request.args.get('_jwt', None)
 
         if not auth_header_value:
             abort(401, '%s jwt header missing' % role)

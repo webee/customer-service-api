@@ -16,6 +16,7 @@ class App:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     # jwt
+    JWT_AUTH_HEADER = 'X-JWT'
     JWT_AUTH_HEADER_PATTERN = 'X-%s-JWT'
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or '.yek tset'
     JWT_EXPIRATION_DELTA = timedelta(days=2)
