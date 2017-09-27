@@ -8,6 +8,7 @@ _raw_staff_specs = {
     'name': fields.String(required=False, min_length=1, max_length=16, example='测试客服#1')
 }
 
+raw_staff = api.model('Raw Staff', _raw_staff_specs)
 staff = api.inherit('Staff', base_resource, _raw_staff_specs)
 page_of_staffs = api.inherit('Page of staffs', pagination, {
     'items': fields.List(fields.Nested(staff))

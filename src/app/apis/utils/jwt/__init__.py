@@ -59,7 +59,7 @@ class JWT(object):
 
     def encode_token(self, role, identity):
         if not identity:
-            abort(403, '% role not found' % role)
+            abort(403, '%s role not found' % role)
 
         payload = self.payload_handler(role, identity)
         secret = self.app.config['JWT_SECRET_KEY']
