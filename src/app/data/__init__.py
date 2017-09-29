@@ -43,6 +43,12 @@ def init_test_data():
 
 def init_prod_data():
     app = create_app('qqxb', 'qqxb1234', '亲亲小保', '亲亲小保客服')
+    # customer
+    app.create_customer('test', '测试客户')
+
+    # staff
+    app.create_staff('test', '测试客服')
+
     project_domain = app.create_project_domain('personal', '个人', '个人域')
     project_domain.create_project_type('consultation', '咨询', '咨询类型')
     project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')

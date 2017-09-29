@@ -35,9 +35,9 @@ def identity(role, payload):
     if role == 'app':
         return App.query.filter_by(name=payload['app_name']).one_or_none()
     elif role == 'customer':
-        return Customer.query.filter(App.name == payload['app_name'], Customer.uid == payload['uid']).one_or_none()
+        return Customer.query.filter(Customer.app.has(name=payload['app_name']), Customer.uid == payload['uid']).one_or_none()
     elif role == 'staff':
-        return Staff.query.filter(App.name == payload['app_name'], Staff.uid == payload['uid']).one_or_none()
+        return Staff.query.filter(Staff.app.has(name=payload['app_name']), Staff.uid == payload['uid']).one_or_none()
 
 
 @jwt.as_identity_secret_handler

@@ -34,7 +34,7 @@ def app_user(user_type, resource_name):
     class AppUser(app_resource(resource_name)):
         __tablename__ = user_type
 
-        uid = db.Column(db.String(32), nullable=False, unique=True)
+        uid = db.Column(db.String(32), nullable=False)
         name = db.Column(db.String(16), nullable=False)
 
         __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_%s' % user_type),)
