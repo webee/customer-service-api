@@ -32,6 +32,9 @@ def init_api():
     from .namespaces.staff.api import api as staff_api
     api.add_namespace(staff_api, path='/staff')
 
+    from .namespaces.xchat.api import api as xchat_api
+    api.add_namespace(xchat_api, path='/xchat')
+
     # error handlers
     from app.errors import BizError, biz_error_handler
     from sqlalchemy.orm.exc import NoResultFound
