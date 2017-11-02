@@ -35,13 +35,5 @@ def init_db(drop_all):
     init_data()
 
 
-@manager.command
-def consume_xchat_msgs():
-    from app import xchat_msgs_consumer
-
-    # xchat_msgs_consumer.start()
-    xchat_msgs_consumer.run()
-
-
 if __name__ == '__main__':
     manager.run()
