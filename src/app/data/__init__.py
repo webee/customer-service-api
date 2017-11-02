@@ -38,7 +38,8 @@ def init_test_data():
     project_domain.create_project_type('test2', '测试2', '测试类型2')
 
     # projects
-    app_biz.create_project(app, sample_data.test_project_data)
+    for project_data in sample_data.test_projects_data:
+        app_biz.create_project(app, project_data)
 
 
 def init_prod_data():
