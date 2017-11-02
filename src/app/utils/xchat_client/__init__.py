@@ -28,6 +28,7 @@ class RequestResult(object):
 
 class RequestError(Exception):
     """http请求错误"""
+
     def __init__(self, resp):
         self.resp = resp
         super().__init__('request error: %d' % self.resp.status_code)
@@ -35,6 +36,7 @@ class RequestError(Exception):
 
 class RequestFailedError(Exception):
     """请求执行失败"""
+
     def __init__(self, msg):
         super().__init__(msg)
 
@@ -109,9 +111,9 @@ class XChatClient(object):
     def _delete(self, url, data=None, **kwargs):
         return self._request('delete', url, data, **kwargs)
 
-    def new_chat(self, type, users=(), biz_id=None, mq_topic=None, title=None, tag=None, ext=None):
-        data = {'type': type, 'users': users}
-        for k, v in {'biz_id': biz_id, 'mq_topic': mq_topic, 'title': title, 'tag': tag, 'ext': ext}.items():
+    def new_chat(self, chat_type, users=(), app_id=None, biz_id=None, title=None, tag=None, ext=None):
+        data = {'type': chat_type, 'users': users}
+        for k, v in {'app_id': app_id, 'biz_id': biz_id, 'title': title, 'tag': tag, 'ext': ext}.items():
             if v is not None:
                 data[k] = v
 
