@@ -11,7 +11,7 @@ class App:
     DEBUG = True
 
     # sqlalchemy
-    SQLALCHEMY_DATABASE_URI = 'postgresql://cs:cs1234@localhost/custom_service'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://cs:cs1234@localhost/cs_dev'
     SQLALCHEMY_ECHO = not os.environ.get('DISABLE_SQLALCHEMY_ECHO', False)
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
@@ -37,14 +37,6 @@ class XChatClient:
     ROOT_URL = "http://local.xchat.com"
 
 
-class XChatKafka:
-    BOOTSTRAP_SERVERS = ['localhost:9092', 'localhost:9093', 'localhost:9094']
-
-    CS_MSGS_TOPIC = 'xchat_cs_msgs'
-    CONSUMER_GROUP = 'xchat_cs_msgs'
-    AUTO_OFFSET_RESET = os.environ.get('KAFKA_AUTO_OFFSET_RESET', 'latest')
-
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -65,6 +57,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True
+        },
+        'app.utils.xchat_client': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
         },
     },
 }
