@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-dropdb custom_service
-createdb custom_service -O cs
+dropdb cs_dev
+createdb cs_dev -O cs
 
 ./cmd.sh init_db
