@@ -1,4 +1,4 @@
-import os
+from urllib import parse
 import threading
 import requests
 import jwt
@@ -55,7 +55,6 @@ class XChatClient(object):
         pmc_config.merge_config(self.config, env_config)
 
     def _new_token(self):
-        logger.info('new token')
         exp = datetime.utcnow() + timedelta(days=30)
         payload = dict(
             ns=self.config.NS,
@@ -74,11 +73,23 @@ class XChatClient(object):
             with self._lock:
                 if not self._is_current_token_valid():
                     self._token, self._token_exp = self._new_token()
+                    logger.info('new token: %s, %s', self._token, self._token_exp)
         return self._token
 
-    def _build_url(self, url, **kwargs):
-        url = url.lstrip('/')
-        return os.path.join(self.config.ROOT_URL, url.format(**kwargs))
+    def _build_url(self, path, path_vars=None, **kwargs):
+        path = path.lstrip('/')
+        path = path.format(**(path_vars or {}))
+
+        scheme, netloc, root_path, params, root_query, fragment = parse.urlparse(self.config.ROOT_URL)
+        path = parse.urljoin(root_path, path)
+
+        qs = parse.parse_qs(root_query)
+        for k, v in kwargs.items():
+            if v is not None:
+                qs[k] = v
+        query = parse.urlencode(qs)
+
+        return parse.urlunparse((scheme, netloc, path, params, query, fragment))
 
     def _request(self, method, url, data=None, **kwargs):
         logger.debug('request: %s, %s, %s', method, url, data)
@@ -104,13 +115,13 @@ class XChatClient(object):
             if v is not None:
                 data[k] = v
 
-        url = self._build_url(self.config.CHATS_URL)
+        url = self._build_url(self.config.CHATS_PATH)
         res = self._post(url, data)
         if res.is_success():
             return res.data['id']
 
     def get_chat(self, chat_id):
-        url = self._build_url(self.config.CHAT_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_PATH, dict(chat_id=chat_id))
         res = self._get(url)
         if res.is_success():
             return res.data
@@ -121,19 +132,19 @@ class XChatClient(object):
             if v is not None:
                 data[k] = v
 
-        url = self._build_url(self.config.CHAT_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_PATH, dict(chat_id=chat_id))
         res = self._post(url, data)
         if res.is_success():
             return res.data['ok']
 
     def delete_chat(self, chat_id):
-        url = self._build_url(self.config.CHAT_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_PATH, dict(chat_id=chat_id))
         res = self._delete(url)
         if res.is_success():
             return res.data['ok']
 
     def get_chat_members(self, chat_id):
-        url = self._build_url(self.config.CHAT_MEMBERS_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_MEMBERS_PATH, dict(chat_id=chat_id))
         res = self._get(url)
         if res.is_success():
             return res.data
@@ -141,21 +152,21 @@ class XChatClient(object):
     def add_chat_members(self, chat_id, users=()):
         data = {'users': users}
 
-        url = self._build_url(self.config.CHAT_MEMBERS_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_MEMBERS_PATH, dict(chat_id=chat_id))
         res = self._post(url, data)
         if res.is_success():
             return res.data['ok']
 
     def delete_chat_members(self, chat_id, users=()):
         data = {'users': users}
-        url = self._build_url(self.config.CHAT_MEMBERS_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_MEMBERS_PATH, dict(chat_id=chat_id))
         res = self._delete(url, data)
         if res.is_success():
             return res.data['ok']
 
     def replace_chat_members(self, chat_id, users=()):
         data = {'users': users}
-        url = self._build_url(self.config.CHAT_MEMBERS_URL, chat_id=chat_id)
+        url = self._build_url(self.config.CHAT_MEMBERS_PATH, dict(chat_id=chat_id))
         res = self._put(url, data)
         if res.is_success():
             return res.data['ok']
@@ -169,7 +180,7 @@ class XChatClient(object):
             'msg': msg,
             'perm_check': perm_check
         }
-        url = self._build_url(self.config.SEND_MSG_URL)
+        url = self._build_url(self.config.SEND_MSG_PATH)
         res = self._post(url, data)
         if res.is_success():
             ok = res.data['ok']
@@ -187,11 +198,19 @@ class XChatClient(object):
             'msg': msg,
             'perm_check': perm_check
         }
-        url = self._build_url(self.config.SEND_MSG_URL)
+        url = self._build_url(self.config.SEND_MSG_PATH)
         res = self._post(url, data)
         if res.is_success():
             ok = res.data['ok']
             if ok:
                 return True
             raise RequestFailedError(res.data['error'])
+        raise RequestError(res.resp)
+
+    def fetch_chat_msgs(self, chat_id, lid=None, rid=None, limit=None, desc=None):
+        url = self._build_url(self.config.FETCH_CHAT_MSGS_PATH, dict(chat_id=chat_id),
+                              lid=lid, rid=rid, limit=limit, desc=desc)
+        res = self._get(url)
+        if res.is_success():
+            return res.data
         raise RequestError(res.resp)
