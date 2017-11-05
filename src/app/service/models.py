@@ -12,18 +12,6 @@ class UserType(enum.Enum):
     app = 'app'
 
 
-class MessageChannel(enum.Enum):
-    """消息通道, 表示消息的来源"""
-    # 客服系统
-    cs = 'cs'
-    # xchat
-    xchat = 'xchat'
-    # 微信
-    weixin = 'weixin'
-    # 电子邮件
-    email = 'email'
-
-
 class App(BaseModel):
     """系统应用"""
     __tablename__ = 'app'
@@ -110,18 +98,23 @@ class App(BaseModel):
 
 class Customer(BaseModel, app_user(UserType.customer.value, 'customers')):
     """客户"""
+
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
 
 
 class Staff(BaseModel, app_user(UserType.staff.value, 'staffs')):
     """客服"""
+
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
 
     @property
     def handling_sessions(self):
         return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.updated))
+
+    def get_handling_session(self, session_id):
+        return self.as_handler_sessions.filter_by(id=session_id).one_or_none()
 
 
 class ProjectDomain(BaseModel, app_resource('project_domains')):
@@ -199,7 +192,14 @@ class Project(BaseModel, app_resource('projects')):
     # 每个项目类型的业务id唯一
     __table_args__ = (db.UniqueConstraint('type_id', 'biz_id', name='uniq_type_biz'),)
 
-    # 会话
+    # 所属客户
+    owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)
+    owner = db.relationship('Customer', lazy='joined', backref=db.backref('as_owner_projects', lazy='dynamic'))
+
+    # 上一次会话
+    last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
+    last_session = db.relationship('Session', foreign_keys=last_session_id, lazy='joined', post_update=True)
+    # 当前会话
     current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
     current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
     # 消息id
@@ -241,47 +241,52 @@ class Project(BaseModel, app_resource('projects')):
 
         return xchat
 
-    @dbs.transactional
-    def new_session(self):
-        if self.current_session is None:
-            self.current_session = Session(project=self, handler=self.staffs.leader)
-            dbs.session.add(self)
-
-        return self.current_session
-
-    @dbs.transactional
-    def next_msg_id(self):
-        if self.current_session is None:
-            self.new_session()
-
-        self.msg_id = Project.msg_id + 1
-        dbs.session.add(self)
-        dbs.session.flush()
-
-        self.current_session.msg_id = self.msg_id
-        dbs.session.add(self.current_session)
-
-        return self.msg_id
-
-    @dbs.transactional
-    def close_current_session(self):
-        if self.current_session:
-            self.current_session.close()
-
 
 class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
+    # 已接收最大消息id
+    msg_id = db.Column(db.BigInteger, nullable=False, default=0)
+
+    # 同步控制
+    # init: 0, False
+    # running: 0, True
+    # running_with_pending: >0, True
+    # # 有同步需求
+    pending = db.Column(db.Integer, nullable=False, default=0)
+    # # 正在同步
+    syncing = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return "<ProjectXChat: {}<->{}>".format(self.project.app_biz_id, self.chat_id)
 
     @dbs.transactional
-    def update(self, chat_id):
-        self.chat_id = chat_id
+    def try_sync(self):
+        """尝试同步"""
+        # init -> running
+        if ProjectXChat.query.filter_by(id=self.id, syncing=False, pending=0).update({'syncing': True}):
+            return True
+        # running/running_with_pending -> running_with_pending
+        ProjectXChat.query.filter_by(id=self.id, syncing=True).update({ProjectXChat.pending: ProjectXChat.pending + 1})
+        return False
 
-        dbs.session.add(self)
+    @dbs.transactional
+    def should_sync(self, pending=0):
+        """测试是否需要同步"""
+        # running_with_pending -> running
+        return ProjectXChat.query.filter_by(id=self.id, syncing=True).filter(ProjectXChat.pending > 0) \
+            .update({ProjectXChat.pending: ProjectXChat.pending - pending})
+
+    @dbs.transactional
+    def done_sync(self):
+        """结束同步"""
+        # running -> init
+        return ProjectXChat.query.filter_by(id=self.id, syncing=True, pending=0).update({'syncing': False})
+
+    def current_pending(self):
+        """当前pending"""
+        return dbs.session.query(ProjectXChat.pending).filter_by(id=self.id).one().pending
 
 
 # many to many helpers
@@ -371,30 +376,32 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     # 接待者
     handler_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
     handler = db.relationship('Staff', lazy='joined', backref=db.backref('as_handler_sessions', lazy='dynamic'))
+
+    # 开始消息id
+    start_msg_id = db.Column(db.BigInteger, nullable=False)
     # 消息id, 0表示未指向任何消息
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
-    @dbs.transactional
-    def close(self):
-        self.is_active = False
-        self.closed = db.func.current_timestamp()
-        dbs.session.add(self)
+    # 已经同步的消息id(已读id)
+    sync_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
-        self.project.current_session_id = None
-        dbs.session.add(self.project)
+    # 当前激活的其它通道
+    activated_channel = db.Column(db.String(16), nullable=True, default=None)
+
+    def __repr__(self):
+        return "<Session: {0}, {1}, {2}>".format(self.project.app_biz_id, 'active' if self.is_active else 'closed',
+                                                 self.msg_id)
 
 
-class Message(BaseModel, project_resource('messages', backref_uselist=True), session_resource('messages', backref_uselist=True)):
+class Message(BaseModel, project_resource('messages', backref_uselist=True),
+              session_resource('messages', backref_uselist=True)):
     __tablename__ = 'message'
 
-    # 消息通道
-    channel = db.Column(db.Enum(MessageChannel), default=MessageChannel.cs, nullable=False)
-
-    # 来自xchat的消息相关
-    xchat_id = db.Column(db.BigInteger, nullable=True, index=True)
+    # 消息通道: 除了来自客服系统自身和xchat的其它通道
+    channel = db.Column(db.String(16), nullable=True, default=None)
 
     # 发送者
-    user_type = db.Column(db.Enum(UserType), nullable=False)
+    user_type = db.Column(db.Enum(UserType), nullable=True)
     customer_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=True)
     customer = db.relationship('Customer', lazy='joined')
     staff_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=True)
@@ -409,13 +416,19 @@ class Message(BaseModel, project_resource('messages', backref_uselist=True), ses
 
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, index=True)
-    # 消息域和类型
-    # cs: text, file, img, voice
+    # 消息域和类型(类型只能为小写字母)
+    # '': '', text, file, image, voice, xxx
     # qqxb: payment, result
-    domain = db.Column(db.String(16), nullable=False, default='cs')
-    type = db.Column(db.String(24), nullable=False)
+    domain = db.Column(db.String(16), nullable=False, default='')
+    type = db.Column(db.String(24), nullable=False, default='')
     content = db.Column(db.Text)
+
+    # 消息发生的时间，以来源通道为准，
+    # msg_id和updated总是递增的，但由于不同渠道同步消息的延迟, 因此可能会出现ts不递增的情况
     ts = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp())
 
+    # project_id, msg_id唯一
+    __table_args__ = (db.UniqueConstraint('project_id', 'msg_id', name='uniq_project_msg_id'),)
+
     def __repr__(self):
-        return "<Message: {0}: {1}, {2}, {3}>".format(self.channel.value, self.msg_id, self.domain, self.type)
+        return "<Message: {0}, [{1}, {2}, {3}]>".format(self.channel, self.msg_id, self.domain, self.type)
