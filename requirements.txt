@@ -13,6 +13,10 @@ Flask-Bcrypt
 Flask-Cors
 kafka-python
 
+# celery
+celery[redis]
+
+
 # etc
 arrow
 requests
