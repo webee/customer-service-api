@@ -2,6 +2,7 @@ from flask import request
 from flask_restplus import Resource
 from .api import api
 from .serializers import notified_msg
+from app.task import tasks
 
 
 @api.route('/msg_notify')
@@ -12,5 +13,9 @@ class MsgNotify(Resource):
     def post(self):
         """接收消息通知"""
         data = request.get_json()
-        print('notified msg: ', data)
+        kind = data['kind']
+        if kind == 'chat':
+            tasks.sync_xchat_msgs(data)
+        elif kind == 'chat_notify':
+            tasks.notify_xchat_msgs(data)
         return None, 204
