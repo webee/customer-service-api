@@ -121,6 +121,7 @@ class XChatClient(object):
         res = self._post(url, data)
         if res.is_success():
             return res.data['id']
+        raise RequestError(res.resp)
 
     def get_chat(self, chat_id):
         url = self._build_url(self.config.CHAT_PATH, dict(chat_id=chat_id))
@@ -173,41 +174,31 @@ class XChatClient(object):
         if res.is_success():
             return res.data['ok']
 
-    def send_chat_msg(self, chat_id, user, msg, domain='', perm_check=False):
+    def send_msg(self, kind, chat_id, user, msg, domain='', perm_check=False, msg_notify=False):
         data = {
-            'kind': 'chat',
+            'kind': kind,
             'chat_id': chat_id,
             'user': user,
             'domain': domain,
             'msg': msg,
-            'perm_check': perm_check
+            'perm_check': perm_check,
+            'msg_notify': msg_notify
         }
         url = self._build_url(self.config.SEND_MSG_PATH)
         res = self._post(url, data)
         if res.is_success():
             ok = res.data['ok']
             if ok:
-                return res.data['id'], res.data['ts']
+                return res.data
             raise RequestFailedError(res.data['error'])
         raise RequestError(res.resp)
 
-    def send_chat_notify_msg(self, chat_id, user, msg, domain='', perm_check=False):
-        data = {
-            'kind': 'chat_notify',
-            'chat_id': chat_id,
-            'user': user,
-            'domain': domain,
-            'msg': msg,
-            'perm_check': perm_check
-        }
-        url = self._build_url(self.config.SEND_MSG_PATH)
-        res = self._post(url, data)
-        if res.is_success():
-            ok = res.data['ok']
-            if ok:
-                return True
-            raise RequestFailedError(res.data['error'])
-        raise RequestError(res.resp)
+    def send_chat_msg(self, chat_id, user, msg, domain='', perm_check=False, msg_notify=False):
+        data = self.send_msg('chat', chat_id, user, msg, domain, perm_check, msg_notify)
+        return data['id'], data['ts']
+
+    def send_chat_notify_msg(self, chat_id, user, msg, domain='', perm_check=False, msg_notify=False):
+        return self.send_msg('chat_notify', chat_id, user, msg, domain, perm_check, msg_notify)
 
     def fetch_chat_msgs(self, chat_id, lid=None, rid=None, limit=None, desc=None):
         url = self._build_url(self.config.FETCH_CHAT_MSGS_PATH, dict(chat_id=chat_id),

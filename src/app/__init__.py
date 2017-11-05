@@ -10,7 +10,6 @@ from .apis.utils.jwt import JWT
 from app.utils import dbs
 from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
-from .task.xchat import XChatMsgsConsumer
 
 # extensions
 jwt = JWT()
@@ -20,13 +19,15 @@ bcrypt = Bcrypt()
 cors = CORS()
 
 xchat_client = XChatClient()
-xchat_msgs_consumer = XChatMsgsConsumer()
 
 
 def create_app(env='dev'):
     app = Flask(__name__)
     # 最先初始化配置
     init_config(app, env)
+
+    # tasks
+    init_tasks(app)
 
     init_extensions(app)
     init_errors(app)
@@ -41,9 +42,18 @@ def init_config(app, env):
 
     os.environ['ENV'] = env
     pmc_config.register_config(config, env=env)
+    pmc_config.register_config(config, 'celery_task', env=env, require_upper=False)
 
     dictConfig(config.LOGGING)
     app.config.from_object(config.App)
+
+
+def init_tasks(app):
+    from app.task import app as celery_app
+    from app.task import init_celery_app
+    from app.config import celery_task as celery_config
+
+    init_celery_app(celery_app, celery_config, app)
 
 
 def register_mods(app):
@@ -74,9 +84,6 @@ def init_extensions(app):
     # xchat client
     from . import config
     xchat_client.init_config(config.XChatClient)
-
-    # xchat msgs consumer
-    xchat_msgs_consumer.init_app(app, config.XChatKafka)
 
 
 def init_errors(app):

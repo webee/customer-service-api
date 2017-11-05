@@ -1,12 +1,14 @@
 from flask_script import Manager, Shell, Server
 from flask_migrate import MigrateCommand
 from app import db, create_app
+from commands import Celery
 
 
 manager = Manager(create_app)
 manager.add_option('-e', '--env', dest='env', default='dev', required=False)
 
 manager.add_command('db', MigrateCommand)
+manager.add_command('celery', Celery('app.task:app'))
 
 
 def make_shell_context():

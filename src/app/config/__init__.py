@@ -30,6 +30,10 @@ class App:
     SWAGGER_UI_JSONEDITOR = False
 
 
+class Biz:
+    CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=3)
+
+
 class XChatClient:
     NS = 'cs'
     KEY = 'demo app cs key.'
