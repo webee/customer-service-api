@@ -1,11 +1,10 @@
-import enum
 from sqlalchemy import desc
 from app import db, dbs, bcrypt
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from . import constant
 
 
-class UserType(enum.Enum):
+class UserType:
     """用户类型"""
     customer = 'customer'
     staff = 'staff'
@@ -96,14 +95,14 @@ class App(BaseModel):
         return project_domain
 
 
-class Customer(BaseModel, app_user(UserType.customer.value, 'customers')):
+class Customer(BaseModel, app_user(UserType.customer, 'customers')):
     """客户"""
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
 
 
-class Staff(BaseModel, app_user(UserType.staff.value, 'staffs')):
+class Staff(BaseModel, app_user(UserType.staff, 'staffs')):
     """客服"""
 
     def __repr__(self):
@@ -250,7 +249,7 @@ class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
     # 同步控制
-    # init: 0, False
+    # init: *, False
     # running: 0, True
     # running_with_pending: >0, True
     # # 有同步需求
@@ -261,32 +260,43 @@ class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
     def __repr__(self):
         return "<ProjectXChat: {}<->{}>".format(self.project.app_biz_id, self.chat_id)
 
+    @staticmethod
     @dbs.transactional
-    def try_sync(self):
+    def try_sync(id):
         """尝试同步"""
         # init -> running
-        if ProjectXChat.query.filter_by(id=self.id, syncing=False, pending=0).update({'syncing': True}):
+        if ProjectXChat.query.filter_by(id=id, syncing=False).update({'syncing': True}):
             return True
         # running/running_with_pending -> running_with_pending
-        ProjectXChat.query.filter_by(id=self.id, syncing=True).update({ProjectXChat.pending: ProjectXChat.pending + 1})
+        ProjectXChat.query.filter_by(id=id, syncing=True).update({ProjectXChat.pending: ProjectXChat.pending + 1})
         return False
 
+    @staticmethod
     @dbs.transactional
-    def should_sync(self, pending=0):
+    def should_sync(id, pending=0):
         """测试是否需要同步"""
         # running_with_pending -> running
-        return ProjectXChat.query.filter_by(id=self.id, syncing=True).filter(ProjectXChat.pending > 0) \
+        return ProjectXChat.query.filter_by(id=id, syncing=True).filter(ProjectXChat.pending > 0) \
             .update({ProjectXChat.pending: ProjectXChat.pending - pending})
 
+    @staticmethod
     @dbs.transactional
-    def done_sync(self):
+    def done_sync(id):
+        """完成同步"""
+        # running -> init
+        return ProjectXChat.query.filter_by(id=id, syncing=True, pending=0).update({'syncing': False})
+
+    @staticmethod
+    @dbs.transactional
+    def stop_sync(id):
         """结束同步"""
         # running -> init
-        return ProjectXChat.query.filter_by(id=self.id, syncing=True, pending=0).update({'syncing': False})
+        return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
 
-    def current_pending(self):
+    @staticmethod
+    def current_pending(id):
         """当前pending"""
-        return dbs.session.query(ProjectXChat.pending).filter_by(id=self.id).one().pending
+        return dbs.session.query(ProjectXChat.pending).filter_by(id=id).one().pending
 
 
 # many to many helpers
@@ -401,18 +411,8 @@ class Message(BaseModel, project_resource('messages', backref_uselist=True),
     channel = db.Column(db.String(16), nullable=True, default=None)
 
     # 发送者
-    user_type = db.Column(db.Enum(UserType), nullable=True)
-    customer_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=True)
-    customer = db.relationship('Customer', lazy='joined')
-    staff_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=True)
-    staff = db.relationship('Staff', lazy='joined')
-
-    @property
-    def user(self):
-        if self.user_type == UserType.customer:
-            return self.customer
-        elif self.user_type == UserType.staff:
-            return self.staff
+    user_type = db.Column(db.String(12), nullable=True)
+    user_id = db.Column(db.String(32), nullable=True)
 
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, index=True)
