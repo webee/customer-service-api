@@ -1,35 +1,41 @@
 import arrow
 from app import db, dbs, config
-from sqlalchemy.orm import lazyload, joinedload, subqueryload
+from sqlalchemy import orm
 from app.service.models import Project, Session, Message
 
 
+def lock_project(id, options=None, read=False):
+    options = [] if options is None else list(options)
+    options.append(orm.lazyload('*'))
+    return Project.query.options(*options).with_for_update(read=read, of=Project).filter_by(id=id).one()
+
+
 @dbs.transactional
-def new_session(proj_id):
+def try_open_session(proj_id):
     # 锁住project
-    proj = dbs.session.query(Project).options(lazyload('*')).with_for_update(read=False).filter_by(id=proj_id).one()
+    proj = lock_project(proj_id, options=[orm.joinedload('last_session'), orm.joinedload('current_session')])
     if proj.current_session is None:
-        if proj.last_session is None or arrow.now() - arrow.get(proj.last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
+        last_session = proj.last_session
+        if last_session is None or arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
             # 没有上次session或者已经超过存活时间
             proj.current_session = Session(project=proj, handler=proj.staffs.leader, start_msg_id=proj.msg_id)
 
             dbs.session.add(proj)
         else:
             # 重新打开上一次的会话
-            last_session = proj.last_session
             last_session.closed = None
             last_session.is_active = True
             proj.current_session = last_session
 
             dbs.session.add(proj)
 
-    return proj.current_session
+    return proj
 
 
 @dbs.transactional
 def close_current_session(proj_id):
     # 锁住project
-    proj = dbs.session.query(Project).options(lazyload('*')).with_for_update(read=False).filter_by(id=proj_id).one()
+    proj = lock_project(proj_id, options=[orm.joinedload('current_session')])
 
     current_session = proj.current_session
     if current_session is not None:
@@ -43,11 +49,10 @@ def close_current_session(proj_id):
 
 
 @dbs.transactional
-def next_msg_id(proj):
-    if proj.current_session is None:
-        new_session(proj.id)
+def next_msg_id(proj, n=1):
+    try_open_session(proj.id)
 
-    proj.msg_id = Project.msg_id + 1
+    proj.msg_id = Project.msg_id + n
     dbs.session.add(proj)
     dbs.session.flush()
 
@@ -58,16 +63,19 @@ def next_msg_id(proj):
 
 
 @dbs.transactional
-def new_message(proj, domain, type, content, user_type=None, customer=None, staff=None):
-    # 锁住project
-    proj = dbs.session.query(Project).options(lazyload('*')).with_for_update(read=False).filter_by(id=proj.id).one()
-    msg_id = next_msg_id(proj)
-    session = proj.current_session
-    message = Message(project=proj, session=session, msg_id=msg_id,
-                      user_type=user_type, customer=customer, staff=staff,
-                      domain=domain, type=type, content=content,
-                      ts=db.func.current_timestamp())
-    dbs.session.add(message)
-    dbs.session.flush()
+def new_messages(proj_id, msgs=()):
+    if len(msgs) == 0:
+        return
 
-    return message
+    # open session
+    proj = try_open_session(proj_id)
+    for i, (domain, type, content, user_type, user_id) in enumerate(msgs, 1):
+        message = Message(project=proj, session=proj.current_session,
+                          user_type=user_type, user_id=user_id,
+                          msg_id=proj.msg_id + i,
+                          domain=domain, type=type, content=content,
+                          ts=db.func.current_timestamp())
+        dbs.session.add(message)
+
+    # update project & session msg_id
+    next_msg_id(proj, n=len(msgs))

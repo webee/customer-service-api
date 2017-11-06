@@ -34,7 +34,12 @@ def add(a, b):
 
 @app.task(ignore_result=True, queue='sync_xchat_msgs', routing_key='sync_xchat_msgs')
 def sync_xchat_msgs(msg):
-    sync.try_sync_xchat_msgs(msg)
+    sync.sync_xchat_msgs(msg)
+
+
+@app.task(ignore_result=True, queue='sync_xchat_msgs', routing_key='sync_xchat_msgs')
+def try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
+    sync.try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=xchat_msg)
 
 
 @app.task(ignore_result=True, queue='notify_xchat_msgs', routing_key='notify_xchat_msgs')

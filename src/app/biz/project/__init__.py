@@ -19,4 +19,4 @@ def send_message(staff, session, domain, type, content):
 
     msg_data = dict(chat_id=chat_id, id=id, ts=ts, user='cs:%s' % user, msg=msg, domain=domain)
     # send celery task request
-    tasks.sync_proj_xchat_msgs.delay(msg_data)
+    tasks.sync_xchat_msgs.delay(msg_data)
