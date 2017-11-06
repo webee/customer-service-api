@@ -12,8 +12,8 @@ class App:
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs:cs1234@localhost/cs_dev'
-    SQLALCHEMY_ECHO = not os.environ.get('DISABLE_SQLALCHEMY_ECHO', False)
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_ECHO = not (os.environ.get('DISABLE_SQLALCHEMY_ECHO', False) or os.environ.get('CELERY_RUNNING', False))
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # jwt
     JWT_AUTH_HEADER = 'X-JWT'
