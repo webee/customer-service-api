@@ -12,10 +12,10 @@ class MsgNotify(Resource):
     @api.response(401, 'change password failed')
     def post(self):
         """接收消息通知"""
-        data = request.get_json()
-        kind = data['kind']
+        msg = request.get_json()
+        kind = msg['kind']
         if kind == 'chat':
-            tasks.sync_xchat_msgs(data)
+            tasks.sync_xchat_msgs.delay(msg)
         elif kind == 'chat_notify':
-            tasks.notify_xchat_msgs(data)
+            tasks.notify_xchat_msgs.delay(msg)
         return None, 204

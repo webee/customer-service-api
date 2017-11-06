@@ -7,6 +7,7 @@ from app.apis.jwt import current_customer, require_customer
 from app.apis.jwt import current_staff, require_staff
 from .api import api
 from .serializers import app_auth_data, customer_auth_data, staff_auth_data, app_change_password_data
+from .parsers import uid_args
 from app.apis.serializers.auth import token_data
 from app.apis.commons.auth import auth_token as _token
 
@@ -63,6 +64,17 @@ class CustomerToken(Resource):
         """生成customer token"""
         return _token('customer', request.get_json(), lambda app, data: app.customers.filter_by(uid=data['uid']).one_or_none())
 
+    @require_app
+    @api.expect(uid_args)
+    @api.marshal_with(token_data)
+    def get(self):
+        """使用app生成customer token"""
+        args = uid_args.parse_args()
+        uid = args['uid']
+        app = current_application
+        # TODO
+        pass
+
 
 @api.route('/refresh_customer_token')
 class RefreshCustomerToken(Resource):
@@ -82,6 +94,17 @@ class StaffToken(Resource):
     def post(self):
         """生成staff token"""
         return _token('staff', request.get_json(), lambda app, data: app.staffs.filter_by(uid=data['uid']).one_or_none())
+
+    @require_app
+    @api.expect(uid_args)
+    @api.marshal_with(token_data)
+    def get(self):
+        """使用app生成staff token"""
+        args = uid_args.parse_args()
+        uid = args['uid']
+        app = current_application
+        # TODO
+        pass
 
 
 @api.route('/refresh_staff_token')
