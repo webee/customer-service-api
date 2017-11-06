@@ -16,16 +16,29 @@ class BaseModel(db.Model):
         return dbs.session.query(cls)
 
 
-def app_resource(name):
+def foreign_key(key, backref_uselist=False, index=True):
+    return db.Column(db.BigInteger, db.ForeignKey(key), index=index, nullable=False, unique=not backref_uselist)
+
+
+def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None):
+    backref_kwargs = dict(uselist=backref_uselist)
+    if backref_uselist:
+        backref_kwargs['lazy'] = 'dynamic'
+    elif backref_lazy:
+        backref_kwargs['lazy'] = backref_lazy
+    return db.relationship(rel, lazy='joined', foreign_keys=foreign_keys, backref=db.backref(name, **backref_kwargs))
+
+
+def app_resource(name, backref_uselist=True, backref_lazy=None):
     class AppResource(object):
         """属于app的资源"""
         @declared_attr
         def app_id(cls):
-            return db.Column(db.BigInteger, db.ForeignKey('app.id'), index=True, nullable=False)
+            return foreign_key('app.id', backref_uselist=backref_uselist)
 
         @declared_attr
         def app(cls):
-            return db.relationship('App', lazy='joined', foreign_keys=cls.app_id, backref=db.backref(name, lazy='dynamic'))
+            return relationship('App', name, cls.app_id, backref_uselist, backref_lazy)
 
     return AppResource
 
@@ -51,32 +64,24 @@ def project_resource(name, backref_uselist=False, backref_lazy=None):
         """属于project的资源"""
         @declared_attr
         def project_id(cls):
-            return db.Column(db.BigInteger, db.ForeignKey('project.id'), index=True, nullable=False, unique=not backref_uselist)
+            return foreign_key('project.id', backref_uselist=backref_uselist)
 
         @declared_attr
         def project(cls):
-            backref_kwargs = dict(uselist=backref_uselist)
-            if backref_uselist:
-                backref_kwargs['lazy'] = 'dynamic'
-            elif backref_lazy:
-                backref_kwargs['lazy'] = backref_lazy
-            return db.relationship('Project', lazy='joined', foreign_keys=cls.project_id, backref=db.backref(name, **backref_kwargs))
+            return relationship('Project', name, cls.project_id, backref_uselist, backref_lazy)
 
     return ProjectResource
 
 
-def session_resource(name, backref_uselist=False):
+def session_resource(name, backref_uselist=False, backref_lazy=None):
     class SessionResource(object):
         """属于session的资源"""
         @declared_attr
         def session_id(cls):
-            return db.Column(db.BigInteger, db.ForeignKey('session.id'), index=True, nullable=False, unique=not backref_uselist)
+            return foreign_key('session.id', backref_uselist=backref_uselist)
 
         @declared_attr
         def session(cls):
-            backref_kwargs = dict(uselist=backref_uselist)
-            if backref_uselist:
-                backref_kwargs['lazy'] = 'dynamic'
-            return db.relationship('Session', lazy='joined', foreign_keys=cls.session_id, backref=db.backref(name, **backref_kwargs))
+            return relationship('Session', name, cls.session_id, backref_uselist, backref_lazy)
 
     return SessionResource

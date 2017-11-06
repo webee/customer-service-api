@@ -94,6 +94,29 @@ class App(BaseModel):
         db.session.add(project_domain)
         return project_domain
 
+    @dbs.transactional
+    def create_configs(self):
+        configs = AppConfigs(app=self)
+        dbs.session.add(configs)
+
+        return configs
+
+
+class AppConfigs(BaseModel, app_resource('configs', backref_uselist=False, backref_lazy='select')):
+    __tablename__ = 'app_configs'
+
+    # 应用分配给客服系统的id和key，作为以后通信的认证元信息
+    aid = db.Column(db.String(64), nullable=True, default=None)
+    akey = db.Column(db.String(128), nullable=True, default=None)
+
+    # TODO: 使用上面的key签名，设计接口规范
+    # 服务提供的接口根url
+    # 接口：1、获取token；2、事件通知接口（消息转发等）；3、获取项目扩展信息等
+    base_url = db.Column(db.String(256), nullable=True, default=None)
+
+    def __repr__(self):
+        return "<AppConfigs: {}>".format(self.app.name)
+
 
 class Customer(BaseModel, app_user(UserType.customer, 'customers')):
     """客户"""
@@ -359,7 +382,7 @@ class ProjectStaffs(BaseModel, project_resource('staffs')):
 
 
 class ProjectMetaData(BaseModel, project_resource('meta_data')):
-    """项目元数据"""
+    """项目元数据: 作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_meta_data'
 
     # TODO: 怎么组织数据？
@@ -367,7 +390,7 @@ class ProjectMetaData(BaseModel, project_resource('meta_data')):
 
 
 class ProjectExtData(BaseModel, project_resource('ext_data')):
-    """项目扩展数据"""
+    """项目扩展数据：作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_ext_data'
 
     # TODO: 怎么组织数据？
