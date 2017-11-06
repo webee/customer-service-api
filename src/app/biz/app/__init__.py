@@ -12,16 +12,18 @@ def create_project(app, data):
     biz_id = data['biz_id']
     project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()
     if project is None:
-        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id)
+        owner = app.create_or_update_customer(data['owner'])
+        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id, owner=owner)
         project.create_customers(data['customers'])
         project.create_staffs(data['staffs'])
         chat_id = xchat_biz.create_chat(project)
         project.create_xchat(chat_id)
     else:
+        project.owner = app.create_or_update_customer(data['owner'])
         project.customers.update(data['customers'])
         project.staffs.update(data['staffs'])
         chat_id = xchat_biz.create_chat(project)
-        project.xchat.update(chat_id)
+        assert chat_id == project.xchat.chat_id, 'chat_id should not change'
 
     dbs.session.add(project)
 
