@@ -38,8 +38,8 @@ def sync_xchat_msgs(msg):
 
 
 @app.task(ignore_result=True, queue='sync_xchat_msgs', routing_key='sync_xchat_msgs')
-def try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
-    sync.try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=xchat_msg)
+def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None):
+    sync.try_sync_proj_xchat_msgs(proj_id=proj_id, proj_xchat_id=proj_xchat_id, xchat_msg=xchat_msg)
 
 
 @app.task(ignore_result=True, queue='notify_xchat_msgs', routing_key='notify_xchat_msgs')

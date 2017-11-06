@@ -1,7 +1,7 @@
 import traceback
 import logging
 from app import dbs, xchat_client
-from app.service.models import ProjectXChat
+from app.service.models import Project, ProjectXChat
 from .ds import parse_xchat_msg_from_data
 from .proj import new_messages
 
@@ -23,15 +23,30 @@ def sync_xchat_msgs(msg):
         # 已经同步
         return
 
-    try_sync_proj_xchat_msgs(proj_xchat.id, xchat_msg)
+    try_sync_proj_xchat_msgs(proj_xchat=proj_xchat, xchat_msg=xchat_msg)
 
 
-def try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
+def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, proj=None, proj_xchat=None):
+    if proj is not None:
+        proj_xchat_id = proj.xchat.id
+    elif proj_xchat is not None:
+        proj = proj_xchat.project
+        proj_xchat_id = proj_xchat.id
+    elif proj_id is not None:
+        proj = Project.query.filter_by(id=proj_id).one()
+        proj_xchat_id = proj.xchat.id
+    elif proj_xchat_id is not None:
+        proj_xchat = ProjectXChat.query.filter_by(id=proj_xchat_id).one()
+        proj = proj_xchat.project
+        proj_xchat_id = proj_xchat.id
+    else:
+        return
+
     if ProjectXChat.try_sync(proj_xchat_id):
         try:
             while True:
                 pending = ProjectXChat.current_pending(proj_xchat_id)
-                sync_proj_xchat_msgs(proj_xchat_id, xchat_msg)
+                _sync_proj_xchat_msgs(proj, xchat_msg)
                 if ProjectXChat.should_sync(proj_xchat_id, pending) or not ProjectXChat.done_sync(proj_xchat_id):
                     continue
                 break
@@ -39,9 +54,8 @@ def try_sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
             ProjectXChat.stop_sync(proj_xchat_id)
 
 
-def sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
-    proj_xchat = ProjectXChat.query.filter_by(id=proj_xchat_id).one()
-    proj = proj_xchat.project
+def _sync_proj_xchat_msgs(proj, xchat_msg=None):
+    proj_xchat = proj.xchat
 
     if xchat_msg and proj_xchat.msg_id + 1 == xchat_msg.id:
         new_proj_xchat_msg(proj, (xchat_msg,))
@@ -54,7 +68,7 @@ def sync_proj_xchat_msgs(proj_xchat_id, xchat_msg=None):
             new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in msgs[i:j]])
             i = j
         if has_more:
-            sync_proj_xchat_msgs(proj_xchat)
+            _sync_proj_xchat_msgs(proj_xchat)
     except:
         logging.error(traceback.format_exc())
 

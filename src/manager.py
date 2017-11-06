@@ -37,5 +37,12 @@ def init_db(drop_all):
     init_data()
 
 
+@manager.option('-p', '--proj-id', type=int, dest="proj_id", required=True, help='project id')
+def sync_proj_msgs(proj_id):
+    from app.task import tasks
+
+    tasks.try_sync_proj_xchat_msgs.delay(proj_id=proj_id)
+
+
 if __name__ == '__main__':
     manager.run()
