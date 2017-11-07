@@ -295,17 +295,17 @@ class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
         return False
 
     @staticmethod
-    @dbs.transactional
-    def should_sync(id, pending=0):
-        """测试是否需要同步"""
-        # running_with_pending -> running
-        return ProjectXChat.query.filter_by(id=id, syncing=True).filter(ProjectXChat.pending > 0) \
-            .update({ProjectXChat.pending: ProjectXChat.pending - pending})
+    def current_pending(id):
+        """当前pending"""
+        return dbs.session.query(ProjectXChat.pending).filter_by(id=id).one().pending
 
     @staticmethod
     @dbs.transactional
-    def done_sync(id):
+    def done_sync(id, pending=0):
         """完成同步"""
+        # running_with_pending -> running
+        ProjectXChat.query.filter_by(id=id, syncing=True).filter(ProjectXChat.pending > 0) \
+            .update({ProjectXChat.pending: ProjectXChat.pending - pending})
         # running -> init
         return ProjectXChat.query.filter_by(id=id, syncing=True, pending=0).update({'syncing': False})
 
@@ -315,11 +315,6 @@ class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
         """结束同步"""
         # running -> init
         return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
-
-    @staticmethod
-    def current_pending(id):
-        """当前pending"""
-        return dbs.session.query(ProjectXChat.pending).filter_by(id=id).one().pending
 
 
 # many to many helpers

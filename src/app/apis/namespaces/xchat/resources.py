@@ -1,5 +1,6 @@
 from flask import request
 from flask_restplus import Resource
+from app.apis import logger
 from .api import api
 from .serializers import notified_msg
 from app.task import tasks
@@ -13,6 +14,7 @@ class MsgNotify(Resource):
     def post(self):
         """接收消息通知"""
         msg = request.get_json()
+        logger.debug('MsgNotify: %s', msg)
         kind = msg['kind']
         if kind == 'chat':
             tasks.sync_xchat_msgs.delay(msg)

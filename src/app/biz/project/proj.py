@@ -49,7 +49,25 @@ def close_current_session(proj_id):
 
 
 @dbs.transactional
-def next_msg_id(proj, n=1):
+def new_messages(proj_id, msgs=()):
+    if len(msgs) == 0:
+        return
+
+    # open session
+    proj = try_open_session(proj_id)
+    for i, (domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
+        message = Message(project=proj, session=proj.current_session,
+                          user_type=user_type, user_id=user_id,
+                          msg_id=proj.msg_id + i,
+                          domain=domain, type=type, content=content,
+                          ts=ts)
+        dbs.session.add(message)
+
+    # update project & session msg_id
+    return __next_msg_id(proj, n=len(msgs))
+
+
+def __next_msg_id(proj, n=1):
     try_open_session(proj.id)
 
     proj.msg_id = Project.msg_id + n
@@ -60,22 +78,3 @@ def next_msg_id(proj, n=1):
     dbs.session.add(proj.current_session)
 
     return proj.msg_id
-
-
-@dbs.transactional
-def new_messages(proj_id, msgs=()):
-    if len(msgs) == 0:
-        return
-
-    # open session
-    proj = try_open_session(proj_id)
-    for i, (domain, type, content, user_type, user_id) in enumerate(msgs, 1):
-        message = Message(project=proj, session=proj.current_session,
-                          user_type=user_type, user_id=user_id,
-                          msg_id=proj.msg_id + i,
-                          domain=domain, type=type, content=content,
-                          ts=db.func.current_timestamp())
-        dbs.session.add(message)
-
-    # update project & session msg_id
-    next_msg_id(proj, n=len(msgs))

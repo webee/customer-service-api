@@ -1,5 +1,6 @@
 import traceback
 import logging
+import time
 from app import dbs, xchat_client
 from app.service.models import Project, ProjectXChat
 from .ds import parse_xchat_msg_from_data
@@ -15,7 +16,9 @@ def sync_xchat_msgs(msg):
         # 不存在的项目
         return
 
-    if xchat_msg.app_user_id.app_name != proj_xchat.project.app.name:
+    proj = proj_xchat.project
+    app = proj.app
+    if xchat_msg.app_user_id.app_name != app.name:
         # app name不匹配
         return
 
@@ -23,7 +26,7 @@ def sync_xchat_msgs(msg):
         # 已经同步
         return
 
-    try_sync_proj_xchat_msgs(proj_xchat=proj_xchat, xchat_msg=xchat_msg)
+    try_sync_proj_xchat_msgs(proj=proj, xchat_msg=xchat_msg)
 
 
 def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, proj=None, proj_xchat=None):
@@ -47,7 +50,10 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
             while True:
                 pending = ProjectXChat.current_pending(proj_xchat_id)
                 _sync_proj_xchat_msgs(proj, xchat_msg)
-                if ProjectXChat.should_sync(proj_xchat_id, pending) or not ProjectXChat.done_sync(proj_xchat_id):
+                xchat_msg = None
+                if not ProjectXChat.done_sync(proj_xchat_id, pending=pending):
+                    # 延时累积
+                    time.sleep(0.12)
                     continue
                 break
         except:
@@ -64,11 +70,11 @@ def _sync_proj_xchat_msgs(proj, xchat_msg=None):
         msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=5000)
         i = 0
         while i < len(msgs):
-            j = i + 75
+            j = i + 100
             new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in msgs[i:j]])
             i = j
         if has_more:
-            _sync_proj_xchat_msgs(proj_xchat)
+            _sync_proj_xchat_msgs(proj)
     except:
         logging.error(traceback.format_exc())
 
@@ -76,11 +82,11 @@ def _sync_proj_xchat_msgs(proj, xchat_msg=None):
 @dbs.transactional
 def new_proj_xchat_msg(proj, xchat_msgs):
     msgs = []
-    max_msg_id = proj.xchat.id
+    max_msg_id = proj.xchat.msg_id
     for xchat_msg in xchat_msgs:
-        app_name, user_type, uid = xchat_msg.app_user_id
+        _, user_type, uid = xchat_msg.app_user_id
         domain, type, content = xchat_msg.msg_data
-        msgs.append((domain, type, content, user_type, uid))
+        msgs.append((domain, type, content, user_type, uid, xchat_msg.ts))
 
         if xchat_msg.id > max_msg_id:
             max_msg_id = xchat_msg.id

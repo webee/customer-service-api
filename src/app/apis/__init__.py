@@ -1,5 +1,8 @@
+import logging
 from flask_restplus import Api
 from flask import Blueprint
+
+logger = logging.getLogger(__name__)
 
 blueprint = Blueprint('api', __name__)
 authorizations = {
