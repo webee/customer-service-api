@@ -396,8 +396,14 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     """表示一个客服项目的一次会话"""
     __tablename__ = 'session'
 
+    # TODO: 添加tags管理, 客服自定义tags和app定义tags
+    # tags
+
     # 是否接待中
     is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    # 会话状态：可以用来标识接待进度及分类管理
+    # TODO: 添加状态管理, 客服自定义tags和app定义tags
+    # status = db.Column(db.String(12), nullable=True, default=None, index=True)
     # 关闭时间
     closed = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
 
