@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 p=${1:-dev}
 u=${1:-$(whoami)}
