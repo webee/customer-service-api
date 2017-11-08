@@ -31,7 +31,7 @@ class App:
 
 
 class Biz:
-    CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=3)
+    CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=15)
 
 
 class XChatClient:

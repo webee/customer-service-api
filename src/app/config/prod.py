@@ -15,4 +15,4 @@ class App:
 
 
 class Biz:
-    CLOSED_SESSION_ALIVE_TIME = timedelta(hours=6)
+    CLOSED_SESSION_ALIVE_TIME = timedelta(hours=24)
