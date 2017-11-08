@@ -10,10 +10,12 @@ def create_project(app, data):
     project_type = project_domain.types.filter_by(name=data['type']).one()
 
     biz_id = data['biz_id']
+    start_msg_id = data.get('start_msg_id', 0)
     project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()
     if project is None:
         owner = app.create_or_update_customer(data['owner'])
-        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id, owner=owner)
+        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id, owner=owner,
+                          start_msg_id=start_msg_id, msg_id=start_msg_id)
         project.create_customers(data['customers'])
         project.create_staffs(data['staffs'])
         chat_id = xchat_biz.create_chat(project)

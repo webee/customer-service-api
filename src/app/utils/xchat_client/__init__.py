@@ -111,9 +111,9 @@ class XChatClient(object):
     def _delete(self, url, data=None, **kwargs):
         return self._request('delete', url, data, **kwargs)
 
-    def new_chat(self, chat_type, users=(), app_id=None, biz_id=None, title=None, tag=None, ext=None):
+    def new_chat(self, chat_type, users=(), app_id=None, biz_id=None, start_msg_id=None, title=None, tag=None, ext=None):
         data = {'type': chat_type, 'users': users}
-        for k, v in {'app_id': app_id, 'biz_id': biz_id, 'title': title, 'tag': tag, 'ext': ext}.items():
+        for k, v in dict(app_id=app_id, biz_id=biz_id, start_msg_id=start_msg_id, title=title, tag=tag, ext=ext).items():
             if v is not None:
                 data[k] = v
 
@@ -173,6 +173,19 @@ class XChatClient(object):
         res = self._put(url, data)
         if res.is_success():
             return res.data['ok']
+
+    def insert_chat_msgs(self, chat_id, msgs=()):
+        """ 往会话前面插入消息
+        :param chat_id: 会话id
+        :param msgs: [{uid, msg, ts, domain}, ...]
+        :return: 是否成功，成功插入条数
+        """
+        data = {'msgs': msgs}
+        url = self._build_url(self.config.INSERT_CHAT_MESSAGES_PATH, dict(chat_id=chat_id))
+        res = self._post(url, data)
+        if res.is_success():
+            return res.data['ok'], res.data.get('n', 0)
+        raise RequestError(res.resp)
 
     def send_msg(self, kind, chat_id, user, msg, domain='', perm_check=False, msg_notify=False):
         data = {

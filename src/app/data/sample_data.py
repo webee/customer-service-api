@@ -3,6 +3,7 @@ test_projects_data = [
         "domain": "test",
         "type": "test",
         "biz_id": "t_0001",
+        "start_msg_id": 0,
         "owner": {
             "uid": "test",
             "name": "测试用户"
@@ -50,6 +51,7 @@ test_projects_data = [
         "domain": "test",
         "type": "test",
         "biz_id": "t_0002",
+        "start_msg_id": 0,
         "owner": {
             "uid": "u#002",
             "name": "用户002"

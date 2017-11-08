@@ -1,6 +1,7 @@
 from flask_restplus import fields
 from . import api
 from . import base_resource, raw_model, raw_specs
+from .customer import customer
 from .project_customers import project_customers
 from .project_staffs import project_staffs
 from .project_domain_type import project_type
@@ -19,6 +20,8 @@ _new_project_specs = raw_specs({
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
     'biz_id': fields.String(required=True, min_length=1, max_length=32),
+    'start_msg_id': fields.Integer(required=False, min=0),
+    'owner': fields.Nested(customer),
     'customers': fields.Nested(project_customers),
     'staffs': fields.Nested(project_staffs)
 })

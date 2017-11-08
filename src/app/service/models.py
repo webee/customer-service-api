@@ -224,6 +224,9 @@ class Project(BaseModel, app_resource('projects')):
     # 当前会话
     current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
     current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
+    # 起始消息id
+    # TODO: 迁移消息各发送消息一样，先发送到xchat，再同步到cs
+    start_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
@@ -268,6 +271,8 @@ class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
+    # 起始消息id
+    start_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     # 已接收最大消息id
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
@@ -411,7 +416,7 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     handler_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
     handler = db.relationship('Staff', lazy='joined', backref=db.backref('as_handler_sessions', lazy='dynamic'))
 
-    # 开始消息id
+    # 起始消息id, 不属于当前会话
     start_msg_id = db.Column(db.BigInteger, nullable=False)
     # 消息id, 0表示未指向任何消息
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
