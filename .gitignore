@@ -3,6 +3,9 @@ py[cod]
 __pycache__/
 venv/
 
+# log
+logs/
+
 # ide
 .idea/
 
