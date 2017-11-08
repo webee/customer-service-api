@@ -3,7 +3,7 @@ set -e
 set -x
 
 p=${1:-dev}
-u=${1:-$(whoami)}
+u=${2:-$(whoami)}
 
 db_name=cs_${p}
 sudo -u ${u} dropdb --if-exists ${db_name}
