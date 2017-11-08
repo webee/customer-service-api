@@ -3,10 +3,10 @@ from flask_restplus import Resource
 from .api import api
 from app.biz import app as biz
 from app.apis.jwt import current_application, require_app
-from app.apis.serializers import resource_id
 from app.apis.serializers.project import project, new_project
 from app.apis.serializers.project_customers import raw_project_customers
 from app.apis.serializers.project_staffs import raw_project_staffs
+from .serializers import new_project_result
 
 
 @api.route('/projects')
@@ -14,12 +14,14 @@ class ProjectCollection(Resource):
     """项目相关"""
     @require_app
     @api.expect(new_project)
-    @api.marshal_with(resource_id)
+    @api.marshal_with(new_project_result)
     def post(self):
         """创建项目"""
         app = current_application
         data = request.get_json()
         project = biz.create_project(app, data)
+        # FIXME: return project_id and xchat chat_id
+        # 给后端和app端两个选择，要么后端返回chat_id, 要么app使用project_id查询cs的接口获取chat_id
         return project, 201
 
 

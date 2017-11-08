@@ -15,6 +15,7 @@ def create_chat(project):
                                  users=users,
                                  app_id=XCHAT_APP_ID,
                                  biz_id=biz_id,
+                                 start_msg_id=project.start_msg_id,
                                  title=title,
                                  tag=XCHAT_CHAT_TAG
                                  )

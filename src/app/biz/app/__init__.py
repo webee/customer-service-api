@@ -24,6 +24,7 @@ def create_project(app, data):
         project.owner = app.create_or_update_customer(data['owner'])
         project.customers.update(data['customers'])
         project.staffs.update(data['staffs'])
+        # update xchat chat
         chat_id = xchat_biz.create_chat(project)
         assert chat_id == project.xchat.chat_id, 'chat_id should not change'
 
