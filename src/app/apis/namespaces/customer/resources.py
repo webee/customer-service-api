@@ -4,7 +4,8 @@ from .api import api
 from app import config
 from app.apis.jwt import current_customer, require_customer
 from app.biz import xchat as xchat_biz
-from app.service.models import Project
+from app.biz import app as app_biz
+from app.service.models import Project, UserType
 
 
 @api.route('/xchat')
@@ -45,3 +46,38 @@ class ProjectXChat(Resource):
 
         proj_xchat = proj.xchat
         return dict(chat_id=proj_xchat.chat_id)
+
+
+@api.route('/users/xchat/<string:xchat_uid>',
+           '/users/<string:user_type>/<string:uid>')
+class AppUser(Resource):
+    @require_customer
+    @api.response(404, 'app user not found.')
+    def get(self, user_type=None, uid=None, xchat_uid=None):
+        """获取用户基本信息"""
+        customer = current_customer
+        app = customer.app
+
+        if xchat_uid is not None:
+            ns, app_uid = xchat_biz.decode_ns_user(xchat_uid)
+            res, parts = app_biz.parse_app_uid(app_uid)
+            if res:
+                app_name, user_type, uid = parts
+                if app_name != app.name:
+                    return abort(404, 'app user not found')
+            else:
+                return abort(404, 'app user not found')
+
+        if user_type is not None:
+            if user_type == UserType.customer:
+                customer = app.customers.filter_by(uid=uid).one()
+                name = customer.name
+            elif user_type == UserType.staff:
+                staff = app.staffs.filter_by(uid=uid).one()
+                name = staff.name
+            else:
+                return abort(404, 'app user not found')
+        else:
+            return abort(404, 'app user not found')
+
+        return dict(user_type=user_type, uid=uid, name=name)

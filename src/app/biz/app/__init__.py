@@ -1,7 +1,10 @@
+import re
 from app import dbs
 from app.service.models import ProjectDomain, ProjectType
 from app.service.models import Project
 from app.biz import xchat as xchat_biz
+
+NS_PT = re.compile(r':')
 
 
 @dbs.transactional
@@ -31,3 +34,10 @@ def create_project(app, data):
     dbs.session.add(project)
 
     return project
+
+
+def parse_app_uid(app_uid):
+    parts = app_uid.split(':', 2)
+    if len(parts) == 3:
+        return True, parts
+    return False, parts

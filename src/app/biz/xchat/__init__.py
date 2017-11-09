@@ -3,7 +3,7 @@ import jwt
 from datetime import datetime
 from app import xchat_client
 from app import config
-from pytoolbox.jwt import encode_ns_user
+from pytoolbox.jwt import encode_ns_user, decode_ns_user
 from .constant import XCHAT_CHAT_TAG
 from .constant import CHAT_MSG_KIND, CHAT_NOTIFY_MSG_KIND, XCHAT_NS, XCHAT_APP_ID
 

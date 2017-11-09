@@ -24,5 +24,5 @@ class SessionSendMsg(Resource):
             abort(403, 'session is not active')
 
         data = request.get_json()
-        proj_biz.send_message(staff, session, data['domain'], data['type'], data['content'])
+        proj_biz.send_message(staff, session, data.get('domain', ''), data.get('type', ''), data['content'])
         return None, 204
