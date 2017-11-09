@@ -22,12 +22,9 @@ class AppToken(Resource):
         """生成app token"""
         return _token('app', request.get_json(), lambda app, data: app)
 
-
-@api.route('/refresh_app_token')
-class RefreshAppToken(Resource):
     @require_app
     @api.marshal_with(token_data)
-    def post(self):
+    def put(self):
         """刷新app token"""
         return dict(token=jwt.encode_token('app', current_application))
 
@@ -72,15 +69,12 @@ class CustomerToken(Resource):
         args = uid_args.parse_args()
         uid = args['uid']
         app = current_application
-        # TODO
-        pass
 
+        return dict(token=jwt.encode_token('customer', app.customers.filter_by(uid=uid).one_or_none()))
 
-@api.route('/refresh_customer_token')
-class RefreshCustomerToken(Resource):
     @require_customer
     @api.marshal_with(token_data)
-    def post(self):
+    def put(self):
         """刷新customer token"""
         return dict(token=jwt.encode_token('customer', current_customer))
 
@@ -103,14 +97,11 @@ class StaffToken(Resource):
         args = uid_args.parse_args()
         uid = args['uid']
         app = current_application
-        # TODO
-        pass
 
+        return dict(token=jwt.encode_token('staff', app.staffs.filter_by(uid=uid).one_or_none()))
 
-@api.route('/refresh_staff_token')
-class RefreshStaffToken(Resource):
     @require_staff
     @api.marshal_with(token_data)
-    def post(self):
+    def put(self):
         """刷新staff token"""
         return dict(token=jwt.encode_token('staff', current_staff))

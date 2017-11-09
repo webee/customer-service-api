@@ -14,7 +14,7 @@ authorizations = {
     for role in ['app', 'customer', 'staff']
 }
 api = Api(blueprint, version='1.0', doc='/',
-          title='客服系统API', description='包括后端、App端和客服端',
+          title='客服系统API', description='包括应用后端、客户端和客服端',
           authorizations=authorizations)
 
 
