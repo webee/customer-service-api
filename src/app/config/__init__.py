@@ -36,6 +36,8 @@ class App:
 class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=15)
 
+    USER_ONLINE_DELTA = timedelta(minutes=3)
+
 
 class XChat:
     KEY = 'demo app cs key.'

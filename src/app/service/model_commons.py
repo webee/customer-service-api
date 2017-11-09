@@ -1,4 +1,5 @@
-from app import db, dbs
+import arrow
+from app import db, dbs, config
 from pytoolbox.util.py import classproperty
 from sqlalchemy.ext.declarative import declared_attr
 
@@ -85,3 +86,17 @@ def session_resource(name, backref_uselist=False, backref_lazy=None):
             return relationship('Session', name, cls.session_id, backref_uselist, backref_lazy)
 
     return SessionResource
+
+
+class WithOnlineModel(object):
+    # TODO:
+    # 是否在线
+    # TODO: Project是否在线, 相关的customers上线时更新这里：只要有一个在线则在线，所有都不在线才不在线
+    online = db.Column(db.Boolean, default=False)
+    # 上次在线通知时间
+    last_online_ts = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
+
+    @property
+    def is_online(self):
+        return self.online and\
+               self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) < config.Biz.USER_ONLINE_DELTA

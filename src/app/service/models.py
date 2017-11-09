@@ -1,6 +1,7 @@
 from sqlalchemy import desc
 from app import db, dbs, bcrypt
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
+from .model_commons import WithOnlineModel
 from . import constant
 
 
@@ -118,14 +119,14 @@ class AppConfigs(BaseModel, app_resource('configs', backref_uselist=False, backr
         return "<AppConfigs: {}>".format(self.app.name)
 
 
-class Customer(BaseModel, app_user(UserType.customer, 'customers')):
+class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineModel):
     """客户"""
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
 
 
-class Staff(BaseModel, app_user(UserType.staff, 'staffs')):
+class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     """客服"""
 
     def __repr__(self):
@@ -197,7 +198,7 @@ class ProjectTypeConfigs(BaseModel):
     __tablename__ = 'project_type_configs'
 
 
-class Project(BaseModel, app_resource('projects')):
+class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     """表示一个客服项目"""
     __tablename__ = 'project'
 
