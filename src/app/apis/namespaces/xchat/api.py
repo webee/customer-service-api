@@ -1,3 +1,3 @@
 from flask_restplus import Namespace
 
-api = Namespace('xchat', description='XChat相关apis')
+api = Namespace('XChat', description='XChat相关接口')

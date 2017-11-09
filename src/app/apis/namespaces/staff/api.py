@@ -1,3 +1,3 @@
 from flask_restplus import Namespace
 
-api = Namespace('staff', description='客服端apis')
+api = Namespace('staff', description='客服端接口')
