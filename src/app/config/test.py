@@ -6,6 +6,7 @@ class App:
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs_dev:cs1234@localhost/cs_test'
+    SQLALCHEMY_ECHO = False
 
 
 class Biz:

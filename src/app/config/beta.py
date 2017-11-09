@@ -4,6 +4,7 @@ from datetime import timedelta
 class App:
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs_dev:cs1234@localhost/cs_beta'
+    SQLALCHEMY_ECHO = False
 
 
 class Biz:
