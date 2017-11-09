@@ -18,13 +18,14 @@ api = Api(blueprint, version='1.0', doc='/',
           authorizations=authorizations)
 
 
-def init_api():
+def init_api(app):
     # jwt
     from . import jwt
 
     # add namespaces
-    from .namespaces.bucket.api import api as bucket_api
-    api.add_namespace(bucket_api, path='/buckets')
+    if app.debug:
+        from .namespaces.bucket.api import api as bucket_api
+        api.add_namespace(bucket_api, path='/buckets')
 
     from .namespaces.auth.api import api as auth_api
     api.add_namespace(auth_api, path='/auth')

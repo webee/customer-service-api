@@ -3,9 +3,9 @@ from datetime import timedelta
 
 
 class App:
-    SECRET_KEY = os.getenv('SECRET_KEY')
     DEBUG = False
-    TESTING = False
+
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
     # sqlalchemy
     # FIXME: load from config file

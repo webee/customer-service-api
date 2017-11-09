@@ -1,2 +1,3 @@
+
 class App:
-    DEBUG = True
+    pass

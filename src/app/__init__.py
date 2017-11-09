@@ -59,7 +59,7 @@ def init_tasks(app):
 def register_mods(app):
     from .apis import init_api, blueprint as api
 
-    init_api()
+    init_api(app)
     app.register_blueprint(api, url_prefix='/api')
 
 
@@ -68,7 +68,8 @@ def init_extensions(app):
     jwt.init_app(app)
 
     # db
-    from .service import test_models
+    if app.debug:
+        from .service import test_models
     from .service import models
 
     db.init_app(app)

@@ -6,9 +6,10 @@ root = get_project_root()
 
 
 class App:
-    SECRET_KEY = os.getenv('SECRET_KEY') or '.yek tset'
     TESTING = False
     DEBUG = True
+
+    SECRET_KEY = os.getenv('SECRET_KEY') or '.yek tset'
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs_dev:cs1234@localhost/cs_dev'
