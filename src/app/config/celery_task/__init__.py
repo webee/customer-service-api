@@ -2,7 +2,7 @@ from kombu import Queue, Exchange
 from datetime import timedelta
 
 
-broker_url = 'redis://127.0.0.1:6379/7'
+broker_url = 'redis://127.0.0.1:6379/13'
 result_backend = 'rpc://'
 result_serializer = 'pickle'
 accept_content = ['json', 'pickle']
