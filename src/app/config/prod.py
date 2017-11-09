@@ -16,3 +16,14 @@ class App:
 
 class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(hours=24)
+
+
+class XChat:
+    # TODO:
+    # KEY = 'demo app cs key.'
+
+    WS_URL = 'wss://xchat.qinqinxiaobao.com/ws'
+
+
+class XChatClient:
+    ROOT_URL = "http://l-xchat.com"

@@ -84,7 +84,7 @@ def init_extensions(app):
 
     # xchat client
     from . import config
-    xchat_client.init_config(config.XChatClient)
+    xchat_client.init_config(config.App.NAME, config.XChat.KEY, config.XChatClient)
 
 
 def init_errors(app):

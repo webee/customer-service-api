@@ -44,7 +44,9 @@ class RequestFailedError(Exception):
 class XChatClient(object):
     constant = constant
 
-    def __init__(self, env_config=None):
+    def __init__(self, ns='', key='<jwt key>', env_config=None):
+        self.ns = ns
+        self.key = key
         self.config = Config()
         self._token = None
         self._token_exp = None
@@ -53,18 +55,20 @@ class XChatClient(object):
         if env_config is not None:
             self.init_config(env_config)
 
-    def init_config(self, env_config):
+    def init_config(self, ns, key, env_config):
+        self.ns = ns
+        self.key = key
         pmc_config.merge_config(self.config, env_config)
 
     def _new_token(self):
         exp = datetime.utcnow() + timedelta(days=30)
         payload = dict(
-            ns=self.config.NS,
+            ns=self.ns,
             is_admin=True,
             exp=exp
         )
 
-        return jwt.encode(payload, self.config.KEY).decode('utf-8'), exp
+        return jwt.encode(payload, self.key).decode('utf-8'), exp
 
     def _is_current_token_valid(self):
         return self._token and self._token_exp > datetime.utcnow() + timedelta(minutes=30)

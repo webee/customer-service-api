@@ -36,6 +36,9 @@ def init_api(app):
     from .namespaces.staff.api import api as staff_api
     api.add_namespace(staff_api, path='/staff')
 
+    from .namespaces.customer.api import api as customer_api
+    api.add_namespace(customer_api, path='/customer')
+
     from .namespaces.xchat.api import api as xchat_api
     api.add_namespace(xchat_api, path='/xchat')
 

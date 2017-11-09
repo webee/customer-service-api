@@ -6,6 +6,8 @@ root = get_project_root()
 
 
 class App:
+    NAME = 'cs'
+
     TESTING = False
     DEBUG = True
 
@@ -35,10 +37,13 @@ class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=15)
 
 
-class XChatClient:
-    NS = 'cs'
+class XChat:
     KEY = 'demo app cs key.'
+    DEFAULT_JWT_EXP_DELTA = timedelta(days=30)
+    WS_URL = 'ws://local.xchat.com/ws'
 
+
+class XChatClient:
     ROOT_URL = "http://local.xchat.com"
 
 

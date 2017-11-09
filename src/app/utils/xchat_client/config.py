@@ -1,8 +1,5 @@
 
 class Config:
-    NS = ''
-    KEY = ''
-
     ROOT_URL = "https://xchat.qinqinxiaobao.com"
 
     CHATS_PATH = "/api/chats/"

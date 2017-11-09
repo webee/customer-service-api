@@ -1,5 +1,9 @@
 import logging
+import jwt
+from datetime import datetime
 from app import xchat_client
+from app import config
+from pytoolbox.jwt import encode_ns_user
 from .constant import XCHAT_CHAT_TAG
 from .constant import CHAT_MSG_KIND, CHAT_NOTIFY_MSG_KIND, XCHAT_NS, XCHAT_APP_ID
 
@@ -19,3 +23,15 @@ def create_chat(project):
                                  title=title,
                                  tag=XCHAT_CHAT_TAG
                                  )
+
+
+def new_user_jwt(ns, name, exp_delta):
+    exp = datetime.utcnow() + exp_delta
+    payload = dict(
+        ns=ns,
+        name=name,
+        username=encode_ns_user(ns, name),
+        exp=exp
+    )
+
+    return jwt.encode(payload, config.XChat.KEY).decode('utf-8'), exp.timestamp()

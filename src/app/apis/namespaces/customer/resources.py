@@ -1,0 +1,47 @@
+from flask import request
+from flask_restplus import Resource, abort
+from .api import api
+from app import config
+from app.apis.jwt import current_customer, require_customer
+from app.biz import xchat as xchat_biz
+from app.service.models import Project
+
+
+@api.route('/xchat')
+class XChat(Resource):
+    @require_customer
+    def get(self):
+        """获取xchat信息"""
+        customer = current_customer
+        ns = config.App.NAME
+        name = customer.app_uid
+        token, exp = xchat_biz.new_user_jwt(ns, name, config.XChat.DEFAULT_JWT_EXP_DELTA)
+        return dict(ns=ns, app=customer.app.name,
+                    name=name, username=xchat_biz.encode_ns_user(ns, name),
+                    token=token, exp=exp,
+                    ws_url=config.XChat.WS_URL)
+
+
+@api.route('/projects/<int:id>/xchat',
+           '/projects/<string:domain_name>/<string:type_name>/<string:biz_id>/xchat')
+class ProjectXChat(Resource):
+    @require_customer
+    @api.response(404, 'project not found.')
+    def get(self, id=None, domain_name=None, type_name=None, biz_id=None):
+        """获取project的xchat信息"""
+        customer = current_customer
+        app = customer.app
+
+        if id is not None:
+            pcs = customer.as_party_projects.filter_by(project_id=id).one()
+            proj = pcs.project
+        elif domain_name is not None:
+            pd = app.project_domains.filter_by(name=domain_name).one()
+            pt = pd.types.filter_by(name=type_name).one()
+            pcs = customer.as_party_projects.filter(Project.type_id == pt.id, Project.biz_id == biz_id).one()
+            proj = pcs.project
+        else:
+            return abort(404, 'project not found')
+
+        proj_xchat = proj.xchat
+        return dict(chat_id=proj_xchat.chat_id)
