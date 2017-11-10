@@ -1,6 +1,7 @@
 import re
+from sqlalchemy.orm.exc import NoResultFound
 from app import dbs
-from app.service.models import ProjectDomain, ProjectType
+from app.errors import BizError
 from app.service.models import Project
 from app.biz import xchat as xchat_biz
 
@@ -9,8 +10,11 @@ NS_PT = re.compile(r':')
 
 @dbs.transactional
 def create_project(app, data):
-    project_domain = app.project_domains.filter_by(name=data['domain']).one()
-    project_type = project_domain.types.filter_by(name=data['type']).one()
+    try:
+        project_domain = app.project_domains.filter_by(name=data['domain']).one()
+        project_type = project_domain.types.filter_by(name=data['type']).one()
+    except NoResultFound:
+        raise BizError('project domain/type not exists', dict(domain=data['domain'], type=data['type']), 400)
 
     biz_id = data['biz_id']
     start_msg_id = data.get('start_msg_id', 0)

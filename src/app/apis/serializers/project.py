@@ -10,6 +10,7 @@ from .project_domain_type import project_type
 _project_specs = {
     'type': fields.Nested(project_type),
     'biz_id': fields.String(),
+    'owner': fields.Nested(customer),
     'customers': fields.Nested(project_customers),
     'staffs': fields.Nested(project_staffs)
 }
