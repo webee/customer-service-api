@@ -3,6 +3,7 @@ import jwt
 from datetime import datetime
 from app import xchat_client
 from app import config
+from app.task import tasks
 from pytoolbox.jwt import encode_ns_user, decode_ns_user
 from .constant import XCHAT_CHAT_TAG
 from .constant import CHAT_MSG_KIND, CHAT_NOTIFY_MSG_KIND, XCHAT_NS, XCHAT_APP_ID
@@ -23,6 +24,19 @@ def create_chat(project):
                                  title=title,
                                  tag=XCHAT_CHAT_TAG
                                  )
+
+
+def handle_msg_notify(msg):
+    kind = msg['kind']
+    if kind == 'chat':
+        tasks.sync_xchat_msgs.delay(msg)
+    elif kind == 'chat_notify':
+        tasks.notify_xchat_msgs.delay(msg)
+
+
+def handle_user_statuses(user_statuses):
+    # TODO: 处理用户状态通知
+    pass
 
 
 def new_user_jwt(ns, name, exp_delta):

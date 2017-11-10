@@ -69,6 +69,9 @@ class IsProjectItemExists(Resource):
 
         return dict(is_exists=is_exists)
 
+# TODO:
+# 添加app user的信息(手机号，邮箱，性别，年龄等)
+
 
 @api.route('/projects/<int:id>/data/meta')
 class ProjectMetaData(Resource):
