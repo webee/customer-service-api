@@ -27,6 +27,9 @@ def init_api(app):
         from .namespaces.bucket.api import api as bucket_api
         api.add_namespace(bucket_api, path='/buckets')
 
+        from .namespaces.test.api import api as test_api
+        api.add_namespace(test_api, path='/test')
+
     from .namespaces.auth.api import api as auth_api
     api.add_namespace(auth_api, path='/auth')
 

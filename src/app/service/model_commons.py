@@ -21,16 +21,19 @@ def foreign_key(key, backref_uselist=False, index=True):
     return db.Column(db.BigInteger, db.ForeignKey(key), index=index, nullable=False, unique=not backref_uselist)
 
 
-def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None):
+def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None, backref_cascade=None):
     backref_kwargs = dict(uselist=backref_uselist)
     if backref_uselist:
         backref_kwargs['lazy'] = 'dynamic'
     elif backref_lazy:
         backref_kwargs['lazy'] = backref_lazy
+
+    if backref_cascade is not None:
+        backref_kwargs['cascade'] = backref_cascade
     return db.relationship(rel, lazy='joined', foreign_keys=foreign_keys, backref=db.backref(name, **backref_kwargs))
 
 
-def app_resource(name, backref_uselist=True, backref_lazy=None):
+def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=None):
     class AppResource(object):
         """属于app的资源"""
         @declared_attr
@@ -39,7 +42,7 @@ def app_resource(name, backref_uselist=True, backref_lazy=None):
 
         @declared_attr
         def app(cls):
-            return relationship('App', name, cls.app_id, backref_uselist, backref_lazy)
+            return relationship('App', name, cls.app_id, backref_uselist, backref_lazy, backref_cascade)
 
     return AppResource
 
@@ -60,7 +63,7 @@ def app_user(user_type, resource_name):
     return AppUser
 
 
-def project_resource(name, backref_uselist=False, backref_lazy=None):
+def project_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None):
     class ProjectResource(object):
         """属于project的资源"""
         @declared_attr
@@ -69,12 +72,12 @@ def project_resource(name, backref_uselist=False, backref_lazy=None):
 
         @declared_attr
         def project(cls):
-            return relationship('Project', name, cls.project_id, backref_uselist, backref_lazy)
+            return relationship('Project', name, cls.project_id, backref_uselist, backref_lazy, backref_cascade)
 
     return ProjectResource
 
 
-def session_resource(name, backref_uselist=False, backref_lazy=None):
+def session_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None):
     class SessionResource(object):
         """属于session的资源"""
         @declared_attr
@@ -83,7 +86,7 @@ def session_resource(name, backref_uselist=False, backref_lazy=None):
 
         @declared_attr
         def session(cls):
-            return relationship('Session', name, cls.session_id, backref_uselist, backref_lazy)
+            return relationship('Session', name, cls.session_id, backref_uselist, backref_lazy, backref_cascade)
 
     return SessionResource
 
@@ -100,3 +103,13 @@ class WithOnlineModel(object):
     def is_online(self):
         return self.online and\
                self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) < config.Biz.USER_ONLINE_DELTA
+
+
+class GenericDataItem(object):
+    key = db.Column(db.String(32), nullable=False)
+    # 类型信息, 可以是复杂的json object描述
+    type = db.Column(db.String(256), nullable=True, default=None)
+    value = db.Column(db.Text, nullable=False)
+    label = db.Column(db.String(16), nullable=False)
+    # 显示次序
+    index = db.Column(db.Integer, nullable=True, default=None, index=True)

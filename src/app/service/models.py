@@ -2,6 +2,7 @@ from sqlalchemy import desc
 from app import db, dbs, bcrypt
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
+from .model_commons import GenericDataItem
 from . import constant
 
 
@@ -71,24 +72,6 @@ class App(BaseModel):
 
         return staff
 
-    def create_or_update_customer(self, data):
-        uid = data.get('uid')
-        name = data.get('name')
-        return self.create_customer(uid, name)
-
-    @dbs.transactional
-    def create_or_update_customers(self, customers_data):
-        return [self.create_or_update_customer(customer) for customer in customers_data]
-
-    def create_or_update_staff(self, data):
-        uid = data.get('uid')
-        name = data.get('name')
-        return self.create_staff(uid, name)
-
-    @dbs.transactional
-    def create_or_update_staffs(self, staffs_data):
-        return [self.create_or_update_staff(staff) for staff in staffs_data]
-
     @dbs.transactional
     def create_project_domain(self, name, title, desc):
         project_domain = ProjectDomain(app=self, name=name, title=title, desc=desc)
@@ -140,7 +123,7 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
         return self.as_handler_sessions.filter_by(id=session_id).one_or_none()
 
 
-class ProjectDomain(BaseModel, app_resource('project_domains')):
+class ProjectDomain(BaseModel, app_resource('project_domains', backref_cascade="all, delete-orphan")):
     """项目域"""
     __tablename__ = 'project_domain'
 
@@ -170,7 +153,7 @@ class ProjectDomain(BaseModel, app_resource('project_domains')):
         return project_type
 
 
-class ProjectType(BaseModel, app_resource('project_types')):
+class ProjectType(BaseModel, app_resource('project_types', backref_cascade="all, delete-orphan")):
     """项目类型"""
     __tablename__ = 'project_type'
 
@@ -239,26 +222,16 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     def xchat_biz_id(self):
         return '%s:%s' % (constant.XCHAT_DOMAIN, self.app_biz_id)
 
+    @property
+    def ordered_meta_data(self):
+        return self.meta_data.order_by(ProjectMetaData.index, ProjectMetaData.id)
+
+    @property
+    def ordered_ext_data(self):
+        return self.ext_data.order_by(ProjectExtData.index, ProjectExtData.id)
+
     def __repr__(self):
         return "<Project: {}>".format(self.app_biz_id)
-
-    # biz
-    @dbs.transactional
-    def create_customers(self, data):
-        pc = ProjectCustomers(project=self, parties=self.app.create_or_update_customers(data['parties']))
-        dbs.session.add(pc)
-
-        return pc
-
-    @dbs.transactional
-    def create_staffs(self, data):
-        leader = self.app.create_or_update_staff(data['leader'])
-        assistants = self.app.create_or_update_staffs(data['assistants'])
-        participants = self.app.create_or_update_staffs(data['participants'])
-        ps = ProjectStaffs(project=self, leader=leader, assistants=assistants, participants=participants)
-        dbs.session.add(ps)
-
-        return ps
 
     @dbs.transactional
     def create_xchat(self, chat_id):
@@ -266,6 +239,20 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
         dbs.session.add(xchat)
 
         return xchat
+
+    @dbs.transactional
+    def create_meta_data_item(self, key, type, value, label, index):
+        meta_data_item = self.meta_data.filter_by(key=key).one_or_none()
+        if meta_data_item is None:
+            meta_data_item = ProjectMetaData(project=self, key=key)
+        meta_data_item.type = type or meta_data_item.type
+        meta_data_item.value = value or meta_data_item.value
+        meta_data_item.label = label or meta_data_item.lable
+        meta_data_item.index = index or meta_data_item.index
+
+        dbs.session.add(meta_data_item)
+
+        return meta_data_item
 
 
 class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
@@ -349,13 +336,6 @@ class ProjectCustomers(BaseModel, project_resource('customers')):
     parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined',
                               backref=db.backref('as_party_projects', lazy='dynamic'))
 
-    @dbs.transactional
-    def update(self, data):
-        app = self.project.app
-        self.parties = app.create_or_update_customers(data['parties'])
-
-        dbs.session.add(self)
-
 
 class ProjectStaffs(BaseModel, project_resource('staffs')):
     """项目相关客服"""
@@ -372,30 +352,27 @@ class ProjectStaffs(BaseModel, project_resource('staffs')):
     participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined',
                                    backref=db.backref('as_participant_projects', lazy='dynamic'))
 
-    @dbs.transactional
-    def update(self, data):
-        app = self.project.app
-        self.leader = app.create_or_update_staff(data['leader'])
-        self.assistants = app.create_or_update_staffs(data['assistants'])
-        self.participants = app.create_or_update_staffs(data['participants'])
 
-        dbs.session.add(self)
-
-
-class ProjectMetaData(BaseModel, project_resource('meta_data')):
+class ProjectMetaData(BaseModel, GenericDataItem, project_resource('meta_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
     """项目元数据: 作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_meta_data'
 
-    # TODO: 怎么组织数据？
-    pass
+    # project_id, key唯一
+    __table_args__ = (db.UniqueConstraint('project_id', 'key', name='uniq_project_meta_data_key'),)
+
+    def __repr__(self):
+        return "<ProjectMetaData: {}({})>".format(self.key, self.label)
 
 
-class ProjectExtData(BaseModel, project_resource('ext_data')):
+class ProjectExtData(BaseModel, GenericDataItem, project_resource('ext_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
     """项目扩展数据：作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_ext_data'
 
-    # TODO: 怎么组织数据？
-    pass
+    # project_id, key唯一
+    __table_args__ = (db.UniqueConstraint('project_id', 'key', name='uniq_project_ext_data_key'),)
+
+    def __repr__(self):
+        return "<ProjectExtData: {}({})>".format(self.key, self.label)
 
 
 class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
