@@ -52,6 +52,10 @@ def create_project(app, data):
     return project
 
 
+def create_or_update_project_meta_data(proj, data):
+    proj_m.create_or_update_meta_data(proj, data)
+
+
 def parse_app_uid(app_uid):
     parts = app_uid.split(':', 2)
     if len(parts) == 3:

@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import desc
 from app import db, dbs, bcrypt
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
@@ -224,7 +225,10 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
 
     @property
     def ordered_meta_data(self):
-        return self.meta_data.order_by(ProjectMetaData.index, ProjectMetaData.id)
+        return [dict(key=item.key,
+                     type=json.loads(item.type),
+                     value=json.loads(item.value),
+                     label=item.label) for item in self.meta_data.order_by(ProjectMetaData.index, ProjectMetaData.id)]
 
     @property
     def ordered_ext_data(self):
