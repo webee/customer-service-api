@@ -9,3 +9,20 @@ _new_message = {
 }
 
 new_message = api.model('New Message', _new_message)
+
+
+message = api.model('Message Result', {
+    'channel': fields.String(),
+    'user_type': fields.String(),
+    'user_id': fields.String(),
+    'msg_id': fields.Integer(),
+    'domain': fields.String(),
+    'type': fields.String(),
+    'content': fields.String(),
+    'ts': fields.Float(attribute=lambda msg: msg.ts.timestamp()),
+})
+
+fetch_msgs_result = api.model('Fetch Msgs Result', {
+    'msgs': fields.List(fields.Nested(message)),
+    'has_more': fields.Boolean(description='is has more msgs?'),
+})
