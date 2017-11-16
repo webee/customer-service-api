@@ -5,7 +5,7 @@ from sqlalchemy import desc as order_desc
 from .utils import TypeMsgPacker
 from .ds import parse_xchat_msg_from_data, XChatMessage, MessageData
 from app.task import tasks
-from app.service.models import Message
+from app.service.models import Message, Session
 
 
 MAX_MSGS_FETCH_SIZE = 3000;
@@ -25,6 +25,15 @@ def send_message(staff, session, domain, type, content):
     msg_data = dict(chat_id=chat_id, id=id, ts=ts, user='cs:%s' % user, msg=msg, domain=domain)
     # send celery task request
     tasks.sync_xchat_msgs.delay(msg_data)
+
+
+@dbs.transactional
+def sync_session_msg_id(staff, session, msg_id):
+    Session.query.filter_by(id=session.id)\
+        .filter(Session.handler_id == staff.id,
+                Session.is_active == True,
+                Session.msg_id >= msg_id,
+                Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
 
 
 def fetch_session_msgs(session, lid=None, rid=None, limit=None, desc=None):
