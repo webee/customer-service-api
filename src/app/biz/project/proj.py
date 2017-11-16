@@ -18,7 +18,8 @@ def try_open_session(proj_id):
         last_session = proj.last_session
         if last_session is None or arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
             # 没有上次session或者已经超过存活时间
-            proj.current_session = Session(project=proj, handler=proj.staffs.leader, start_msg_id=proj.msg_id)
+            proj.current_session = Session(project=proj, handler=proj.staffs.leader,
+                                           start_msg_id=proj.msg_id, sync_msg_id=proj.msg_id)
 
             dbs.session.add(proj)
         else:
