@@ -402,6 +402,7 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     start_msg_id = db.Column(db.BigInteger, nullable=False)
     # 消息id, 0表示未指向任何消息
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
+    msg = db.relationship('Message', foreign_keys=msg_id, primaryjoin="Session.msg_id == Message.msg_id", lazy='joined')
 
     # 已经同步的消息id(已读id)
     sync_msg_id = db.Column(db.BigInteger, nullable=False, default=0)

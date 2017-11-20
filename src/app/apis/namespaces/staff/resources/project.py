@@ -18,14 +18,4 @@ class MyHandlingSessions(Resource):
         project_domain = app.project_domains.filter_by(name=domain_name).one()
         project_type = project_domain.types.filter_by(name=type_name).one()
 
-        sessions = staff.handling_sessions.filter(Project.type == project_type)
-        res = []
-        for session in sessions:
-            project = session.project
-            res.append(dict(
-                id=session.id,
-                owner=project.owner.name,
-                updated=session.updated
-            ))
-
-        return res
+        return staff.handling_sessions.filter(Project.type == project_type).all()

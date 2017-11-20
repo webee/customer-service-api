@@ -5,6 +5,7 @@ venv/
 
 # log
 logs/
+!.gitkeep
 
 # ide
 .idea/

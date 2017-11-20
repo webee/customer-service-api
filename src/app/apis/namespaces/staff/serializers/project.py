@@ -1,11 +1,20 @@
 from flask_restplus import fields
 from app.apis import api
+from .session import message
 
 
-_handling_session_item_specs = {
-    'id': fields.Integer(readonly=True, description='session id'),
-    'owner': fields.String(readonly=True),
-    'updated': fields.DateTime(readonly=True, description='updated time')
-}
+app_user = api.model('App User', {
+    'uid': fields.String(),
+    'name': fields.String(),
+})
 
-handling_session_item = api.model('Handling Session Item', _handling_session_item_specs)
+
+handling_session_item = api.model('Handling Session Item', {
+    'id': fields.Integer(description='session id'),
+    'proj_id': fields.Integer(attribute=lambda s: s.project.id),
+    'is_online': fields.Boolean(attribute=lambda s: s.project.is_online),
+    'owner': fields.Nested(app_user, attribute=lambda s: s.project.owner),
+    'msg_id': fields.Integer(description='last msg id'),
+    'msg': fields.Nested(message, allow_null=True, description='last msg'),
+    'sync_msg_id': fields.Integer(),
+})
