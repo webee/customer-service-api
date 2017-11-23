@@ -1,3 +1,4 @@
+import json
 from flask_restplus import Resource, abort
 from app import errors
 from app.errors import BizError
@@ -7,7 +8,7 @@ from .api import api
 @api.route('/')
 class Test(Resource):
     def get(self):
-        return dict(test='OK', ns='test', path='/')
+        return dict(test='OK', ns='test', path='/'), 200, {'cs-api-xxx': json.dumps(dict(ns='test', path='/'))}
 
 
 @api.route('/abort')

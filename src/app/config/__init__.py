@@ -30,6 +30,8 @@ class App:
     ERROR_404_HELP = False
     RESTPLUS_VALIDATE = True
     RESTPLUS_MASK_SWAGGER = False
+    # json.dumps参数
+    RESTPLUS_JSON = {}
     SWAGGER_UI_JSONEDITOR = False
 
 
