@@ -1,6 +1,9 @@
 import logging
 from flask_restplus import Api
 from flask import Blueprint
+from app.errors import BizError, biz_error_handler
+from sqlalchemy.orm.exc import NoResultFound
+from app.errors import db_not_found_error_handler
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,11 @@ authorizations = {
 api = Api(blueprint, version='1.0', doc='/',
           title='客服系统API', description='包括应用后端、客户端和客服端',
           authorizations=authorizations)
+
+
+# error handlers
+api.errorhandler(BizError)(biz_error_handler)
+api.errorhandler(NoResultFound)(db_not_found_error_handler)
 
 
 def init_api(app):
@@ -44,11 +52,3 @@ def init_api(app):
 
     from .namespaces.xchat.api import api as xchat_api
     api.add_namespace(xchat_api, path='/xchat')
-
-    # error handlers
-    from app.errors import BizError, biz_error_handler
-    from sqlalchemy.orm.exc import NoResultFound
-    from app.errors import db_not_found_error_handler
-
-    api.errorhandler(BizError)(biz_error_handler)
-    api.errorhandler(NoResultFound)(db_not_found_error_handler)

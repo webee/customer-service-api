@@ -18,7 +18,7 @@ class BizError(Exception):
         self.details = details
         self.status_code = status_code
         self.code = code or status_code
-        self.headers = headers
+        self.headers = headers or {}
 
     def __repr__(self):
         return 'BizError: %s' % self.msg

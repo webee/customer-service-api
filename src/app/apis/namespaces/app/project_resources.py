@@ -17,6 +17,7 @@ class ProjectCollection(Resource):
     @require_app
     @api.expect(new_project)
     @api.marshal_with(new_project_result)
+    @api.response(201, 'project is created')
     def post(self):
         """创建项目"""
         app = current_application
