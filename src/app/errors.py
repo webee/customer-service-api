@@ -5,33 +5,49 @@ logger = logging.getLogger(__name__)
 
 
 class BizError(Exception):
-    def __init__(self, msg, details, status_code, code=None, headers=None):
+    def __init__(self, code, description, details, status_code=409, headers=None):
         """
         业务异常
         :param msg: 错误信息
         :param details: 错误详情
-        :param status_code: http response status code
         :param code: 错误码
+        :param status_code: http response status code
         :param headers: http response headers
         """
-        self.msg = msg
+        self.code = code
+        self.message = _ERROR_MSGS.get(code)
+        self.description = description
         self.details = details
         self.status_code = status_code
-        self.code = code or status_code
         self.headers = headers or {}
 
     def __repr__(self):
-        return 'BizError: %s' % self.msg
+        return 'BizError<%s, %s, %s>' % (self.code, self.message, self.description)
 
     def __str__(self):
-        return '%s. %s' % (self.msg, self.details)
+        return 'BizError<%s, %s, %s>' % (self.code, self.message, self.description)
 
 
-def biz_error_handler(err):
+def biz_error_handler(err: BizError):
     logger.error(traceback.format_exc())
-    return dict(message=err.msg, code=err.code, details=err.details), err.status_code, err.headers
+    return dict(code=err.code, message=err.message, description=err.description, details=err.details), err.status_code, err.headers
 
 
 def db_not_found_error_handler(err):
     logger.warning(traceback.format_exc())
     return dict(message='item not found'), 404
+
+
+# error msgs and code
+_ERROR_MSGS = {
+}
+
+
+def with_error_msg(code, msg):
+    _ERROR_MSGS[code] = msg
+    return code
+
+
+# codes
+ERR_ITEM_NOT_FOUND = with_error_msg(1000001, 'item not found')
+ERR_XXX = with_error_msg(999999, 'xxx')
