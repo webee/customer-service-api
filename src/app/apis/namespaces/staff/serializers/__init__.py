@@ -23,10 +23,10 @@ _app_project_domain_type_tree_specs = {
 app_project_domain_type_tree = api.model('App Project Domain Type Tree', _app_project_domain_type_tree_specs)
 
 
-_staff_app_tree_specs = {
+_staff_app_info_specs = {
     'staff': fields.Nested(raw_staff, attribute=lambda staff: staff),
     'app': fields.Nested(application),
     'project_domains': fields.List(fields.Nested(raw_project_domain_tree), attribute="app.ordered_project_domains")
 }
 
-staff_app_tree = api.model('Staff App Tree', _staff_app_tree_specs)
+staff_app_info = api.model('Staff App Info', _staff_app_info_specs)
