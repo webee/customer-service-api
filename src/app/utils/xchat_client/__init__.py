@@ -217,6 +217,23 @@ class XChatClient(object):
     def send_chat_notify_msg(self, chat_id, user, msg, domain='', perm_check=False, msg_notify=False):
         return self.send_msg('chat_notify', chat_id, user, msg, domain, perm_check, msg_notify)
 
+    def send_user_notify(self, to_user, msg, domain='', user='', perm_check=False):
+        data = {
+            'user': user,
+            'to_user': to_user,
+            'domain': domain,
+            'msg': msg,
+            'perm_check': perm_check,
+        }
+        url = self._build_url(self.config.SEND_USER_NOTIFY_PATH)
+        res = self._post(url, data)
+        if res.is_success():
+            ok = res.data['ok']
+            if ok:
+                return res.data['ts']
+            raise RequestFailedError(res.data['error'])
+        raise RequestError(res.resp)
+
     def fetch_chat_msgs(self, chat_id, lid=None, rid=None, limit=None, desc=None):
         url = self._build_url(self.config.FETCH_CHAT_MSGS_PATH, dict(chat_id=chat_id),
                               lid=lid, rid=rid, limit=limit, desc=desc)
