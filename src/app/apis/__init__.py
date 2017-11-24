@@ -27,6 +27,10 @@ api.errorhandler(NoResultFound)(db_not_found_error_handler)
 
 
 def init_api(app):
+    # middleware
+    if app.debug:
+        from . import debug_middleware
+
     # jwt
     from . import jwt
 
