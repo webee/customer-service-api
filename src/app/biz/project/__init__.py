@@ -35,7 +35,7 @@ def sync_session_msg_id(staff, session, msg_id):
                 Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
 
 
-def fetch_session_msgs(session, lid=None, rid=None, limit=None, desc=None):
+def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     if lid is None:
         lid = 0
         if desc is None:
@@ -62,7 +62,7 @@ def fetch_session_msgs(session, lid=None, rid=None, limit=None, desc=None):
     elif limit > MAX_MSGS_FETCH_SIZE:
         limit = MAX_MSGS_FETCH_SIZE
 
-    q = session.messages.filter(Message.msg_id > lid)
+    q = project.messages.filter(Message.msg_id > lid)
     if rid > 0:
         q = q.filter(Message.msg_id < rid)
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
