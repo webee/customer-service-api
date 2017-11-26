@@ -118,7 +118,7 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
 
     @property
     def handling_sessions(self):
-        return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.updated))
+        return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
 
     def get_handling_session(self, session_id):
         return self.as_handler_sessions.filter_by(id=session_id).one_or_none()
@@ -405,6 +405,8 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     msg = db.relationship('Message', uselist=False,
                           primaryjoin="and_(Session.id == Message.session_id, Session.msg_id == Message.msg_id)",
                           lazy='joined')
+    # 消息接收的时间
+    msg_ts = db.Column(db.DateTime(timezone=True), index=True, default=db.func.current_timestamp())
 
     # 已经同步的消息id(已读id)
     sync_msg_id = db.Column(db.BigInteger, nullable=False, default=0)

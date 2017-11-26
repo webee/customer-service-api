@@ -76,6 +76,7 @@ def __next_msg_id(proj, n=1):
     dbs.session.flush()
 
     proj.current_session.msg_id = proj.msg_id
+    proj.current_session.msg_ts = db.func.current_timestamp()
     dbs.session.add(proj.current_session)
 
     return proj.msg_id
