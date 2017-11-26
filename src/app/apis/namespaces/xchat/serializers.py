@@ -4,7 +4,7 @@ from app.apis import api
 
 notified_event = api.model('notified event', {
     'event': fields.String(required=True, example='msg', description='notify event name'),
-    'data': fields.Raw(required=True),
+    # 'data': fields.Raw(required=True),
 })
 
 

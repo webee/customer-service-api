@@ -1,7 +1,8 @@
 from collections import namedtuple
-import arrow
-from .utils import TypeMsgPacker
 
+import arrow
+
+from app.biz.utils import TypeMsgPacker
 
 AppUserID = namedtuple('AppUserID', ['app_name', 'user_type', 'uid'])
 MessageData = namedtuple('MessageData', ['domain', 'type', 'content'])

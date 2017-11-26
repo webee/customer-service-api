@@ -21,11 +21,11 @@ task_queues = (
     Queue('test_task', Exchange('test_task', 'direct'), routing_key='test_task'),
     Queue('sync_xchat_msgs', Exchange('sync_xchat_msgs', 'direct'), routing_key='sync_xchat_msgs'),
     Queue('notify_xchat_msgs', Exchange('notify_xchat_msgs', 'direct'), routing_key='notify_xchat_msgs'),
+    Queue('sync_user_statuses', Exchange('sync_user_statuses', 'direct'), routing_key='sync_user_statuses'),
 )
 
 task_routes = {
     'app.task.tasks.test_task': {'queue': 'test_task', 'routing_key': 'test_task'},
-    'app.task.tasks.pay_notify': {'queue': 'pay_notify', 'routing_key': 'pay_notify'},
 }
 
 

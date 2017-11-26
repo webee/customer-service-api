@@ -22,8 +22,8 @@ class EventNotify(Resource):
             # TODO: 使用schema校验
             xchat_biz.handle_msg_notify(msg)
         elif event == 'user_status':
-            data = data.get('data')
+            user_statuses = data.get('data')
             # TODO: 使用schema校验
-            xchat_biz.handle_user_statuses(data['statuses'])
+            xchat_biz.handle_user_statuses(user_statuses)
 
         return None, 204

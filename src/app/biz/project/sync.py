@@ -1,9 +1,10 @@
-import traceback
 import logging
+import traceback
 import time
 from app import dbs, xchat_client
+from app.biz.ds import parse_xchat_msg_from_data
 from app.service.models import Project, ProjectXChat
-from .ds import parse_xchat_msg_from_data
+from app.utils.commons import batch_split
 from .proj import new_messages
 
 logger = logging.getLogger(__name__)
@@ -68,11 +69,8 @@ def _sync_proj_xchat_msgs(proj, xchat_msg=None):
 
     try:
         msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=5000)
-        i = 0
-        while i < len(msgs):
-            j = i + 100
-            new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in msgs[i:j]])
-            i = j
+        for split_msgs in batch_split(msgs, 100):
+            new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
         if has_more:
             _sync_proj_xchat_msgs(proj)
     except:

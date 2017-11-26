@@ -31,12 +31,12 @@ def handle_msg_notify(msg):
     if kind == 'chat':
         tasks.sync_xchat_msgs.delay(msg)
     elif kind == 'chat_notify':
-        tasks.notify_xchat_msgs.delay(msg)
+        pass
+        # tasks.notify_xchat_msgs.delay(msg)
 
 
 def handle_user_statuses(user_statuses):
-    # TODO: 处理用户状态通知
-    pass
+    tasks.sync_user_statuses.delay(user_statuses)
 
 
 def new_user_jwt(ns, name, exp_delta):

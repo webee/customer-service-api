@@ -99,6 +99,18 @@ class WithOnlineModel(object):
     # 上次在线通知时间
     last_online_ts = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
 
+    @dbs.transactional
+    def update_online(self, online, offline_check=True):
+        if not online and offline_check:
+            if self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) > config.Biz.USER_OFFLINE_DELTA:
+                # offline check
+                self.online = False
+        else:
+            self.online = online
+            if online:
+                self.last_online_ts = db.func.current_timestamp()
+        db.session.add(self)
+
     @property
     def is_online(self):
         return self.online and\

@@ -39,6 +39,7 @@ class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=15)
 
     USER_ONLINE_DELTA = timedelta(minutes=3)
+    USER_OFFLINE_DELTA = timedelta(seconds=3)
 
 
 class XChat:

@@ -3,8 +3,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import dbs
 from app import errors
 from app.errors import BizError
-from app.service.models import Project, ProjectCustomers, ProjectStaffs
+from app.service.models import App, UserType, Project
 from app.biz import xchat as xchat_biz
+from app.biz.ds import parse_app_user_id_from_xchat_uid
+from app.utils.commons import batch_split
 from . import app as app_m
 from . import proj as proj_m
 
@@ -63,3 +65,52 @@ def parse_app_uid(app_uid):
     if len(parts) == 3:
         return True, parts
     return False, parts
+
+
+def sync_user_statuses(user_statuses):
+    app_user_statuses = {}
+    for user_status in user_statuses:
+        app_name, user_type, uid = parse_app_user_id_from_xchat_uid(user_status['user'])
+        online = user_status['status'] == 'online'
+        app_user_statuses.setdefault(app_name, []).append((user_type, uid, online))
+    for app_name, statuses in app_user_statuses.items():
+        app = App.query.filter_by(name=app_name).one_or_none()
+        if app is None:
+            continue
+        for split_statuses in batch_split(statuses, 100):
+            update_user_statuses(app, split_statuses)
+
+
+@dbs.transactional
+def update_user_statuses(app, user_statuses):
+    for user_status in user_statuses:
+        _update_user_status(app, user_status)
+
+
+def _update_user_status(app, status):
+    user_type, uid, online = status
+    if user_type == UserType.staff:
+        staff = app.staffs.filter_by(uid=uid).one_or_none()
+        if staff is None:
+            return
+        staff.update_online(online)
+    elif user_type == UserType.customer:
+        customer = app.customers.filter_by(uid=uid).one_or_none()
+        if customer is None:
+            return
+        customer.update_online(online)
+
+        # update as party projects' online status
+        pcs = customer.as_party_projects.all()
+        _update_project_statuses([pc.project for pc in pcs], online)
+
+
+def _update_project_statuses(projects, online):
+    for project in projects:
+        if online:
+            project.update_online(online)
+        else:
+            # 离线
+            # any of project's customer parties are online
+            proj_online = any([c.is_online for c in project.customers.parties])
+            project.update_online(proj_online, offline_check=False)

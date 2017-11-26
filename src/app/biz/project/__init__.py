@@ -1,14 +1,13 @@
-import traceback
 import logging
-from app import dbs, db, xchat_client
+
 from sqlalchemy import desc as order_desc
-from .utils import TypeMsgPacker
-from .ds import parse_xchat_msg_from_data, XChatMessage, MessageData
-from app.task import tasks
+
+from app import dbs, xchat_client
+from app.biz.utils import TypeMsgPacker
 from app.service.models import Message, Session
+from app.task import tasks
 
-
-MAX_MSGS_FETCH_SIZE = 3000;
+MAX_MSGS_FETCH_SIZE = 3000
 
 
 logger = logging.getLogger(__name__)
