@@ -405,7 +405,7 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     msg = db.relationship('Message', uselist=False,
                           primaryjoin="and_(Session.id == Message.session_id, Session.msg_id == Message.msg_id)",
                           lazy='joined')
-    # 消息接收的时间
+    # 消息发送的时间
     msg_ts = db.Column(db.DateTime(timezone=True), index=True, default=db.func.current_timestamp())
 
     # 已经同步的消息id(已读id)
