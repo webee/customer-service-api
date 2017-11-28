@@ -22,6 +22,7 @@ task_queues = (
     Queue('sync_xchat_msgs', Exchange('sync_xchat_msgs', 'direct'), routing_key='sync_xchat_msgs'),
     Queue('notify_xchat_msgs', Exchange('notify_xchat_msgs', 'direct'), routing_key='notify_xchat_msgs'),
     Queue('sync_user_statuses', Exchange('sync_user_statuses', 'direct'), routing_key='sync_user_statuses'),
+    Queue('notify_client', Exchange('notify_client', 'direct'), routing_key='notify_client'),
 )
 
 task_routes = {

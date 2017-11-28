@@ -121,7 +121,7 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
         return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
 
     def get_handling_session(self, session_id):
-        return self.as_handler_sessions.filter_by(id=session_id).one_or_none()
+        return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
 
 
 class ProjectDomain(BaseModel, app_resource('project_domains', backref_cascade="all, delete-orphan")):

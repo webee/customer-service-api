@@ -5,6 +5,7 @@ from app import dbs, xchat_client
 from app.biz.ds import parse_xchat_msg_from_data
 from app.service.models import Project, ProjectXChat
 from app.utils.commons import batch_split
+from app.task import tasks
 from .proj import new_messages
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,19 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
                     time.sleep(0.12)
                     continue
                 break
+            # # notify client
+            current_session = proj.current_session
+            if current_session is not None:
+                handler = current_session.handler
+                app_uid = handler.app_uid
+                # my_handling.session
+                tasks.notify_client.delay(app_uid, 'project', 'my_handling.sessions',
+                                          dict(projectDomain=proj.domain.name, projectType=proj.type.name,
+                                               sessionID=current_session.id))
+                # msgs
+                tasks.notify_client.delay(app_uid, 'project', 'msgs',
+                                          dict(projectDomain=proj.domain.name, projectType=proj.type.name,
+                                               projectID=proj.id))
         except:
             ProjectXChat.stop_sync(proj_xchat_id)
 
@@ -92,4 +106,5 @@ def new_proj_xchat_msg(proj, xchat_msgs):
     new_messages(proj.id, msgs)
 
     # update project xchat msg id
-    ProjectXChat.query.filter_by(id=proj.xchat.id).filter(ProjectXChat.msg_id < max_msg_id).update({'msg_id': max_msg_id})
+    ProjectXChat.query.filter_by(id=proj.xchat.id).filter(ProjectXChat.msg_id < max_msg_id).update(
+        {'msg_id': max_msg_id})

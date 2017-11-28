@@ -9,7 +9,6 @@ from app.task import tasks
 
 MAX_MSGS_FETCH_SIZE = 3000
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -26,13 +25,20 @@ def send_message(staff, session, domain, type, content):
     tasks.sync_xchat_msgs.delay(msg_data)
 
 
-@dbs.transactional
 def sync_session_msg_id(staff, session, msg_id):
-    Session.query.filter_by(id=session.id)\
-        .filter(Session.handler_id == staff.id,
-                Session.is_active == True,
-                Session.msg_id >= msg_id,
-                Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
+    with dbs.require_transaction_context():
+        Session.query.filter_by(id=session.id) \
+            .filter(Session.handler_id == staff.id,
+                    Session.is_active == True,
+                    Session.msg_id >= msg_id,
+                    Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
+
+    # # notify client
+    project = session.project
+    # my_handling.session
+    tasks.notify_client.delay(staff.app_uid, 'project', 'my_handling.sessions',
+                              dict(projectDomain=project.domain.name, projectType=project.type.name,
+                                   sessionID=session.id))
 
 
 def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):

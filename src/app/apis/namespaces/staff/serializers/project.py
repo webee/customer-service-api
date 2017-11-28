@@ -20,7 +20,7 @@ message = api.model('Message Result', {
     'session_id': fields.Integer(),
 })
 
-handling_session_item = api.model('Handling Session Item', {
+session_item = api.model('Session Item', {
     'id': fields.Integer(description='session id'),
     'project': fields.Nested(project_data),
     'msg_id': fields.Integer(description='last msg id'),

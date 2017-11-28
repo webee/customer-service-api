@@ -41,7 +41,7 @@ class SyncSessionMsgID(Resource):
 
         session = staff.get_handling_session(session_id)
         if session is None:
-            abort(403, 'you are not the session handler')
+            abort(403, 'you are not the session handler or it is closed')
         if not session.is_active:
             abort(403, 'session is not active')
 

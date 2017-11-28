@@ -2,6 +2,7 @@ import logging
 from . import app
 from app.biz.project import sync as proj_biz_sync
 from app.biz import app as app_biz
+from app.biz import notify as notify_biz
 
 
 logger = logging.getLogger(__name__)
@@ -56,3 +57,9 @@ def notify_xchat_msgs(msg):
 @app.task(ignore_result=True, queue='sync_user_statuses', routing_key='sync_user_statuses')
 def sync_user_statuses(user_statuses):
     app_biz.sync_user_statuses(user_statuses)
+
+
+# notify client
+@app.task(ignore_result=True, queue='notify_client', routing_key='notify_client')
+def notify_client(user, ns, type, details, domain=''):
+    notify_biz.notify_client(user, ns, type, details, domain=domain)
