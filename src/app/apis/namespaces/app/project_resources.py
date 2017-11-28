@@ -23,7 +23,7 @@ class ProjectCollection(Resource):
         app = current_application
         data = request.get_json()
         project = biz.create_project(app, data)
-        # FIXME: return project_id and xchat chat_id
+        # NOTE: return project_id and xchat chat_id
         # 给后端和app端两个选择，要么后端返回chat_id, 要么app使用project_id查询cs的接口获取chat_id
         return project, 201
 

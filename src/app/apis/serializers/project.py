@@ -3,19 +3,18 @@ from .xfields import Any
 from . import api
 from . import base_resource, raw_model, raw_specs
 from .customer import customer
-from .project_customers import project_customers
-from .project_staffs import project_staffs
+from .project_customers import project_customers, raw_project_customers
+from .project_staffs import project_staffs, raw_project_staffs
 from .project_domain_type import project_type
 
 
-_project_specs = {
+project = api.inherit('Project', base_resource, {
     'type': fields.Nested(project_type),
     'biz_id': fields.String(),
     'owner': fields.Nested(customer),
     'customers': fields.Nested(project_customers),
     'staffs': fields.Nested(project_staffs)
-}
-project = api.inherit('Project', base_resource, _project_specs)
+})
 
 
 meta_data_item = api.model('meta data item', {
@@ -26,7 +25,8 @@ meta_data_item = api.model('meta data item', {
     'index': fields.Integer(required=False, example=1, description='显示次序'),
 })
 
-_new_project_specs = raw_specs({
+
+new_project = api.model('New Project', raw_specs({
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
     'biz_id': fields.String(required=True, min_length=1, max_length=32),
@@ -35,6 +35,15 @@ _new_project_specs = raw_specs({
     'customers': fields.Nested(project_customers),
     'staffs': fields.Nested(project_staffs),
     'meta_data': fields.List(fields.Nested(meta_data_item)),
-})
+}))
 
-new_project = api.model('New Project', _new_project_specs)
+
+project_data = api.inherit('Project Data', {
+    'id': fields.Integer(description='project id'),
+    'biz_id': fields.String(),
+    'is_online': fields.Boolean(),
+    'owner': fields.Nested(customer),
+    'customers': fields.Nested(raw_project_customers),
+    'staffs': fields.Nested(raw_project_staffs),
+    'meta_data': fields.List(fields.Nested(meta_data_item)),
+})

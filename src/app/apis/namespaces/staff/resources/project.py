@@ -23,8 +23,8 @@ class MyHandlingSessions(Resource):
         return staff.handling_sessions.filter(Project.type == project_type).all()
 
 
-@api.route('/sessions/<int:project_id>/msgs')
-class SessionMsgs(Resource):
+@api.route('/projects/<int:project_id>/msgs')
+class ProjectMsgs(Resource):
     @require_staff
     @api.expect(fetch_msgs_arguments)
     @api.marshal_with(fetch_msgs_result)
