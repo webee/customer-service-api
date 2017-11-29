@@ -60,6 +60,16 @@ def create_or_update_project_meta_data(proj, data):
     proj_m.create_or_update_meta_data(proj, data)
 
 
+def batch_create_or_update_customers(app, data):
+    for split_data in batch_split(data, 100):
+        app_m.create_or_update_customers(app, split_data)
+
+
+def batch_create_or_update_staffs(app, data):
+    for split_data in batch_split(data, 100):
+        app_m.create_or_update_staffs(app, split_data)
+
+
 def parse_app_uid(app_uid):
     parts = app_uid.split(':', 2)
     if len(parts) == 3:
