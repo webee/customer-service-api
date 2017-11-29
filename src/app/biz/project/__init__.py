@@ -5,6 +5,7 @@ from sqlalchemy import desc as order_desc
 from app import dbs, xchat_client
 from app.biz.utils import TypeMsgPacker
 from app.service.models import Message, Session
+from app.biz.notifies import task_project_notify
 from app.task import tasks
 
 MAX_MSGS_FETCH_SIZE = 3000
@@ -37,11 +38,7 @@ def sync_session_msg_id(staff, session, msg_id):
                     Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
 
     # # notify client
-    project = session.project
-    # my_handling.session
-    tasks.notify_client.delay(staff.app_uid, 'project', 'my_handling.sessions',
-                              dict(projectDomain=project.domain.name, projectType=project.type.name,
-                                   sessionID=session.id))
+    task_project_notify(session.project, 'my_handling.sessions', dict(sessionID=session.id))
 
 
 def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):

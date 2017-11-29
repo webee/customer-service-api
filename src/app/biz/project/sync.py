@@ -5,7 +5,7 @@ from app import dbs, xchat_client
 from app.biz.ds import parse_xchat_msg_from_data
 from app.service.models import Project, ProjectXChat
 from app.utils.commons import batch_split
-from app.task import tasks
+from app.biz.notifies import task_project_notify
 from .proj import new_messages
 
 logger = logging.getLogger(__name__)
@@ -59,18 +59,9 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
                     continue
                 break
             # # notify client
-            current_session = proj.current_session
-            if current_session is not None:
-                handler = current_session.handler
-                app_uid = handler.app_uid
-                # my_handling.session
-                tasks.notify_client.delay(app_uid, 'project', 'my_handling.sessions',
-                                          dict(projectDomain=proj.domain.name, projectType=proj.type.name,
-                                               sessionID=current_session.id))
-                # msgs
-                tasks.notify_client.delay(app_uid, 'project', 'msgs',
-                                          dict(projectDomain=proj.domain.name, projectType=proj.type.name,
-                                               projectID=proj.id))
+            if proj.current_session_id is not None:
+                task_project_notify(proj, 'my_handling.sessions', dict(sessionID=proj.current_session_id))
+                task_project_notify(proj, 'msgs', dict(projectID=proj.id))
         except:
             ProjectXChat.stop_sync(proj_xchat_id)
 

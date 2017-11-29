@@ -7,6 +7,7 @@ from app.service.models import App, UserType, Project
 from app.biz import xchat as xchat_biz
 from app.biz.ds import parse_app_user_id_from_xchat_uid
 from app.utils.commons import batch_split
+from app.biz.notifies import task_project_notify, task_app_notify
 from . import app as app_m
 from . import proj as proj_m
 
@@ -104,6 +105,8 @@ def _update_user_status(app, status):
         if staff is None:
             return
         staff.update_online(online)
+        # TODO: 通知所有在线的staffs该staff的状态改变
+        # task_app_notify(app_uid, 'user', dict(user_type='staff', uid=customer.uid))
     elif user_type == UserType.customer:
         customer = app.customers.filter_by(uid=uid).one_or_none()
         if customer is None:
@@ -112,11 +115,12 @@ def _update_user_status(app, status):
 
         # update as party projects' online status
         pcs = customer.as_party_projects.all()
-        _update_project_statuses([pc.project for pc in pcs], online)
+        _update_project_statuses(customer, [pc.project for pc in pcs], online)
 
 
-def _update_project_statuses(projects, online):
+def _update_project_statuses(customer, projects, online):
     for project in projects:
+        prev_is_online = project.is_online
         if online:
             project.update_online(online)
         else:
@@ -124,3 +128,9 @@ def _update_project_statuses(projects, online):
             # any of project's customer parties are online
             proj_online = any([c.is_online for c in project.customers.parties])
             project.update_online(proj_online, offline_check=False)
+
+        current_session = project.current_session
+        if current_session is not None and prev_is_online != project.is_online:
+            # # notify client
+            task_project_notify(project, 'my_handling.sessions', dict(sessionID=project.current_session_id))
+            task_app_notify(current_session.handler, 'user', dict(user_type='customer', uid=customer.uid))
