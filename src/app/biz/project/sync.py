@@ -98,7 +98,7 @@ def new_proj_xchat_msg(proj, xchat_msgs):
     for xchat_msg in xchat_msgs:
         _, user_type, uid = xchat_msg.app_user_id
         domain, type, content = xchat_msg.msg_data
-        msgs.append((domain, type, content, user_type, uid, xchat_msg.ts))
+        msgs.append((xchat_msg.id, domain, type, content, user_type, uid, xchat_msg.ts))
 
         if xchat_msg.id > max_msg_id:
             max_msg_id = xchat_msg.id

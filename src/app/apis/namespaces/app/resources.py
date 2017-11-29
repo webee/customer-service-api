@@ -1,7 +1,5 @@
 from flask import request
 from flask_restplus import Resource, abort
-from sqlalchemy.orm.exc import NoResultFound
-from app import dbs
 from .api import api
 from app.biz import app as biz
 from app.apis.jwt import current_application, require_app

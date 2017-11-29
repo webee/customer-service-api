@@ -12,7 +12,7 @@ class SessionSendMsg(Resource):
     @api.expect(new_message)
     @api.response(403, 'you are not the session handler')
     @api.response(403, 'session is not active')
-    @api.response(204, 'send msg successfully')
+    @api.response(200, 'send msg successfully')
     def post(self, project_id, session_id):
         """发送消息"""
         staff = current_staff
@@ -24,8 +24,8 @@ class SessionSendMsg(Resource):
             abort(403, 'session is not active')
 
         data = request.get_json()
-        proj_biz.send_message(staff, session, data.get('domain', ''), data.get('type', ''), data['content'])
-        return None, 204
+        rx_key, ts = proj_biz.send_message(staff, session, data.get('domain', ''), data.get('type', ''), data['content'])
+        return dict(rx_key=rx_key, ts=ts), 200
 
 
 @api.route('/sessions/<int:project_id>/<int:session_id>/sync_msg_id')

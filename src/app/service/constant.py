@@ -1,2 +1,0 @@
-
-XCHAT_DOMAIN = 'cs'

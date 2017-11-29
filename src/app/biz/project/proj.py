@@ -57,8 +57,9 @@ def new_messages(proj_id, msgs=()):
     # open session
     proj = try_open_session(proj_id)
     msg_ts = None
-    for i, (domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
+    for i, (id, domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
         message = Message(project=proj, session=proj.current_session,
+                          rx_key=id,
                           user_type=user_type, user_id=user_id,
                           msg_id=proj.msg_id + i,
                           domain=domain, type=type, content=content,

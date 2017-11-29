@@ -1,10 +1,9 @@
 import json
 from sqlalchemy import desc
-from app import db, dbs, bcrypt
+from app import db, dbs, bcrypt, config
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
 from .model_commons import GenericDataItem
-from . import constant
 
 
 class UserType:
@@ -221,7 +220,7 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
 
     @property
     def xchat_biz_id(self):
-        return '%s:%s' % (constant.XCHAT_DOMAIN, self.app_biz_id)
+        return '%s:%s' % (config.App.NAME, self.app_biz_id)
 
     @property
     def ordered_meta_data(self):
@@ -429,6 +428,12 @@ class Message(BaseModel, project_resource('messages', backref_uselist=True),
     # 发送者
     user_type = db.Column(db.String(12), nullable=True)
     user_id = db.Column(db.String(32), nullable=True)
+
+    # tx key: 客户端发送的，用于防止重复发送
+    tx_key = db.Column(db.BigInteger, nullable=True)
+    # rx key: 服务端返回的，用于异步处理消息发送时给客户端的一个临时唯一消息id, 用于乐观展示
+    #           目前为xchat_chat_id
+    rx_key = db.Column(db.BigInteger, nullable=True)
 
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, index=True)

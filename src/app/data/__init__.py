@@ -1,6 +1,5 @@
 import os
-from app.service.dba import create_app
-from app.biz import app as app_biz
+from app.biz import app as app_biz, create_app
 from . import sample_data
 
 

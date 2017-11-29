@@ -12,6 +12,8 @@ message = api.model('Message Result', {
     'channel': fields.String(),
     'user_type': fields.String(),
     'user_id': fields.String(),
+    'tx_key': fields.Integer(),
+    'rx_key': fields.Integer(),
     'msg_id': fields.Integer(),
     'domain': fields.String(),
     'type': fields.String(),

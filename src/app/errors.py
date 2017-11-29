@@ -8,9 +8,9 @@ class BizError(Exception):
     def __init__(self, code, description, details, status_code=409, headers=None):
         """
         业务异常
-        :param msg: 错误信息
-        :param details: 错误详情
         :param code: 错误码
+        :param description: 错误信息
+        :param details: 错误详情
         :param status_code: http response status code
         :param headers: http response headers
         """

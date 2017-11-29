@@ -24,6 +24,9 @@ def send_message(staff, session, domain, type, content):
     # send celery task request
     tasks.sync_xchat_msgs.delay(msg_data)
 
+    # rx_key, ts
+    return id, ts
+
 
 def sync_session_msg_id(staff, session, msg_id):
     with dbs.require_transaction_context():
