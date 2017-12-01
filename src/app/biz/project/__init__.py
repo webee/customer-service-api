@@ -5,8 +5,11 @@ from sqlalchemy import desc as order_desc
 from app import dbs, xchat_client
 from app.biz.utils import TypeMsgPacker
 from app.service.models import Message, Session
+from .constants import NotifyTypes
 from app.biz.notifies import task_project_notify
 from app.task import tasks
+from .proj import close_current_session
+
 
 MAX_MSGS_FETCH_SIZE = 3000
 
@@ -38,7 +41,13 @@ def sync_session_msg_id(staff, session, msg_id):
                     Session.sync_msg_id < msg_id).update({'sync_msg_id': msg_id})
 
     # # notify client
-    task_project_notify(session.project, 'my_handling.sessions', dict(sessionID=session.id))
+    task_project_notify(session.project, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=session.id))
+
+
+def finish_session(staff, session):
+    if close_current_session(session.project_id, session_id=session.id):
+        # # notify client
+        task_project_notify(session.project, NotifyTypes.MY_HANDLING_SESSION_FINISHED, dict(sessionID=session.id), handler=staff)
 
 
 def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):

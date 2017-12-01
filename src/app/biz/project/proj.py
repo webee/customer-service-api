@@ -34,12 +34,12 @@ def try_open_session(proj_id):
 
 
 @dbs.transactional
-def close_current_session(proj_id):
+def close_current_session(proj_id, session_id=None):
     # 锁住project
     proj = lock_project(proj_id, options=[orm.joinedload('current_session')])
 
     current_session = proj.current_session
-    if current_session is not None:
+    if current_session is not None and current_session.id == session_id:
         current_session.is_active = False
         current_session.closed = db.func.current_timestamp()
         dbs.session.add(current_session)
@@ -47,6 +47,8 @@ def close_current_session(proj_id):
         proj.last_session = current_session
         proj.current_session = None
         dbs.session.add(proj)
+        return True
+    return False
 
 
 @dbs.transactional

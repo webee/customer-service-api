@@ -1,9 +1,9 @@
 from app.task import tasks
 
 
-def task_project_notify(project, type, details):
+def task_project_notify(project, type, details, handler=None):
     current_session = project.current_session
-    handler = current_session.handler
+    handler = handler or current_session.handler
     if handler.is_online:
         details.update(dict(projectDomain=project.domain.name, projectType=project.type.name))
         tasks.notify_client.delay(handler.app_uid, 'project', type, details)
