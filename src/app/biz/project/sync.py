@@ -60,8 +60,8 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
                 break
             # # notify client
             if proj.current_session_id is not None:
-                task_project_notify(proj, 'my_handling.sessions', dict(sessionID=proj.current_session_id))
                 task_project_notify(proj, 'msgs', dict(projectID=proj.id))
+                task_project_notify(proj, 'my_handling.sessions', dict(sessionID=proj.current_session_id))
         except:
             ProjectXChat.stop_sync(proj_xchat_id)
 
