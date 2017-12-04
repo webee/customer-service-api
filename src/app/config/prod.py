@@ -13,6 +13,11 @@ class App:
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # flask profiler
+    FLASK_PROFILER = {
+        "enabled": False
+    }
+
 
 class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(hours=24)

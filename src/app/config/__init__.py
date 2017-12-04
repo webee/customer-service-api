@@ -34,6 +34,18 @@ class App:
     RESTPLUS_JSON = {}
     SWAGGER_UI_JSONEDITOR = False
 
+    # flask profiler
+    FLASK_PROFILER = {
+        "enabled": False,
+        "storage": {
+            "engine": "sqlite",
+            "FILE": "flask_profiler.sqlite"
+        },
+        "ignore": [
+            "^((?!\/api\/.+).)*$"
+        ]
+    }
+
 
 class Biz:
     CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=15)

@@ -11,7 +11,8 @@ flask-restplus
 markdown
 Flask-Bcrypt
 Flask-Cors
-kafka-python
+gevent
+gunicorn
 
 # celery
 celery[redis]

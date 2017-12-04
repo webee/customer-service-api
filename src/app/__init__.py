@@ -1,10 +1,11 @@
 import os
-
+from werkzeug.contrib.profiler import ProfilerMiddleware
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_profiler import Profiler
 from .apis.utils.jwt import JWT
 
 from app.utils import dbs
@@ -12,6 +13,7 @@ from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
 
 # extensions
+profiler = Profiler()
 jwt = JWT()
 db = SQLAlchemy()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
@@ -23,6 +25,8 @@ xchat_client = XChatClient()
 
 def create_app(env='dev'):
     app = Flask(__name__)
+    if env == 'dev':
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app)
     # 最先初始化配置
     init_config(app, env)
 
@@ -32,6 +36,7 @@ def create_app(env='dev'):
     init_extensions(app)
     init_errors(app)
     register_mods(app)
+    profiler.init_app(app)
 
     return app
 
