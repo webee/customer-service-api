@@ -1,4 +1,5 @@
 from flask_restplus import fields
+from app import ma
 from . import api
 from . import pagination, base_resource
 
@@ -13,3 +14,11 @@ customer = api.inherit('Customer', base_resource, _raw_customer_specs)
 page_of_customers = api.inherit('Page of customers', pagination, {
     'items': fields.List(fields.Nested(customer))
 })
+
+
+class RawCustomerSchema(ma.Schema):
+    class Meta:
+        fields = ("uid", "name")
+
+
+raw_customer_schema = RawCustomerSchema()

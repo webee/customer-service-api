@@ -1,4 +1,5 @@
 from flask_restplus import fields
+from app import ma
 from . import api
 from . import pagination, base_resource
 
@@ -13,3 +14,8 @@ staff = api.inherit('Staff', base_resource, _raw_staff_specs)
 page_of_staffs = api.inherit('Page of staffs', pagination, {
     'items': fields.List(fields.Nested(staff))
 })
+
+
+class RawStaffSchema(ma.Schema):
+    class Meta:
+        fields = ("uid", "name")

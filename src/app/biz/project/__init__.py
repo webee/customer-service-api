@@ -1,5 +1,6 @@
 import logging
 
+from sqlalchemy.orm import lazyload
 from sqlalchemy import desc as order_desc
 
 from app import dbs, xchat_client
@@ -78,7 +79,8 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     elif limit > MAX_MSGS_FETCH_SIZE:
         limit = MAX_MSGS_FETCH_SIZE
 
-    q = project.messages.filter(Message.msg_id > lid)
+    # 这里不需要用到Session
+    q = project.messages.options(lazyload('session')).filter(Message.msg_id > lid)
     if rid > 0:
         q = q.filter(Message.msg_id < rid)
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)

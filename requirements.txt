@@ -8,6 +8,7 @@ psycopg2
 flask-sqlalchemy
 flask-migrate
 flask-restplus
+flask-marshmallow
 markdown
 Flask-Bcrypt
 Flask-Cors

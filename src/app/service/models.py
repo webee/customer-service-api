@@ -117,7 +117,8 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
 
     @property
     def handling_sessions(self):
-        return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
+        # return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
+        return self.as_handler_sessions.filter_by(is_active=True)
 
     def get_handling_session(self, session_id):
         return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
@@ -258,7 +259,7 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
         return meta_data_item
 
 
-class ProjectXChat(BaseModel, project_resource('xchat', backref_lazy='joined')):
+class ProjectXChat(BaseModel, project_resource('xchat')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)

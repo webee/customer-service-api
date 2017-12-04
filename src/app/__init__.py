@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from flask_profiler import Profiler
 from .apis.utils.jwt import JWT
 
@@ -16,6 +17,7 @@ from .utils.xchat_client import XChatClient
 profiler = Profiler()
 jwt = JWT()
 db = SQLAlchemy()
+ma = Marshmallow()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
 bcrypt = Bcrypt()
 cors = CORS()
@@ -25,8 +27,8 @@ xchat_client = XChatClient()
 
 def create_app(env='dev'):
     app = Flask(__name__)
-    if env == 'dev':
-        app.wsgi_app = ProfilerMiddleware(app.wsgi_app)
+    # if env == 'dev':
+    #     app.wsgi_app = ProfilerMiddleware(app.wsgi_app)
     # 最先初始化配置
     init_config(app, env)
 
@@ -36,7 +38,10 @@ def create_app(env='dev'):
     init_extensions(app)
     init_errors(app)
     register_mods(app)
-    profiler.init_app(app)
+
+    # profiler
+    # if env == 'dev':
+    #     profiler.init_app(app)
 
     return app
 
@@ -80,6 +85,8 @@ def init_extensions(app):
     db.init_app(app)
     dbs.init_app(app, db)
     migrate.init_app(app, db)
+
+    ma.init_app(app)
 
     # bcrypt
     bcrypt.init_app(app)

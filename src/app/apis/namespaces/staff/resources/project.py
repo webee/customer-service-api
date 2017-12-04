@@ -4,14 +4,15 @@ from ..api import api
 from app.apis.jwt import current_staff, require_staff
 from app.service.models import Project, Session
 from app.biz import project as proj_biz
+from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from ..parsers import fetch_msgs_arguments
-from ..serializers.project import session_item, fetch_msgs_result
+from ..serializers.project import session_item, fetch_msgs_result, session_item_schema, fetch_msgs_result_schema
 
 
 @api.route('/projects/<string:domain_name>/<string:type_name>/my_handling_sessions')
 class MyHandlingSessions(Resource):
     @require_staff
-    @api.marshal_list_with(session_item)
+    @marshal_list_with(session_item_schema, session_item)
     def get(self, domain_name, type_name):
         """获取我正在接待的会话"""
         staff = current_staff
@@ -43,7 +44,7 @@ class SessionItem(Resource):
 class ProjectMsgs(Resource):
     @require_staff
     @api.expect(fetch_msgs_arguments)
-    @api.marshal_with(fetch_msgs_result)
+    @marshal_with(fetch_msgs_result_schema, fetch_msgs_result)
     @api.response(404, 'session not found')
     @api.response(200, 'fetch msgs ok')
     def get(self, project_id):
