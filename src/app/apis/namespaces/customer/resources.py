@@ -34,13 +34,11 @@ class ProjectXChat(Resource):
         app = customer.app
 
         if id is not None:
-            pcs = customer.as_party_projects.filter_by(project_id=id).one()
-            proj = pcs.project
+            proj = customer.as_customer_projects.filter_by(project_id=id).one()
         elif domain_name is not None:
             pd = app.project_domains.filter_by(name=domain_name).one()
             pt = pd.types.filter_by(name=type_name).one()
-            pcs = customer.as_party_projects.filter(Project.type_id == pt.id, Project.biz_id == biz_id).one()
-            proj = pcs.project
+            proj = customer.as_customer_projects.filter(Project.type_id == pt.id, Project.biz_id == biz_id).one()
         else:
             return abort(404, 'project not found')
 

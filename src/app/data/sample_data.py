@@ -8,45 +8,20 @@ test_projects_data = [
             "uid": "test",
             "name": "测试用户"
         },
-        "customers": {
-            "parties": [
-                {
-                    "uid": "test",
-                    "name": "测试用户"
-                },
-                {
-                    "uid": "u#001",
-                    "name": "用户001"
-                }
-            ]
+        "leader": {
+            "uid": "test",
+            "name": "测试客服"
         },
-        "staffs": {
-            "leader": {
+        "customers": [
+            {
                 "uid": "test",
-                "name": "测试客服"
+                "name": "测试用户"
             },
-            "assistants": [
-                {
-                    "uid": "test_01",
-                    "name": "测试客服#1"
-                }, {
-                    "uid": "test_02",
-                    "name": "小二"
-                }, {
-                    "uid": "test_08",
-                    "name": "小八"
-                }
-            ],
-            "participants": [
-                {
-                    "uid": "test_03",
-                    "name": "测试客服#3"
-                }, {
-                    "uid": "test_04",
-                    "name": "小五"
-                }
-            ]
-        },
+            {
+                "uid": "u#001",
+                "name": "用户001"
+            }
+        ],
         "meta_data": [
             {"key": "username", "value": "测试用户", "label": "姓名", "index": 1},
             {"key": "age", "value": 28, "label": "年龄", "index": 2},
@@ -64,37 +39,15 @@ test_projects_data = [
             "uid": "u#002",
             "name": "用户002"
         },
-        "customers": {
-            "parties": [
-                {
-                    "uid": "u#002",
-                    "name": "用户002"
-                }
-            ]
+        "leader": {
+            "uid": "test"
         },
-        "staffs": {
-            "leader": {
-                "uid": "test"
-            },
-            "assistants": [
-                {
-                    "uid": "test_01",
-                    "name": "测试客服#1"
-                }, {
-                    "uid": "test_02",
-                    "name": "小二"
-                }, {
-                    "uid": "test_03",
-                    "name": "测试客服#3"
-                }
-            ],
-            "participants": [
-                {
-                    "uid": "test_04",
-                    "name": "小五"
-                }
-            ]
-        },
+        "customers": [
+            {
+                "uid": "u#002",
+                "name": "用户002"
+            }
+        ],
         "meta_data": [
             {"key": "username", "value": "用户002", "label": "姓名", "index": 1},
             {"key": "is_valid", "value": True, "label": "是否有效", "index": 2},

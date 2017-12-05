@@ -11,7 +11,6 @@ from app.biz.notifies import task_project_notify, task_app_notify
 from . import app as app_m
 from . import proj as proj_m
 
-
 NS_PT = re.compile(r':')
 
 
@@ -29,10 +28,10 @@ def create_project(app, data):
     project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()
     if project is None:
         owner = app_m.create_or_update_customer(app, data['owner'])
-        project = Project(app=app, domain=project_type.domain, type=project_type, biz_id=biz_id, owner=owner,
-                          start_msg_id=start_msg_id, msg_id=start_msg_id)
-        proj_m.create_or_update_customers(project, data['customers'])
-        proj_m.create_or_update_staffs(project, data['staffs'])
+        leader = app_m.create_or_update_staff(app, data['leader'])
+        customers = app_m.create_or_update_customers(app, data['customers'])
+        project = Project(app=app, domain=project_domain, type=project_type, biz_id=biz_id, owner=owner, leader=leader,
+                          customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
 
         # xchat
         chat_id = xchat_biz.create_chat(project)
@@ -42,8 +41,8 @@ def create_project(app, data):
         proj_m.create_or_update_meta_data(project, data['meta_data'])
     else:
         project.owner = app_m.create_or_update_customer(app, data['owner'])
-        proj_m.create_or_update_customers(project, data['customers'])
-        proj_m.create_or_update_staffs(project, data['staffs'])
+        project.leader = app_m.create_or_update_staff(app, data['owner'])
+        project.customers = app_m.create_or_update_customers(app, data['customers'])
 
         # update xchat chat
         chat_id = xchat_biz.create_chat(project)
@@ -113,9 +112,9 @@ def _update_user_status(app, status):
             return
         customer.update_online(online)
 
-        # update as party projects' online status
-        pcs = customer.as_party_projects.all()
-        _update_project_statuses(customer, [pc.project for pc in pcs], online)
+        # update as customer projects' online status
+        projs = customer.as_customer_projects.all()
+        _update_project_statuses(customer, projs, online)
 
 
 def _update_project_statuses(customer, projects, online):
@@ -125,8 +124,8 @@ def _update_project_statuses(customer, projects, online):
             project.update_online(online)
         else:
             # 离线
-            # any of project's customer parties are online
-            proj_online = any([c.is_online for c in project.customers.parties])
+            # any of project's customer are online
+            proj_online = any([c.is_online for c in project.customers])
             project.update_online(proj_online, offline_check=False)
 
         current_session = project.current_session

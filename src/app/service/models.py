@@ -58,6 +58,7 @@ class App(BaseModel):
         if customer is None:
             customer = Customer(app=self, uid=uid)
         customer.name = name or customer.name
+        customer.is_deleted = False
         db.session.add(customer)
 
         return customer
@@ -68,6 +69,7 @@ class App(BaseModel):
         if staff is None:
             staff = Staff(app=self, uid=uid)
         staff.name = name or staff.name
+        staff.is_deleted = False
         dbs.session.add(staff)
 
         return staff
@@ -182,6 +184,14 @@ class ProjectTypeConfigs(BaseModel):
     __tablename__ = 'project_type_configs'
 
 
+# many to many helpers
+# # 项目客户
+project_customers = db.Table('project_customers',
+                             db.Column('customer_id', db.Integer, db.ForeignKey('customer.id')),
+                             db.Column('project_id', db.Integer, db.ForeignKey('project.id'))
+                             )
+
+
 class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     """表示一个客服项目"""
     __tablename__ = 'project'
@@ -202,6 +212,14 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     # 所属客户
     owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)
     owner = db.relationship('Customer', lazy='joined', backref=db.backref('as_owner_projects', lazy='dynamic'))
+
+    # 负责人
+    leader_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
+    leader = db.relationship('Staff', lazy='joined', backref=db.backref('as_leader_projects', lazy='dynamic'))
+
+    # 当事人
+    customers = db.relationship('Customer', secondary=project_customers, lazy='joined',
+                                backref=db.backref('as_customer_projects', lazy='dynamic'))
 
     # 上一次会话
     last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
@@ -314,50 +332,8 @@ class ProjectXChat(BaseModel, project_resource('xchat')):
         return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
 
 
-# many to many helpers
-# # 项目客户当事人
-project_customer_parties = db.Table('project_customer_parties',
-                                    db.Column('customer_id', db.Integer, db.ForeignKey('customer.id')),
-                                    db.Column('project_customers_id', db.Integer, db.ForeignKey('project_customers.id'))
-                                    )
-# # 项目客服协助人
-project_staff_assistants = db.Table('project_staff_assistants',
-                                    db.Column('staff_id', db.Integer, db.ForeignKey('staff.id')),
-                                    db.Column('project_staffs_id', db.Integer, db.ForeignKey('project_staffs.id'))
-                                    )
-# # 项目客服参与人
-project_staff_participants = db.Table('project_staff_participants',
-                                      db.Column('staff_id', db.Integer, db.ForeignKey('staff.id')),
-                                      db.Column('project_staffs_id', db.Integer, db.ForeignKey('project_staffs.id'))
-                                      )
-
-
-class ProjectCustomers(BaseModel, project_resource('customers')):
-    """项目相关客户"""
-    __tablename__ = 'project_customers'
-
-    # 当事人
-    parties = db.relationship('Customer', secondary=project_customer_parties, lazy='joined',
-                              backref=db.backref('as_party_projects', lazy='dynamic'))
-
-
-class ProjectStaffs(BaseModel, project_resource('staffs')):
-    """项目相关客服"""
-    __tablename__ = 'project_staffs'
-
-    # 负责人
-    leader_id = db.Column(db.BigInteger, db.ForeignKey('staff.id'), nullable=False)
-    leader = db.relationship('Staff', lazy='joined',
-                             backref=db.backref('as_leader_projects', lazy='dynamic'))
-    # 协助人
-    assistants = db.relationship('Staff', secondary=project_staff_assistants, lazy='joined',
-                                 backref=db.backref('as_assistant_projects', lazy='dynamic'))
-    # 参与人
-    participants = db.relationship('Staff', secondary=project_staff_participants, lazy='joined',
-                                   backref=db.backref('as_participant_projects', lazy='dynamic'))
-
-
-class ProjectMetaData(BaseModel, GenericDataItem, project_resource('meta_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
+class ProjectMetaData(BaseModel, GenericDataItem,
+                      project_resource('meta_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
     """项目元数据: 作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_meta_data'
 
@@ -368,7 +344,8 @@ class ProjectMetaData(BaseModel, GenericDataItem, project_resource('meta_data', 
         return "<ProjectMetaData: {}({})>".format(self.key, self.label)
 
 
-class ProjectExtData(BaseModel, GenericDataItem, project_resource('ext_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
+class ProjectExtData(BaseModel, GenericDataItem,
+                     project_resource('ext_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
     """项目扩展数据：作为客服界面展示的一个数据缓存"""
     __tablename__ = 'project_ext_data'
 

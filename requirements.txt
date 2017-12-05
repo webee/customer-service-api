@@ -9,6 +9,7 @@ flask-sqlalchemy
 flask-migrate
 flask-restplus
 flask-marshmallow
+marshmallow-sqlalchemy
 markdown
 Flask-Bcrypt
 Flask-Cors

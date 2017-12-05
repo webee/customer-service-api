@@ -53,6 +53,8 @@ def app_user(user_type, resource_name):
 
         uid = db.Column(db.String(32), nullable=False)
         name = db.Column(db.String(16), nullable=False)
+        # 是否删除
+        is_deleted = db.Column(db.Boolean, default=False)
 
         __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_%s' % user_type),)
 

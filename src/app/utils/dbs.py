@@ -17,12 +17,14 @@ def require_transaction_context():
     is_entry = not hasattr(db.session, '__nested')
     try:
         if is_entry:
+            # 因为是自动开始事务，所以第一层可以不开始嵌套事务
             setattr(db.session, '__nested', 0)
-        with db.session.begin_nested():
-            db.session.__nested += 1
             yield
-        if is_entry:
             db.session.commit()
+        else:
+            with db.session.begin_nested():
+                db.session.__nested += 1
+                yield
     except:
         if is_entry:
             db.session.rollback()
