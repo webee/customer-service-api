@@ -46,6 +46,16 @@ class ProjectItem(Resource):
 
         return proj
 
+#     @require_app
+#     @api.expect(new_project)
+#     @api.response(204, 'successfully updated')
+#     def patch(self, id):
+#         """TODO:更新项目信息: owner, customers, leader, meta_data, scope_labels"""
+#         app = current_application
+#         project = app.projects.filter_by(id=id).one()
+#         # TODO
+#         return None, 204
+
 
 @api.route('/projects/<int:id>/is_exists',
            '/projects/<string:domain_name>/<string:type_name>/<string:biz_id>/is_exists')
@@ -74,28 +84,6 @@ class IsProjectItemExists(Resource):
 
 @api.route('/projects/<int:id>/data/meta')
 class ProjectMetaData(Resource):
-    # @require_app
-    # @api.expect([meta_data_item])
-    # @api.response(204, 'successfully added')
-    # def post(self, id):
-    #     """TODO:添加项目元数据"""
-    #     app = current_application
-    #     project = app.projects.filter_by(id=id).one()
-    #     data = request.get_json()
-    #     # TODO
-    #     return None, 204
-    #
-    # @require_app
-    # @api.expect([meta_data_item])
-    # @api.response(204, 'successfully deleted')
-    # def delete(self, id):
-    #     """TODO:删除项目元数据"""
-    #     app = current_application
-    #     project = app.projects.filter_by(id=id).one()
-    #     data = request.get_json()
-    #     # TODO
-    #     return None, 204
-
     @require_app
     @api.expect([meta_data_item])
     @api.response(204, 'successfully replaced')
@@ -106,61 +94,3 @@ class ProjectMetaData(Resource):
         data = request.get_json()
         biz.create_or_update_project_meta_data(proj, data)
         return None, 204
-
-    # @require_app
-    # @api.expect([meta_data_item])
-    # @api.response(204, 'successfully updated')
-    # def patch(self, id):
-    #     """TODO:更新项目元数据"""
-    #     app = current_application
-    #     project = app.projects.filter_by(id=id).one()
-    #     data = request.get_json()
-    #     # TODO
-    #     return None, 204
-
-
-# @api.route('/projects/<int:id>/customers')
-# class ProjectCustomers(Resource):
-#     @require_app
-#     @api.expect(raw_project_customers)
-#     @api.response(204, 'successfully added')
-#     def post(self, id):
-#         """TODO:添加项目客户"""
-#         app = current_application
-#         project = app.projects.filter_by(id=id).one()
-#         data = request.get_json()
-#         # TODO
-#         return None, 204
-#
-#     @require_app
-#     @api.expect(raw_project_customers)
-#     @api.response(204, 'successfully deleted')
-#     def delete(self, id):
-#         """TODO:删除项目客户"""
-#         app = current_application
-#         project = app.projects.filter_by(id=id).one()
-#         data = request.get_json()
-#         # TODO
-#         return None, 204
-#
-#     @require_app
-#     @api.expect(raw_project_customers)
-#     @api.response(204, 'successfully replaced')
-#     def put(self, id):
-#         """TODO:替换项目客户"""
-#         app = current_application
-#         project = app.projects.filter_by(id=id).one()
-#         data = request.get_json()
-#         # TODO
-#         return None, 204
-#
-#     @require_app
-#     @api.expect(raw_project_customers)
-#     @api.response(204, 'successfully updated')
-#     def patch(self, id):
-#         """TODO:更新项目客户"""
-#         app = current_application
-#         project = app.projects.filter_by(id=id).one()
-#         data = request.get_json()
-#         # TODO
-#         return None, 204

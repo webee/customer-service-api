@@ -13,7 +13,7 @@ class Customers(Resource):
     @api.expect([raw_customer])
     @api.response(204, 'created')
     def post(self):
-        """批量创建客户"""
+        """批量创建或更新客户信息"""
         app = current_application
         data = request.get_json()
 
@@ -28,7 +28,7 @@ class Staffs(Resource):
     @api.expect([raw_staff])
     @api.response(204, 'created')
     def post(self):
-        """批量创建客服"""
+        """批量创建或更新客服信息"""
         app = current_application
         data = request.get_json()
 
