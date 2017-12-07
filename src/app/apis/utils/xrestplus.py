@@ -1,3 +1,4 @@
+from functools import wraps
 from flask_restplus.utils import merge
 
 
@@ -22,7 +23,6 @@ def response_with(fields, as_list=False, code=200, description=None, **kwargs):
     :param int code: Optionally give the expected HTTP response code if its different from 200
 
     '''
-
     def wrapper(func):
         return add_response_doc(func, fields, as_list, code, description, **kwargs)
 
@@ -40,7 +40,11 @@ def marshal_with(schema, response_fields=None, as_list=False):
     def wrapper(func):
         if response_fields:
             func = add_response_doc(func, response_fields, as_list)
-        return lambda *args, **kwargs: schema.jsonify(func(*args, **kwargs), many=as_list)
+
+        @wraps(func)
+        def _wrapper(*args, **kwargs):
+            return schema.jsonify(func(*args, **kwargs), many=as_list)
+        return _wrapper
 
     return wrapper
 

@@ -12,7 +12,8 @@ from ..serializers.project import session_item, fetch_msgs_result, session_item_
 @api.route('/projects/<string:domain_name>/<string:type_name>/my_handling_sessions')
 class MyHandlingSessions(Resource):
     @require_staff
-    @marshal_list_with(session_item_schema, session_item)
+    @api.doc(model=session_item)
+    @marshal_list_with(session_item_schema)
     def get(self, domain_name, type_name):
         """获取我正在接待的会话"""
         staff = current_staff
@@ -44,7 +45,8 @@ class SessionItem(Resource):
 class ProjectMsgs(Resource):
     @require_staff
     @api.expect(fetch_msgs_arguments)
-    @marshal_with(fetch_msgs_result_schema, fetch_msgs_result)
+    @api.doc(model=fetch_msgs_result)
+    @marshal_with(fetch_msgs_result_schema)
     @api.response(404, 'session not found')
     @api.response(200, 'fetch msgs ok')
     def get(self, project_id):
