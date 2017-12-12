@@ -19,7 +19,7 @@ class App:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # jwt
-    JWT_AUTH_HEADER = 'X-JWT'
+    JWT_AUTH_HEADER = 'X-ANY-JWT'
     JWT_AUTH_HEADER_PATTERN = 'X-%s-JWT'
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or '.yek tset'
     JWT_EXPIRATION_DELTA = timedelta(days=2)
@@ -62,6 +62,12 @@ class XChat:
 
 class XChatClient:
     ROOT_URL = "http://local.xchat.com"
+
+
+class XFiles:
+    JWT_KEY = "xfiles@qqxb@2017"
+    JWT_ALGORITHM = 'HS256'
+    JWT_EXPIRATION_DELTA = timedelta(days=2)
 
 
 LOGGING = {

@@ -14,7 +14,7 @@ authorizations = {
         'in': 'header',
         'name': 'X-%s-JWT' % role.upper()
     }
-    for role in ['app', 'customer', 'staff']
+    for role in ['app', 'customer', 'staff', 'any']
 }
 api = Api(blueprint, version='1.0', doc='/',
           title='客服系统API', description='包括应用后端、客户端和客服端',
