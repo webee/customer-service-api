@@ -4,7 +4,6 @@ from app.apis.jwt import current_staff, require_staff
 from ..api import api
 from app.apis.serializers.auth import token_data
 from app.apis.serializers.staff import staff
-from app.apis.utils import xfiles
 
 
 @api.route('/auth')
@@ -23,12 +22,3 @@ class RefreshToken(Resource):
     def post(self):
         """刷新staff token"""
         return dict(token=jwt.encode_token('staff', current_staff))
-
-
-@api.route('/auth/xfiles_token')
-class RefreshToken(Resource):
-    @require_staff
-    @api.marshal_with(token_data)
-    def post(self):
-        """生成xfiles上传使用的token"""
-        return dict(token=xfiles.encode_token())

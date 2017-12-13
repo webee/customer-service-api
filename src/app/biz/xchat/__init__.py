@@ -36,7 +36,7 @@ def handle_msg_notify(msg):
 
 
 def handle_user_statuses(user_statuses):
-    tasks.sync_user_statuses.delay(user_statuses)
+    tasks.sync_user_statuses.apply_async(args=(user_statuses,), expires=180)
 
 
 def new_user_jwt(ns, name, exp_delta):

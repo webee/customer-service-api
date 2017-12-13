@@ -3,3 +3,4 @@
 """
 from . import resources
 from . import auth_resources
+from . import xfiles_resources
