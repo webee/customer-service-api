@@ -3,3 +3,4 @@
 """
 from . import resources
 from . import project_resources
+from . import msg_resources
