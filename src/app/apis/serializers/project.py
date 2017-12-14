@@ -40,6 +40,7 @@ new_project = api.model('New Project', raw_specs({
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
     'meta_data': fields.List(fields.Nested(meta_data_item)),
+    # 'scope_labels': fields.List(fields.Nested)
 }))
 
 
