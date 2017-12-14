@@ -50,9 +50,10 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
 
     if ProjectXChat.try_sync(proj_xchat_id):
         try:
+            synced_count = 0
             while True:
                 pending = ProjectXChat.current_pending(proj_xchat_id)
-                _sync_proj_xchat_msgs(proj, xchat_msg)
+                synced_count += _sync_proj_xchat_msgs(proj, xchat_msg)
                 xchat_msg = None
                 if not ProjectXChat.done_sync(proj_xchat_id, pending=pending):
                     # 延时累积
@@ -60,7 +61,7 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
                     continue
                 break
             # # notify client
-            if proj.current_session_id is not None:
+            if synced_count > 0 and proj.current_session_id is not None:
                 task_project_notify(proj, NotifyTypes.MSGS, dict(projectID=proj.id))
                 task_project_notify(proj, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=proj.current_session_id))
         except:
@@ -70,17 +71,22 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, p
 def _sync_proj_xchat_msgs(proj, xchat_msg=None):
     proj_xchat = proj.xchat
 
+    synced_count = 0
     if xchat_msg and proj_xchat.msg_id + 1 == xchat_msg.id:
         new_proj_xchat_msg(proj, (xchat_msg,))
+        synced_count += 1
 
     try:
         msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=5000)
         for split_msgs in batch_split(msgs, 100):
             new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
+        synced_count += len(msgs)
         if has_more:
-            _sync_proj_xchat_msgs(proj)
+            synced_count += _sync_proj_xchat_msgs(proj)
     except:
         logging.error(traceback.format_exc())
+
+    return synced_count
 
 
 @dbs.transactional
