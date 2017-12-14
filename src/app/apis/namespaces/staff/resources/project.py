@@ -22,7 +22,7 @@ class MyHandlingSessions(Resource):
         project_domain = app.project_domains.filter_by(name=domain_name).one()
         project_type = project_domain.types.filter_by(name=type_name).one()
 
-        return staff.handling_sessions.filter(Project.type == project_type).all()
+        return staff.handling_sessions.filter(Session.project.has(type_id=project_type.id)).all()
 
 
 @api.route('/projects/<string:domain_name>/<string:type_name>/<int:session_id>')
