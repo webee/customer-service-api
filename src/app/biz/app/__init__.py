@@ -41,7 +41,7 @@ def create_project(app, data):
         proj_m.create_or_update_meta_data(project, data['meta_data'])
     else:
         project.owner = app_m.create_or_update_customer(app, data['owner'])
-        project.leader = app_m.create_or_update_staff(app, data['owner'])
+        project.leader = app_m.create_or_update_staff(app, data['leader'])
         project.customers = app_m.create_or_update_customers(app, data['customers'])
 
         # update xchat chat
