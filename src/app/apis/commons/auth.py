@@ -13,4 +13,4 @@ def auth_token(role, data, get_identity_from_app):
         abort(401, 'invalid credentials')
 
     identity = get_identity_from_app(app, data)
-    return dict(token=jwt.encode_token(role, identity))
+    return jwt.encode_token(role, identity)

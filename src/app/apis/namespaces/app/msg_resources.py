@@ -7,7 +7,7 @@ from app.apis.jwt import current_application, require_app
 from .serializers import new_channel_message
 
 
-@api.route('/projects/<int:id>/channel_messages')
+@api.route('/projects/send_channel_msg')
 class ChannelMessages(Resource):
     @require_app
     @api.expect(new_channel_message)

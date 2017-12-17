@@ -26,7 +26,7 @@ class AppToken(Resource):
     @api.marshal_with(token_data)
     def put(self):
         """刷新app token"""
-        return dict(token=jwt.encode_token('app', current_application))
+        return jwt.encode_token('app', current_application)
 
 
 @api.route('/change_app_password')
@@ -70,13 +70,13 @@ class CustomerToken(Resource):
         uid = args['uid']
         app = current_application
 
-        return dict(token=jwt.encode_token('customer', app.customers.filter_by(uid=uid).one_or_none()))
+        return jwt.encode_token('customer', app.customers.filter_by(uid=uid).one_or_none())
 
     @require_customer
     @api.marshal_with(token_data)
     def put(self):
         """刷新customer token"""
-        return dict(token=jwt.encode_token('customer', current_customer))
+        return jwt.encode_token('customer', current_customer)
 
 
 @api.route('/staff_token')
@@ -98,10 +98,10 @@ class StaffToken(Resource):
         uid = args['uid']
         app = current_application
 
-        return dict(token=jwt.encode_token('staff', app.staffs.filter_by(uid=uid).one_or_none()))
+        return jwt.encode_token('staff', app.staffs.filter_by(uid=uid).one_or_none())
 
     @require_staff
     @api.marshal_with(token_data)
     def put(self):
         """刷新staff token"""
-        return dict(token=jwt.encode_token('staff', current_staff))
+        return jwt.encode_token('staff', current_staff)

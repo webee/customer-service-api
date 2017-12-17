@@ -21,4 +21,4 @@ class RefreshToken(Resource):
     @api.marshal_with(token_data)
     def post(self):
         """刷新staff token"""
-        return dict(token=jwt.encode_token('staff', current_staff))
+        return jwt.encode_token('staff', current_staff)

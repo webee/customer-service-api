@@ -53,10 +53,8 @@ class ProjectMsgs(Resource):
         """获取项目消息"""
         staff = current_staff
 
-        proj = Project.query.filter_by(id=project_id).one()
+        proj = staff.app.projects.filter_by(id=project_id).one()
         # FIXME: 添加权限控制
-        if proj.app != staff.app:
-            abort(404, 'session not found')
 
         args = fetch_msgs_arguments.parse_args()
         lid = args['lid']
