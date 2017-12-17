@@ -38,7 +38,7 @@ class App(BaseModel):
             return app
 
     def set_password(self, new_password):
-        self.password = bcrypt.generate_password_hash(new_password).decode()
+        self.password = bcrypt.generate_password_hash(new_password, rounds=9).decode()
         db.session.add(self)
         db.session.commit()
 
