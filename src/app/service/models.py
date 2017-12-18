@@ -1,9 +1,18 @@
 import json
 from sqlalchemy import desc
+from sqlalchemy.ext.mutable import MutableDict, MutableList
+from sqlalchemy.dialects import postgresql as pg
+from sqlalchemy.orm import deferred
+from sqlalchemy import text
+from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy import types
 from app import db, dbs, bcrypt, config
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
-from .model_commons import GenericDataItem
+
+WIDEST_SCOPE_LABEL = ['all', '']
+HIGHEST_CONTEXT_LABEL = ['self', '']
+DEFAULT_LABELS = text("ARRAY[[NULL,NULL]]")
 
 
 class UserType:
@@ -21,98 +30,175 @@ class App(BaseModel):
     password = db.Column(db.String(128), nullable=False)
     title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
+    # [{name, title, desc, types:[{name, title, desc}]}]
+    project_domain_type_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
 
-    def __init__(self, name, password, title, desc):
-        self.name = name
-        self.password = bcrypt.generate_password_hash(password).decode()
-        self.title = title
-        self.desc = desc
+    # 应用分配给客服系统的id和key，作为以后通信的认证元信息
+    app_id = deferred(db.Column(db.String(64), nullable=True, default=None), group='configs')
+    app_key = deferred(db.Column(db.String(128), nullable=True, default=None), group='configs')
+
+    # 应用提供的接口urls
+    urls = deferred(db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False, default={}), group='configs')
+
+    # 应用提供的访问功能列表
+    access_functions = deferred(db.Column(pg.ARRAY(db.String(16)), nullable=False, default=[]), group='configs')
+
+    # 应用的客服标签树
+    staff_label_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
 
     def __repr__(self):
         return "<App: {}>".format(self.name)
 
     @staticmethod
     def authenticate(name, password):
-        app = App.query.filter_by(name=name).one_or_none()
-        if app and bcrypt.check_password_hash(app.password, password):
-            return app
+        try:
+            app = App.query.filter_by(name=name).one_or_none()
+            if app and bcrypt.check_password_hash(app.password, password):
+                return app
+        except:
+            return None
 
-    def set_password(self, new_password):
+    @staticmethod
+    def update_app(id, values):
+        App.query.filter_by(id=id).update(values)
+
+    @dbs.transactional
+    def update_password(self, new_password):
         self.password = bcrypt.generate_password_hash(new_password, rounds=9).decode()
         db.session.add(self)
-        db.session.commit()
 
     def change_password(self, password, new_password):
         if bcrypt.check_password_hash(self.password, password):
-            self.set_password(new_password)
+            self.update_password(new_password)
             return True
-
-    @property
-    def ordered_project_domains(self):
-        return self.project_domains.order_by(ProjectDomain.id)
 
     # biz
     @dbs.transactional
-    def create_customer(self, uid, name):
+    def update_urls(self, urls):
+        new_urls = dict(**urls)
+        new_urls.update(self.urls)
+        self.urls = new_urls
+        flag_modified(self, 'urls')
+        db.session.add(self)
+
+    @dbs.transactional
+    def update_access_functions(self, functions):
+        self.access_functions = functions
+        flag_modified(self, 'access_functions')
+        db.session.add(self)
+
+    @dbs.transactional
+    def update_staff_label_tree(self, tree):
+        App.update_app(self.id, dict(staff_label_tree=tree))
+        # self.staff_label_tree = tree
+        # flag_modified(self, 'staff_label_tree')
+        # db.session.add(self)
+
+    @dbs.transactional
+    def create_customer(self, uid, name=None):
         customer = self.customers.filter_by(uid=uid).one_or_none()
         if customer is None:
             customer = Customer(app=self, uid=uid)
-        customer.name = name or customer.name
-        customer.is_deleted = False
+        elif customer.is_deleted:
+            customer.is_deleted = False
+        if name:
+            customer.name = name
         db.session.add(customer)
 
         return customer
 
     @dbs.transactional
-    def create_staff(self, uid, name):
+    def create_staff(self, uid, name=None, context_labels=None):
         staff = self.staffs.filter_by(uid=uid).one_or_none()
         if staff is None:
             staff = Staff(app=self, uid=uid)
-        staff.name = name or staff.name
-        staff.is_deleted = False
+        elif staff.is_deleted:
+            staff.is_deleted = False
+        if name:
+            staff.name = name
+        if context_labels is not None:
+            staff.context_labels = context_labels or DEFAULT_LABELS
+            flag_modified(staff, 'context_labels')
         dbs.session.add(staff)
 
         return staff
 
     @dbs.transactional
-    def create_project_domain(self, name, title, desc):
-        project_domain = ProjectDomain(app=self, name=name, title=title, desc=desc)
-        db.session.add(project_domain)
-        return project_domain
+    def create_project_domain_type(self, domain, type, access_functions=None, class_label_tree=None):
+        project_domain_type = self.project_domain_types.filter_by(domain=domain, type=type).one_or_none()
+        if project_domain_type is None:
+            project_domain_type = ProjectDomainType(app=self, domain=domain, type=type)
+        if access_functions is not None:
+            project_domain_type.access_functions = access_functions
+        if class_label_tree is not None:
+            project_domain_type.class_label_tree = class_label_tree
+        db.session.add(project_domain_type)
+        return project_domain_type
+
+
+class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_cascade="all, delete-orphan")):
+    """项目类型"""
+    __tablename__ = 'project_domain_type'
+
+    # 域
+    domain = db.Column(db.String(32), nullable=False)
+    # 类型
+    type = db.Column(db.String(32), nullable=False)
+
+    # 项目类型提供的访问功能列表
+    access_functions = db.Column(pg.ARRAY(db.String(16)), nullable=False, default=[])
+    # 项目类型的分类标签树
+    class_label_tree = db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={})
+
+    # 每个域下面类型唯一
+    __table_args__ = (db.UniqueConstraint('app_name', 'domain', 'type', name='uniq_app_project_domain_type'),)
+
+    @property
+    def app_biz_id(self):
+        return '%s:%s:%s' % (self.app_name, self.domain, self.type)
+
+    # biz
+    @dbs.transactional
+    def update_access_functions(self, functions):
+        self.access_functions = functions
+        flag_modified(self, 'access_functions')
+        db.session.add(self)
 
     @dbs.transactional
-    def create_configs(self):
-        configs = AppConfigs(app=self)
-        dbs.session.add(configs)
-
-        return configs
-
-
-class AppConfigs(BaseModel, app_resource('configs', backref_uselist=False, backref_lazy='select')):
-    __tablename__ = 'app_configs'
-
-    # 应用分配给客服系统的id和key，作为以后通信的认证元信息
-    aid = db.Column(db.String(64), nullable=True, default=None)
-    akey = db.Column(db.String(128), nullable=True, default=None)
-
-    # TODO: 使用上面的key签名，设计接口规范
-    # 服务提供的接口根url
-    # 接口：1、获取token；2、事件通知接口（消息转发等）；3、获取项目扩展信息等
-    base_url = db.Column(db.String(256), nullable=True, default=None)
+    def update_staff_label_tree(self, tree):
+        self.class_label_tree = tree
+        flag_modified(self, 'class_label_tree')
+        db.session.add(self)
 
     def __repr__(self):
-        return "<AppConfigs: {}>".format(self.app.name)
+        return "<ProjectDomainType: {}>".format(self.app_biz_id)
 
 
 class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineModel):
     """客户"""
+    # 元数据
+    # [{type, value, label}, ...]
+    meta_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
 
+    # biz
+    @dbs.transactional
+    def update_meta_data(self, data):
+        if data is not None:
+            self.meta_data = data or []
+            flag_modified(self, 'meta_data')
+            db.session.add(self)
+
 
 class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     """客服"""
+
+    # 客服定位标签
+    # [{type, path}, ...]
+    context_labels = deferred(
+        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
 
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
@@ -124,64 +210,6 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
 
     def get_handling_session(self, session_id):
         return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
-
-
-class ProjectDomain(BaseModel, app_resource('project_domains', backref_cascade="all, delete-orphan")):
-    """项目域"""
-    __tablename__ = 'project_domain'
-
-    name = db.Column(db.String(32), nullable=False, index=True)
-    # eg: 个人，员工，企业
-    title = db.Column(db.String(32), nullable=False)
-    desc = db.Column(db.String(64), nullable=False)
-
-    # 每个app下面域唯一
-    __table_args__ = (db.UniqueConstraint('app_id', 'name', name='uniq_app_domain'),)
-
-    @property
-    def app_biz_id(self):
-        return '%s:%s' % (self.app.name, self.name)
-
-    def __repr__(self):
-        return "<ProjectDomain: {}>".format(self.name)
-
-    @property
-    def ordered_types(self):
-        return self.types.order_by(ProjectType.id)
-
-    @dbs.transactional
-    def create_project_type(self, name, title, desc):
-        project_type = ProjectType(app=self.app, domain=self, name=name, title=title, desc=desc)
-        db.session.add(project_type)
-        return project_type
-
-
-class ProjectType(BaseModel, app_resource('project_types', backref_cascade="all, delete-orphan")):
-    """项目类型"""
-    __tablename__ = 'project_type'
-
-    domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
-    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('types', lazy='dynamic'))
-
-    name = db.Column(db.String(32), nullable=False, index=True)
-    # eg: 咨询，专业业务订单，工单
-    title = db.Column(db.String(32), nullable=False)
-    desc = db.Column(db.String(64), nullable=False)
-
-    # 每个域下面类型唯一
-    __table_args__ = (db.UniqueConstraint('domain_id', 'name', name='uniq_domain_type'),)
-
-    @property
-    def app_biz_id(self):
-        return '%s:%s' % (self.domain.app_biz_id, self.name)
-
-    def __repr__(self):
-        return "<ProjectType: {}:{}>".format(self.domain.name, self.name)
-
-
-class ProjectTypeConfigs(BaseModel):
-    """项目类型配置"""
-    __tablename__ = 'project_type_configs'
 
 
 # many to many helpers
@@ -197,17 +225,25 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     __tablename__ = 'project'
 
     # 域
-    domain_id = db.Column(db.BigInteger, db.ForeignKey('project_domain.id'), index=True, nullable=False)
-    domain = db.relationship('ProjectDomain', lazy='joined', backref=db.backref('projects', lazy='dynamic'))
+    domain = db.Column(db.String(32), nullable=False)
     # 类型
-    type_id = db.Column(db.BigInteger, db.ForeignKey('project_type.id'), index=True, nullable=False)
-    type = db.relationship('ProjectType', lazy='joined', backref=db.backref('projects', lazy='dynamic'))
-
+    type = db.Column(db.String(32), nullable=False)
     # 业务id
     biz_id = db.Column(db.String(32), nullable=False)
 
-    # 每个项目类型的业务id唯一
-    __table_args__ = (db.UniqueConstraint('type_id', 'biz_id', name='uniq_type_biz'),)
+    # 项目范围标签
+    scope_labels = deferred(
+        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
+    # 项目分类标签
+    class_labels = deferred(
+        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
+
+    # 元数据
+    # [{type, value, label}, ...]
+    meta_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
+    # 扩展数据
+    # [{type, value, label}, ...]
+    ext_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
 
     # 所属客户
     owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)
@@ -233,48 +269,59 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
+    # 每个项目类型的业务id唯一
+    __table_args__ = (
+        db.UniqueConstraint('app_name', 'domain', 'type', 'biz_id', name='uniq_app_project_domain_type_biz'),)
+
     @property
     def app_biz_id(self):
-        return '%s:%s' % (self.type.app_biz_id, self.biz_id)
+        return '%s:%s:%s:%s' % (self.app_name, self.domain, self.type, self.biz_id)
 
     @property
     def xchat_biz_id(self):
         return '%s:%s' % (config.App.NAME, self.app_biz_id)
 
-    @property
-    def ordered_meta_data(self):
-        return [dict(key=item.key,
-                     type=json.loads(item.type),
-                     value=json.loads(item.value),
-                     label=item.label) for item in self.meta_data.order_by(ProjectMetaData.index, ProjectMetaData.id)]
-
-    @property
-    def ordered_ext_data(self):
-        return self.ext_data.order_by(ProjectExtData.index, ProjectExtData.id)
-
     def __repr__(self):
         return "<Project: {}>".format(self.app_biz_id)
 
+    # biz
     @dbs.transactional
-    def create_xchat(self, chat_id):
-        xchat = ProjectXChat(project=self, chat_id=chat_id)
-        dbs.session.add(xchat)
-
-        return xchat
+    def create_or_update_xchat(self, chat_id):
+        if self.xchat:
+            assert chat_id == self.xchat.chat_id, 'chat_id should not change'
+            return self.xchat
+        else:
+            xchat = ProjectXChat(project=self, chat_id=chat_id)
+            dbs.session.add(xchat)
+            return xchat
 
     @dbs.transactional
-    def create_meta_data_item(self, key, type, value, label, index):
-        meta_data_item = self.meta_data.filter_by(key=key).one_or_none()
-        if meta_data_item is None:
-            meta_data_item = ProjectMetaData(project=self, key=key)
-        meta_data_item.type = type or meta_data_item.type
-        meta_data_item.value = value or meta_data_item.value
-        meta_data_item.label = label or meta_data_item.lable
-        meta_data_item.index = index or meta_data_item.index
+    def update_scope_labels(self, labels):
+        if labels is not None:
+            self.scope_labels = labels or DEFAULT_LABELS
+            flag_modified(self, 'scope_labels')
+            db.session.add(self)
 
-        dbs.session.add(meta_data_item)
+    @dbs.transactional
+    def update_class_labels(self, labels):
+        if labels is not None:
+            self.class_labels = labels or DEFAULT_LABELS
+            flag_modified(self, 'class_labels')
+            db.session.add(self)
 
-        return meta_data_item
+    @dbs.transactional
+    def update_meta_data(self, data):
+        if data is not None:
+            self.meta_data = data or []
+            flag_modified(self, 'meta_data')
+            db.session.add(self)
+
+    @dbs.transactional
+    def update_ext_data(self, data):
+        if data is not None:
+            self.ext_data = data or []
+            flag_modified(self, 'ext_data')
+            db.session.add(self)
 
 
 class ProjectXChat(BaseModel, project_resource('xchat')):
@@ -332,30 +379,6 @@ class ProjectXChat(BaseModel, project_resource('xchat')):
         return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
 
 
-class ProjectMetaData(BaseModel, GenericDataItem,
-                      project_resource('meta_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
-    """项目元数据: 作为客服界面展示的一个数据缓存"""
-    __tablename__ = 'project_meta_data'
-
-    # project_id, key唯一
-    __table_args__ = (db.UniqueConstraint('project_id', 'key', name='uniq_project_meta_data_key'),)
-
-    def __repr__(self):
-        return "<ProjectMetaData: {}({})>".format(self.key, self.label)
-
-
-class ProjectExtData(BaseModel, GenericDataItem,
-                     project_resource('ext_data', backref_uselist=True, backref_cascade="all, delete-orphan")):
-    """项目扩展数据：作为客服界面展示的一个数据缓存"""
-    __tablename__ = 'project_ext_data'
-
-    # project_id, key唯一
-    __table_args__ = (db.UniqueConstraint('project_id', 'key', name='uniq_project_ext_data_key'),)
-
-    def __repr__(self):
-        return "<ProjectExtData: {}({})>".format(self.key, self.label)
-
-
 class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     """表示一个客服项目的一次会话"""
     __tablename__ = 'session'
@@ -390,6 +413,7 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
 
     # 当前激活的其它通道
     activated_channel = db.Column(db.String(16), nullable=True, default=None)
+    channel_user_id = db.Column(db.String(32), nullable=True, default=None)
 
     def __repr__(self):
         return "<Session: {0}, {1}, {2}>".format(self.project.app_biz_id, 'active' if self.is_active else 'closed',

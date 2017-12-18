@@ -1,18 +1,12 @@
 from flask_restplus import fields
 from app import ma
 from . import api
-from . import pagination, base_resource
+from .app import meta_data_item
 
-
-_raw_customer_specs = {
+raw_customer = api.model('Raw Customer', {
     'uid': fields.String(required=True, min_length=1, max_length=32, example='test_001'),
-    'name': fields.String(required=False, min_length=1, max_length=16, example='测试客户#1')
-}
-
-raw_customer = api.model('Raw Customer', _raw_customer_specs)
-customer = api.inherit('Customer', base_resource, _raw_customer_specs)
-page_of_customers = api.inherit('Page of customers', pagination, {
-    'items': fields.List(fields.Nested(customer))
+    'name': fields.String(required=False, min_length=1, max_length=16, example='测试客户#1'),
+    'meta_data': fields.List(fields.Nested(meta_data_item)),
 })
 
 

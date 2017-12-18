@@ -10,54 +10,114 @@ from app.utils.commons import batch_split
 from app.biz.notifies import task_project_notify, task_app_notify
 from . import app as app_m
 from . import proj as proj_m
+from .app import create_or_update_project_domain_type, create_or_update_project_domain_types
 
 NS_PT = re.compile(r':')
 
 
+def get_project(app, id=None, domain=None, type=None, biz_id=None):
+    if id is not None:
+        return app.projects.filter_by(id=id).one_or_none()
+    elif domain is not None and type is not None:
+        return app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+
+
+def is_project_exists(app, id=None, domain=None, type=None, biz_id=None):
+    if id is not None:
+        return dbs.session.query(app.projects.filter_by(id=id).exists()).scalar()
+    elif domain is not None and type is not None:
+        return dbs.session.query(
+            app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).exists()).scalar()
+    return False
+
+
 @dbs.transactional
 def create_project(app, data):
-    try:
-        project_domain = app.project_domains.filter_by(name=data['domain']).one()
-        project_type = project_domain.types.filter_by(name=data['type']).one()
-    except NoResultFound:
-        raise BizError(errors.ERR_ITEM_NOT_FOUND, 'project domain/type not exists',
-                       dict(domain=data['domain'], type=data['type']))
+    project_domain_type_tree = app.project_domain_type_tree
+    domain = data['domain']
+    type = data['type']
+    if domain not in project_domain_type_tree or type not in project_domain_type_tree[domain]['types']:
+        raise BizError(errors.ERR_INVALID_PARAMS, 'project domain/type not exists', dict(domain=domain, type=type))
 
     biz_id = data['biz_id']
     start_msg_id = data.get('start_msg_id', 0)
-    project = project_type.projects.filter_by(biz_id=biz_id).one_or_none()
+    project = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+    owner = app_m.create_or_update_customer(app, data['owner'])
+    leader = app_m.create_or_update_staff(app, data['leader'])
+    customers = app_m.create_or_update_customers(app, data['customers'])
     if project is None:
-        owner = app_m.create_or_update_customer(app, data['owner'])
-        leader = app_m.create_or_update_staff(app, data['leader'])
-        customers = app_m.create_or_update_customers(app, data['customers'])
-        project = Project(app=app, domain=project_domain, type=project_type, biz_id=biz_id, owner=owner, leader=leader,
+        project = Project(app_name=app.name, app=app, domain=domain, type=type, biz_id=biz_id, owner=owner,
+                          leader=leader,
                           customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
-
-        # xchat
-        chat_id = xchat_biz.create_chat(project)
-        project.create_xchat(chat_id)
-
-        # meta data
-        proj_m.create_or_update_meta_data(project, data['meta_data'])
     else:
-        project.owner = app_m.create_or_update_customer(app, data['owner'])
-        project.leader = app_m.create_or_update_staff(app, data['leader'])
-        project.customers = app_m.create_or_update_customers(app, data['customers'])
+        project.owner = owner
+        project.leader = leader
+        project.customers = customers
 
-        # update xchat chat
-        chat_id = xchat_biz.create_chat(project)
-        assert chat_id == project.xchat.chat_id, 'chat_id should not change'
+    # create or update xchat chat
+    chat_id = xchat_biz.create_chat(project)
+    project.create_or_update_xchat(chat_id)
 
-        # meta data
-        proj_m.create_or_update_meta_data(project, data['meta_data'])
+    # scope labels
+    proj_m.update_scope_labels(project, data.get('scope_labels'))
+    # class labels
+    proj_m.update_class_labels(project, data.get('class_labels'))
+    # meta data
+    proj_m.update_meta_data(project, data.get('meta_data'))
 
     dbs.session.add(project)
 
     return project
 
 
-def create_or_update_project_meta_data(proj, data):
-    proj_m.create_or_update_meta_data(proj, data)
+@dbs.transactional
+def create_projects(app, data):
+    return [create_project(app, d) for d in data]
+
+
+def batch_create_projects(app, data):
+    projects = []
+    for split_data in batch_split(data, 100):
+        projects.extend(create_projects(app, split_data))
+    return projects
+
+
+@dbs.transactional
+def update_project(project, data):
+    app = project.app
+    if 'owner' in data:
+        project.owner = app_m.create_or_update_customer(app, data['owner'])
+    if 'leader' in data:
+        project.leader = app_m.create_or_update_staff(app, data['leader'])
+    if 'customers' in data:
+        project.customers = app_m.create_or_update_customers(app, data['customers'])
+
+    # scope labels
+    if 'scope_labels' in data:
+        proj_m.update_scope_labels(project, data.get('scope_labels'))
+    # class labels
+    if 'class_labels' in data:
+        proj_m.update_class_labels(project, data.get('class_labels'))
+    # meta data
+    if 'meta_data' in data:
+        proj_m.update_meta_data(project, data.get('meta_data'))
+
+    dbs.session.add(project)
+
+    return project
+
+
+@dbs.transactional
+def update_projects(app, data):
+    for d in data:
+        project = get_project(app, d.get('id'), d.get('domain'), d.get('type'), d.get('biz_id'))
+        if project:
+            update_project(project, d)
+
+
+def batch_update_projects(app, data):
+    for split_data in batch_split(data, 100):
+        update_projects(app, split_data)
 
 
 def batch_create_or_update_customers(app, data):

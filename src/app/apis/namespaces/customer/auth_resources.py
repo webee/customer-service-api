@@ -3,13 +3,13 @@ from app import jwt
 from app.apis.jwt import current_customer, require_customer
 from .api import api
 from app.apis.serializers.auth import token_data
-from app.apis.serializers.customer import customer
+from app.apis.serializers.customer import raw_customer
 
 
 @api.route('/auth')
 class Auth(Resource):
     @require_customer
-    @api.marshal_with(customer)
+    @api.marshal_with(raw_customer)
     def get(self):
         """得到customer信息"""
         return current_customer

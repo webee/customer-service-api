@@ -12,29 +12,29 @@ def init_data():
 
 
 def init_test_data():
-    app = create_app('test', 'test1234', '测试应用', '测试应用客服')
+    app = create_app(dict(name='test', password='test1234', title='测试应用', desc='测试应用客服', project_domain_type_tree={
+        'test': dict(title='测试', desc='测试域', types={
+            'test': dict(title='测试', desc='测试类型')
+        }),
+        'test2': dict(type='测试', title='测试域', types={
+            'test': dict(title='测试', desc='测试类型'),
+            'test2': dict(title='测试2', desc='测试类型2'),
+        }),
+    }, app_id='cs', app_key='cs1234', urls={
+        'getToken': 'http://test.com/api/getToken',
+        'getExtData': 'http://test.com/api/getExtData',
+        'accessFunction': 'http://test.com/api/accessFunction',
+        'sendChannelMsg': 'http://test.com/api/sendChannelMsg',
+    }, access_functions=['customerDetails'], staff_label_tree=sample_data.test_staff_label_tree))
+
+    # project_domain_type
+    # app_biz.create_or_update_project_domain_type(
+    #     dict(domain='test', type='test', access_functions=[], class_label_tree={}))
 
     # customer
-    app.create_customer('test', '测试客户')
-    app.create_customer('test_001', '测试客户#1')
-    app.create_customer('test_002', '测试客户#2')
-    app.create_customer('test_003', '测试客户#3')
-
+    app_biz.batch_create_or_update_customers(app, sample_data.test_customers_data)
     # staff
-    app.create_staff('test', '测试客服')
-    app.create_staff('test_01', '测试客服#1')
-    app.create_staff('test_02', '测试客服#2')
-    app.create_staff('test_03', '测试客服#3')
-    app.create_staff('test_04', '测试客服#4')
-    app.create_staff('test_05', '测试客服#5')
-
-    # domain/type
-    project_domain = app.create_project_domain('test', '测试', '测试域')
-    project_domain.create_project_type('test', '测试', '测试类型')
-
-    project_domain = app.create_project_domain('test2', '测试2', '测试域2')
-    project_domain.create_project_type('test', '测试', '测试类型')
-    project_domain.create_project_type('test2', '测试2', '测试类型2')
+    app_biz.batch_create_or_update_staffs(app, sample_data.test_staffs_data)
 
     # projects
     for project_data in sample_data.test_projects_data:
@@ -42,23 +42,28 @@ def init_test_data():
 
 
 def init_prod_data():
-    app = create_app('qqxb', 'qqxb1234', '亲亲小保', '亲亲小保客服')
+    app = create_app(dict(name='qqxb', password='qqxb1234', title='亲亲小保', desc='亲亲小保客服', project_domain_type_tree={
+        'personal': dict(title='个人', desc='个人域', types={
+            'consultation': dict(title='咨询', desc='咨询类型'),
+            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
+        }),
+        'employee': dict(title='员工', desc='员工域', types={
+            'consultation': dict(title='咨询', desc='咨询类型'),
+            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
+        }),
+        'enterprise': dict(title='企业', desc='企业域', types={
+            'consultation': dict(title='咨询', desc='咨询类型'),
+            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
+            'work_order': dict(title='工单', desc='工单类型'),
+        }),
+    }, app_id='cs', app_key='cs1234', urls={
+        'getToken': 'http://qqxb.com/api/getToken',
+        'getExtData': 'http://qqxb.com/api/getExtData',
+        'accessFunction': 'http://qqxb.com/api/accessFunction',
+        'sendChannelMsg': 'http://qqxb.com/api/sendChannelMsg',
+    }, access_functions=['addRemark', 'addTask', 'customerDetails'], staff_label_tree={}))
+
     # customer
     app.create_customer('test', '测试客户')
-
     # staff
-    app.create_staff('test', '测试客服')
-
-    project_domain = app.create_project_domain('personal', '个人', '个人域')
-    project_domain.create_project_type('consultation', '咨询', '咨询类型')
-    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
-
-    project_domain = app.create_project_domain('employee', '员工', '员工域')
-    project_domain.create_project_type('consultation', '咨询', '咨询类型')
-    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
-
-    project_domain = app.create_project_domain('enterprise', '企业', '企业域')
-    project_domain.create_project_type('consultation', '咨询', '咨询类型')
-    project_domain.create_project_type('biz_order', '专项业务订单', '专项业务订单类型')
-    project_domain.create_project_type('work_order', '工单', '工单类型')
-
+    app.create_staff('test', '测试客服', [['self', '']])

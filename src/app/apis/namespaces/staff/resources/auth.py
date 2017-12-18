@@ -3,13 +3,13 @@ from app import jwt
 from app.apis.jwt import current_staff, require_staff
 from ..api import api
 from app.apis.serializers.auth import token_data
-from app.apis.serializers.staff import staff
+from app.apis.serializers.staff import raw_staff
 
 
 @api.route('/auth')
 class Auth(Resource):
     @require_staff
-    @api.marshal_with(staff)
+    @api.marshal_with(raw_staff)
     def get(self):
         """得到staff信息"""
         return current_staff

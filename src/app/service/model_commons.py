@@ -1,4 +1,5 @@
 import arrow
+import enum
 from app import db, dbs, config
 from pytoolbox.util.py import classproperty
 from sqlalchemy.ext.declarative import declared_attr
@@ -10,15 +11,16 @@ class BaseModel(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     created = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp())
-    updated = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    updated = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp(),
+                        onupdate=db.func.current_timestamp())
 
     @classproperty
     def t_query(cls):
         return dbs.session.query(cls)
 
 
-def foreign_key(key, backref_uselist=False, index=True):
-    return db.Column(db.BigInteger, db.ForeignKey(key), index=index, nullable=False, unique=not backref_uselist)
+def foreign_key(key, backref_uselist=False, index=True, type=db.BigInteger):
+    return db.Column(type, db.ForeignKey(key), index=index, nullable=False, unique=not backref_uselist)
 
 
 def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None, backref_cascade=None):
@@ -36,13 +38,14 @@ def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=No
 def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=None):
     class AppResource(object):
         """属于app的资源"""
+
         @declared_attr
-        def app_id(cls):
-            return foreign_key('app.id', backref_uselist=backref_uselist)
+        def app_name(cls):
+            return foreign_key('app.name', backref_uselist=backref_uselist, type=db.String(32))
 
         @declared_attr
         def app(cls):
-            return relationship('App', name, cls.app_id, backref_uselist, backref_lazy, backref_cascade)
+            return relationship('App', name, cls.app_name, backref_uselist, backref_lazy, backref_cascade)
 
     return AppResource
 
@@ -56,11 +59,11 @@ def app_user(user_type, resource_name):
         # 是否删除
         is_deleted = db.Column(db.Boolean, default=False)
 
-        __table_args__ = (db.UniqueConstraint('app_id', 'uid', name='uniq_app_%s' % user_type),)
+        __table_args__ = (db.UniqueConstraint('app_name', 'uid', name='uniq_app_%s' % user_type),)
 
         @property
         def app_uid(self):
-            return '%s:%s:%s' % (self.app.name, user_type, self.uid)
+            return '%s:%s:%s' % (self.app_name, user_type, self.uid)
 
     return AppUser
 
@@ -68,6 +71,7 @@ def app_user(user_type, resource_name):
 def project_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None):
     class ProjectResource(object):
         """属于project的资源"""
+
         @declared_attr
         def project_id(cls):
             return foreign_key('project.id', backref_uselist=backref_uselist)
@@ -82,6 +86,7 @@ def project_resource(name, backref_uselist=False, backref_lazy=None, backref_cas
 def session_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None):
     class SessionResource(object):
         """属于session的资源"""
+
         @declared_attr
         def session_id(cls):
             return foreign_key('session.id', backref_uselist=backref_uselist)
@@ -115,15 +120,5 @@ class WithOnlineModel(object):
 
     @property
     def is_online(self):
-        return self.online and\
+        return self.online and \
                self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) < config.Biz.USER_ONLINE_DELTA
-
-
-class GenericDataItem(object):
-    key = db.Column(db.String(32), nullable=False)
-    # 类型信息, 可以是复杂的json object描述
-    type = db.Column(db.String(256), nullable=True, default=None)
-    value = db.Column(db.Text, nullable=False)
-    label = db.Column(db.String(16), nullable=False)
-    # 显示次序
-    index = db.Column(db.Integer, nullable=True, default=None, index=True)

@@ -4,7 +4,7 @@ from .api import api
 from app.biz import app as biz
 from app.apis.jwt import current_application, require_app
 from app.apis.serializers.customer import raw_customer
-from app.apis.serializers.staff import raw_staff
+from app.apis.serializers.staff import new_staff
 
 
 @api.route('/customers')
@@ -25,7 +25,7 @@ class Customers(Resource):
 @api.route('/staffs')
 class Staffs(Resource):
     @require_app
-    @api.expect([raw_staff])
+    @api.expect([new_staff])
     @api.response(204, 'created')
     def post(self):
         """批量创建或更新客服信息"""

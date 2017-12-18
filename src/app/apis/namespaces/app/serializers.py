@@ -9,6 +9,10 @@ new_project_result = api.inherit('new project result', resource_id, {
 
 new_channel_message = api.model('New Channel Message', {
     'channel': fields.String(required=True),
+    'project_domain': fields.String(required=False),
+    'project_type': fields.String(required=False),
+    'biz_id': fields.String(required=False),
+    'project_id': fields.Integer(required=False),
     'uid': fields.String(required=True),
     'type': fields.String(required=True, enum=('text', 'file', 'image', 'voice')),
     'content': any_of(['string', 'object'], required=True)

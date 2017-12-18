@@ -1,3 +1,37 @@
+test_customers_data = [
+    {"uid": "test", "name": "测试客户"},
+    {"uid": "test_001", "name": "测试客户#1"},
+    {"uid": "test_002", "name": "测试客户#2"},
+    {"uid": "test_003", "name": "测试客户#3"}
+]
+
+test_staff_label_tree = {
+    "1": {"name": "角色#1", "children": {
+        "1": {"name": "分组#1"},
+        "2": {"name": "分组#2"}
+    }},
+    "2": {"name": "角色#2", "children": {
+        "1": {"name": "分组#1"}
+    }},
+}
+
+test_staffs_data = [
+    {"uid": "test", "name": "测试客服",
+     "context_labels": [{"type": "self", "path": "1.1"}, {"type": "sub", "path": "2.1"}, ]},
+    {"uid": "test_x", "name": "测试客服#x",
+     "context_labels": [["self", ""], ]},
+    {"uid": "test_01", "name": "测试客服#1",
+     "context_labels": [["sub", "1.1"], ]},
+    {"uid": "test_02", "name": "测试客服#2",
+     "context_labels": [["self", "2.1"], ]},
+    {"uid": "test_03", "name": "测试客服#3",
+     "context_labels": [["self", "1.2"], ]},
+    {"uid": "test_04", "name": "测试客服#4",
+     "context_labels": [["sub", "1.2"], ]},
+    {"uid": "test_05", "name": "测试客服#5",
+     "context_labels": [["sub", "1.2"], ]},
+]
+
 test_projects_data = [
     {
         "domain": "test",
@@ -22,12 +56,15 @@ test_projects_data = [
                 "name": "用户001"
             }
         ],
+        "scope_labels": [
+            {"type": "all", "path": "1.1"},
+            ["self", "1.2"]
+        ],
         "meta_data": [
-            {"key": "username", "value": "测试用户", "label": "姓名", "index": 1},
-            {"key": "age", "value": 28, "label": "年龄", "index": 2},
-            {"key": "user_details", "type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"},
-             "label": "用户详情", "index": 3},
-            {"key": "test_x", "type": "value", "value": "xxxxx", "label": "测试x", "index": 4}
+            {"value": "测试用户", "label": "姓名"},
+            {"value": 28, "label": "年龄"},
+            {"type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"}, "label": "用户详情"},
+            ["测试x", "value", "xxxxx"]
         ]
     },
     {
@@ -48,12 +85,15 @@ test_projects_data = [
                 "name": "用户002"
             }
         ],
+        "scope_labels": [
+            {"type": "all", "path": "1.1"},
+            ["self", "1.2"]
+        ],
         "meta_data": [
-            {"key": "username", "value": "用户002", "label": "姓名", "index": 1},
-            {"key": "is_valid", "value": True, "label": "是否有效", "index": 2},
-            {"key": "user_details", "type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"},
-             "label": "用户详情", "index": 3},
-            {"key": "test_y", "type": "value", "value": "yyyyy", "label": "测试y", "index": 4}
+            {"value": "用户002", "label": "姓名"},
+            {"value": True, "label": "是否有效"},
+            {"type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"}, "label": "用户详情"},
+            ["测试y", "value", "yyyyy"]
         ]
     }
 ]

@@ -72,7 +72,7 @@ class JWT(object):
 
         payload = dict(exp=exp, iat=iat, role=role, **payload)
 
-        return dict(token=jwt.encode(payload, secret, algorithm=algorithm).decode('utf-8'), exp=exp)
+        return dict(token=jwt.encode(payload, secret, algorithm=algorithm).decode('utf-8'), exp=exp.timestamp())
 
     def _gen_sign(self, role, identity):
         id_secret = self.identity_secret_handler(role, identity) or self.app.config['JWT_SECRET_KEY']
