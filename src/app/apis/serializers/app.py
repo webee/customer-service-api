@@ -1,6 +1,14 @@
 from flask_restplus import fields
 from . import api
-from .xfields import Any
+from .xfields import Any, any_of
+
+update_application_payload = api.model('Update Application Payload', {
+    'appid': fields.String(),
+    'appkey': fields.String(),
+    'urls': any_of(['object']),
+    'access_functions': fields.List(fields.String()),
+    'staff_label_tree': any_of(['object'])
+})
 
 application = api.model('Application', {
     'name': fields.String(example='test', description='app name'),
@@ -12,7 +20,6 @@ path_label = api.model('Path Label', {
     'type': fields.String(required=True, enum=['super', 'self', 'sub', 'all']),
     'path': fields.String(required=True)
 })
-
 
 meta_data_item = api.model('meta data item', {
     'label': fields.String(required=True, example='用户名', description='显示名称'),

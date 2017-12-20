@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import types
 from app import db, dbs, bcrypt, config
+from app.utils.commons import merge_to_dict
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
 
@@ -31,11 +32,11 @@ class App(BaseModel):
     title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
     # [{name, title, desc, types:[{name, title, desc}]}]
-    project_domain_type_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
+    project_domains = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
 
     # 应用分配给客服系统的id和key，作为以后通信的认证元信息
-    app_id = deferred(db.Column(db.String(64), nullable=True, default=None), group='configs')
-    app_key = deferred(db.Column(db.String(128), nullable=True, default=None), group='configs')
+    appid = deferred(db.Column(db.String(64), nullable=True, default=None), group='configs')
+    appkey = deferred(db.Column(db.String(128), nullable=True, default=None), group='configs')
 
     # 应用提供的接口urls
     urls = deferred(db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False, default={}), group='configs')
@@ -45,6 +46,12 @@ class App(BaseModel):
 
     # 应用的客服标签树
     staff_label_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
+
+    @property
+    def project_domain_type_tree(self):
+        project_domains = self.project_domains
+        return {domain['name']: merge_to_dict(domain, types={type['name']: type for type in domain.get('types', [])})
+                for domain in project_domains}
 
     def __repr__(self):
         return "<App: {}>".format(self.name)

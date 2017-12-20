@@ -12,15 +12,15 @@ def init_data():
 
 
 def init_test_data():
-    app = create_app(dict(name='test', password='test1234', title='测试应用', desc='测试应用客服', project_domain_type_tree={
-        'test': dict(title='测试', desc='测试域', types={
-            'test': dict(title='测试', desc='测试类型')
-        }),
-        'test2': dict(type='测试', title='测试域', types={
-            'test': dict(title='测试', desc='测试类型'),
-            'test2': dict(title='测试2', desc='测试类型2'),
-        }),
-    }, app_id='cs', app_key='cs1234', urls={
+    app = create_app(dict(name='test', password='test1234', title='测试应用', desc='测试应用客服', project_domains=[
+        dict(name='test', title='测试', desc='测试域', types=[
+            dict(name='test', title='测试', desc='测试类型')
+        ]),
+        dict(name='test2', type='测试', title='测试域', types=[
+            dict(name='test', title='测试', desc='测试类型'),
+            dict(name='test2', title='测试2', desc='测试类型2'),
+        ]),
+    ], appid='cs', appkey='cs1234', urls={
         'getToken': 'http://test.com/api/getToken',
         'getExtData': 'http://test.com/api/getExtData',
         'accessFunction': 'http://test.com/api/accessFunction',
@@ -42,21 +42,21 @@ def init_test_data():
 
 
 def init_prod_data():
-    app = create_app(dict(name='qqxb', password='qqxb1234', title='亲亲小保', desc='亲亲小保客服', project_domain_type_tree={
-        'personal': dict(title='个人', desc='个人域', types={
-            'consultation': dict(title='咨询', desc='咨询类型'),
-            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
-        }),
-        'employee': dict(title='员工', desc='员工域', types={
-            'consultation': dict(title='咨询', desc='咨询类型'),
-            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
-        }),
-        'enterprise': dict(title='企业', desc='企业域', types={
-            'consultation': dict(title='咨询', desc='咨询类型'),
-            'biz_order': dict(title='专项业务订单', desc='专项业务订单类型'),
-            'work_order': dict(title='工单', desc='工单类型'),
-        }),
-    }, app_id='cs', app_key='cs1234', urls={
+    app = create_app(dict(name='qqxb', password='qqxb1234', title='亲亲小保', desc='亲亲小保客服', project_domains=[
+        dict(name='personal', title='个人', desc='个人域', types=[
+            dict(name='consultation', title='咨询', desc='咨询类型'),
+            dict(name='biz_order', title='专项业务订单', desc='专项业务订单类型'),
+        ]),
+        dict(name='employee', title='员工', desc='员工域', types=[
+            dict(name='consultation', title='咨询', desc='咨询类型'),
+            dict(name='biz_order', title='专项业务订单', desc='专项业务订单类型'),
+        ]),
+        dict(name='enterprise', title='企业', desc='企业域', types=[
+            dict(name='consultation', title='咨询', desc='咨询类型'),
+            dict(name='biz_order', title='专项业务订单', desc='专项业务订单类型'),
+            dict(name='work_order', title='工单', desc='工单类型'),
+        ]),
+    ], appid='cs', appkey='cs1234', urls={
         'getToken': 'http://qqxb.com/api/getToken',
         'getExtData': 'http://qqxb.com/api/getExtData',
         'accessFunction': 'http://qqxb.com/api/accessFunction',
