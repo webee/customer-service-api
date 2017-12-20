@@ -1,11 +1,20 @@
+-- super: 10 -> 2
+-- self: 00 -> 0
+-- sub: 01 -> 1
+-- all: 11 -> 3
 -- 路径匹配目标
 CREATE OR REPLACE FUNCTION path_match_target(type text, path text, target text) RETURNS BOOLEAN AS $$
+    DECLARE
+        T_SUPER CONSTANT text := '2';
+        T_SELF CONSTANT text := '0';
+        T_SUB CONSTANT text := '1';
+        T_ALL CONSTANT text := '3';
     BEGIN
         RAISE NOTICE 'path_match_target: %, %, %', type, path, target;
-        return case type when 'super' then path like target||'%'
-                when 'self' then path = target
-                when 'sub' then target like path||'%'
-                when 'all' then path like target||'%' or target like path||'%'
+        return case type when T_SUPER then path like target||'%'
+                when T_SELF then path = target
+                when T_SUB then target like path||'%'
+                when T_ALL then path like target||'%' or target like path||'%'
                 else false
             end;
     END;
@@ -38,10 +47,13 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- 多scopes匹配单context路径
 CREATE OR REPLACE FUNCTION scopes_match_ctx_path(scopes json, uid text, type text, path text) RETURNS BOOLEAN AS $$
+    DECLARE
+        T_SELF CONSTANT text := '0';
+        T_SUB CONSTANT text := '1';
     BEGIN
 --         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when 'self' then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||'.'||uid)
-                    when 'sub' then scopes_match_target(scopes, path||'.'||uid)
+        return case type when T_SELF then scopes_match_target(scopes, path) or scopes_match_target(scopes, concat(path, ':', uid))
+                    when T_SUB then scopes_match_target(scopes, concat(path, ':', uid))
                     else false
         end;
     END;
@@ -99,10 +111,13 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- 多scopes匹配单context路径
 CREATE OR REPLACE FUNCTION x_scopes_match_ctx_path(scopes text[][], uid text, type text, path text) RETURNS BOOLEAN AS $$
+    DECLARE
+        T_SELF CONSTANT text := '0';
+        T_SUB CONSTANT text := '1';
     BEGIN
         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when 'self' then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||'.'||uid)
-                    when 'sub' then x_scopes_match_target(scopes, path||'.'||uid)
+        return case type when T_SELF then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, concat(path, ':', uid))
+                    when T_SUB then x_scopes_match_target(scopes, concat(path, ':', uid))
                     else false
         end;
     END;

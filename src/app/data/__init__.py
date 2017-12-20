@@ -66,6 +66,6 @@ def init_prod_data():
                          dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
 
     # customer
-    app.create_customer('test', '测试客户')
+    app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客户"}])
     # staff
-    app.create_staff('test', '测试客服', [['self', '']])
+    app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客服", "context_labels": [['self', '']]}])

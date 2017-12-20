@@ -1,6 +1,15 @@
+LABEL_TYPE_MAP = {
+    'super': str(0b10),
+    'self': str(0b00),
+    'sub': str(0b01),
+    'all': str(0b11),
+}
+
+
 def normalize_labels(labels):
     if labels:
-        return [l if isinstance(l, list) else [l['type'], l['path']] for l in labels]
+        return [[LABEL_TYPE_MAP[l[0]], l[1]] if isinstance(l, list) else [LABEL_TYPE_MAP[l['type']], l['path']]
+                for l in labels]
     return labels
 
 

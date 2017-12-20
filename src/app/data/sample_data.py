@@ -95,5 +95,31 @@ test_projects_data = [
             {"type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"}, "label": "用户详情"},
             ["测试y", "value", "yyyyy"]
         ]
+    },
+    {
+        "domain": "test",
+        "type": "test",
+        "biz_id": "t_0003",
+        "start_msg_id": 0,
+        "owner": {
+            "uid": "test",
+        },
+        "leader": {
+            "uid": "test"
+        },
+        "customers": [
+            {
+                "uid": "test",
+            }
+        ],
+        "scope_labels": [
+            ["self", "1.2:test"]
+        ],
+        "meta_data": [
+            {"value": "用户002", "label": "姓名"},
+            {"value": True, "label": "是否有效"},
+            {"type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"}, "label": "用户详情"},
+            ["测试y", "value", "yyyyy"]
+        ]
     }
 ]
