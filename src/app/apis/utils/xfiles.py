@@ -12,4 +12,4 @@ def encode_token():
 
     payload = dict(exp=exp, iat=iat, iss=config.App.NAME)
 
-    return jwt.encode(payload, secret, algorithm=algorithm).decode('utf-8')
+    return dict(token=jwt.encode(payload, secret, algorithm=algorithm).decode('utf-8'), exp=exp.timestamp())

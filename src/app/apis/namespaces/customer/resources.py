@@ -24,22 +24,17 @@ class XChat(Resource):
 
 
 @api.route('/projects/<int:id>/xchat',
-           '/projects/<string:domain_name>/<string:type_name>/<string:biz_id>/xchat')
+           '/projects/<string:domain>/<string:type>/<string:biz_id>/xchat')
 class ProjectXChat(Resource):
     @require_customer
     @api.response(404, 'project not found.')
-    def get(self, id=None, domain_name=None, type_name=None, biz_id=None):
+    def get(self, id=None, domain=None, type=None, biz_id=None):
         """获取project的xchat信息"""
         customer = current_customer
         app = customer.app
 
-        if id is not None:
-            proj = customer.as_customer_projects.filter_by(project_id=id).one()
-        elif domain_name is not None:
-            pd = app.project_domains.filter_by(name=domain_name).one()
-            pt = pd.types.filter_by(name=type_name).one()
-            proj = customer.as_customer_projects.filter(Project.type_id == pt.id, Project.biz_id == biz_id).one()
-        else:
+        proj = app_biz.get_user_project(app, customer, id, domain, type, biz_id)
+        if proj is None:
             return abort(404, 'project not found')
 
         proj_xchat = proj.xchat

@@ -4,5 +4,5 @@ from . import api
 
 token_data = api.model('Token data', {
     'token': fields.String(readonly=True, descrption='jwt'),
-    'exp': fields.Integer(description='token expire ts')
+    'exp': fields.Float(description='token expire ts')
 })

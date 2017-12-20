@@ -9,39 +9,31 @@ from ..parsers import fetch_msgs_arguments
 from ..serializers.project import session_item, fetch_msgs_result, session_item_schema, fetch_msgs_result_schema
 
 
-@api.route('/projects/<string:domain_name>/<string:type_name>/my_handling_sessions')
+@api.route('/projects/<string:domain>/<string:type>/my_handling_sessions')
 class MyHandlingSessions(Resource):
     @require_staff
     @api.doc(model=session_item)
     @marshal_list_with(session_item_schema)
-    def get(self, domain_name, type_name):
+    def get(self, domain, type):
         """获取我正在接待的会话"""
         staff = current_staff
-        app = staff.app
 
-        project_domain = app.project_domains.filter_by(name=domain_name).one()
-        project_type = project_domain.types.filter_by(name=type_name).one()
-
-        return staff.handling_sessions.filter(Session.project.has(type_id=project_type.id)).all()
+        return staff.handling_sessions.filter(Session.project.has(domain=domain, type=type)).all()
 
 
-@api.route('/projects/<string:domain_name>/<string:type_name>/<int:session_id>')
+@api.route('/projects/<string:domain>/<string:type>/<int:id>')
 class SessionItem(Resource):
     @require_staff
     @api.marshal_with(session_item)
     @api.response(404, 'session not found')
-    def get(self, domain_name, type_name, session_id):
+    def get(self, domain, type, id):
         """获取我正在接待的一个会话"""
         staff = current_staff
-        app = staff.app
 
-        project_domain = app.project_domains.filter_by(name=domain_name).one()
-        project_type = project_domain.types.filter_by(name=type_name).one()
-
-        return staff.handling_sessions.filter(Project.type == project_type).filter_by(id=session_id).one()
+        return staff.handling_sessions.filter(Session.project.has(domain=domain, type=type)).filter_by(id=id).one()
 
 
-@api.route('/projects/<int:project_id>/msgs')
+@api.route('/projects/<int:id>/msgs')
 class ProjectMsgs(Resource):
     @require_staff
     @api.expect(fetch_msgs_arguments)
@@ -49,12 +41,12 @@ class ProjectMsgs(Resource):
     @marshal_with(fetch_msgs_result_schema)
     @api.response(404, 'session not found')
     @api.response(200, 'fetch msgs ok')
-    def get(self, project_id):
+    def get(self, id):
         """获取项目消息"""
         staff = current_staff
 
-        proj = staff.app.projects.filter_by(id=project_id).one()
         # FIXME: 添加权限控制
+        proj = staff.app.projects.filter_by(id=id).one()
 
         args = fetch_msgs_arguments.parse_args()
         lid = args['lid']

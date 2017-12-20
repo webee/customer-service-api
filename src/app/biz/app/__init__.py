@@ -1,5 +1,6 @@
 import re
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import or_
 from app import dbs
 from app import errors
 from app.errors import BizError
@@ -20,6 +21,15 @@ def get_project(app, id=None, domain=None, type=None, biz_id=None):
         return app.projects.filter_by(id=id).one_or_none()
     elif domain is not None and type is not None:
         return app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+
+
+def get_user_project(app, user, id=None, domain=None, type=None, biz_id=None):
+    q = app.projects;
+    if id is not None:
+        q = q.filter_by(id=id)
+    elif domain is not None and type is not None:
+        q = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id)
+    return q.filter(or_(Project.owner.has(id=user.id), Project.customers.any(id=user.id))).one_or_none()
 
 
 def is_project_exists(app, id=None, domain=None, type=None, biz_id=None):

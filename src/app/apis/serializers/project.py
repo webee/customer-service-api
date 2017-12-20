@@ -16,11 +16,6 @@ project = api.inherit('Project', base_resource, {
 })
 
 
-class MetaDataItemSchema(ma.Schema):
-    class Meta:
-        fields = ("key", "type", "value", "label", "index")
-
-
 new_project = api.model('New Project', {
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
@@ -74,7 +69,7 @@ class ProjectDataSchema(ma.Schema):
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
     customers = ma.List(ma.Nested(RawCustomerSchema))
-    meta_data = ma.List(ma.Nested(MetaDataItemSchema))
+    meta_data = ma.List(ma.List(ma.Raw()))
 
 
 project_data_schema = ProjectDataSchema()
