@@ -23,3 +23,18 @@ def create_app(app_data):
     app_biz.create_or_update_project_domain_types(app, project_domain_types_data)
 
     return app
+
+
+@dbs.transactional
+def update_app(app, data):
+    if 'appid' in data:
+        app.appid = data['appid']
+    if 'appkey' in data:
+        app.appkey = data['appkey']
+    app.update_urls(data['urls'])
+    app.update_access_functions(data['access_functions'])
+    app.update_staff_label_tree(data['staff_label_tree'])
+
+    dbs.session.add(app)
+
+    return app

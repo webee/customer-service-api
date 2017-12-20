@@ -2,11 +2,16 @@ from flask_restplus import fields
 from . import api
 from .xfields import Any, any_of
 
+access_function = api.model('Access Function', {
+    'name': fields.String(required=True, min_length=1, max_length=16, example='addRemark'),
+    'label': fields.String(required=True, min_length=1, max_length=16, example='添加备注'),
+})
+
 update_application_payload = api.model('Update Application Payload', {
     'appid': fields.String(),
     'appkey': fields.String(),
     'urls': any_of(['object']),
-    'access_functions': fields.List(fields.String()),
+    'access_functions': fields.List(fields.Nested(access_function)),
     'staff_label_tree': any_of(['object'])
 })
 

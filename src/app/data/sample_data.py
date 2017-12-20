@@ -1,7 +1,7 @@
 test_customers_data = [
-    {"uid": "test", "name": "测试客户"},
-    {"uid": "test_001", "name": "测试客户#1"},
-    {"uid": "test_002", "name": "测试客户#2"},
+    {"uid": "test", "name": "测试客户", "mobile": "18812345678"},
+    {"uid": "test_001", "name": "测试客户#1", "mobile": "15912345678"},
+    {"uid": "test_002", "name": "", "mobile": "12387654321"},
     {"uid": "test_003", "name": "测试客户#3"}
 ]
 

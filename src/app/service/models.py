@@ -42,7 +42,7 @@ class App(BaseModel):
     urls = deferred(db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False, default={}), group='configs')
 
     # 应用提供的访问功能列表
-    access_functions = deferred(db.Column(pg.ARRAY(db.String(16)), nullable=False, default=[]), group='configs')
+    access_functions = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]), group='configs')
 
     # 应用的客服标签树
     staff_label_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
@@ -82,9 +82,7 @@ class App(BaseModel):
     # biz
     @dbs.transactional
     def update_urls(self, urls):
-        new_urls = dict(**urls)
-        new_urls.update(self.urls)
-        self.urls = new_urls
+        self.urls = urls
         flag_modified(self, 'urls')
         db.session.add(self)
 
@@ -102,14 +100,17 @@ class App(BaseModel):
         # db.session.add(self)
 
     @dbs.transactional
-    def create_customer(self, uid, name=None):
+    def create_customer(self, uid, name=None, mobile=None, meta_data=None):
         customer = self.customers.filter_by(uid=uid).one_or_none()
         if customer is None:
-            customer = Customer(app=self, uid=uid)
+            customer = Customer(app_name=self.name, app=self, uid=uid)
         elif customer.is_deleted:
             customer.is_deleted = False
-        if name:
+        if name is not None:
             customer.name = name
+        if mobile is not None:
+            customer.mobile = mobile
+        customer.update_meta_data(meta_data)
         db.session.add(customer)
 
         return customer
@@ -118,14 +119,12 @@ class App(BaseModel):
     def create_staff(self, uid, name=None, context_labels=None):
         staff = self.staffs.filter_by(uid=uid).one_or_none()
         if staff is None:
-            staff = Staff(app=self, uid=uid)
+            staff = Staff(app_name=self.name, app=self, uid=uid)
         elif staff.is_deleted:
             staff.is_deleted = False
-        if name:
+        if name is not None:
             staff.name = name
-        if context_labels is not None:
-            staff.context_labels = context_labels or DEFAULT_LABELS
-            flag_modified(staff, 'context_labels')
+        staff.update_context_labels(context_labels)
         dbs.session.add(staff)
 
         return staff
@@ -153,7 +152,7 @@ class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_
     type = db.Column(db.String(32), nullable=False)
 
     # 项目类型提供的访问功能列表
-    access_functions = db.Column(pg.ARRAY(db.String(16)), nullable=False, default=[])
+    access_functions = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]), group='configs')
     # 项目类型的分类标签树
     class_label_tree = db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={})
 
@@ -183,6 +182,7 @@ class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_
 
 class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineModel):
     """客户"""
+    mobile = db.Column(db.String(16), nullable=False, default="")
     # 元数据
     # [{type, value, label}, ...]
     meta_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
@@ -201,7 +201,6 @@ class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineMo
 
 class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     """客服"""
-
     # 客服定位标签
     # [{type, path}, ...]
     context_labels = deferred(
@@ -217,6 +216,14 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
 
     def get_handling_session(self, session_id):
         return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
+
+    # biz
+    @dbs.transactional
+    def update_context_labels(self, context_labels):
+        if context_labels is not None:
+            self.context_labels = context_labels or DEFAULT_LABELS
+            flag_modified(self, 'context_labels')
+            dbs.session.add(self)
 
 
 # many to many helpers

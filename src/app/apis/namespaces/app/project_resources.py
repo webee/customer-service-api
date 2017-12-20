@@ -39,7 +39,7 @@ class ProjectCollection(Resource):
     @api.expect([update_project])
     @api.response(204, 'successfully updated')
     def patch(self):
-        """批量更新项目信息: owner, customers, leader, meta_data, scope_labels"""
+        """批量更新项目信息: owner, customers, leader, meta_data, scope_labels, class_labels"""
         app = current_application
         biz.batch_update_projects(app, request.get_json())
         return None, 204
@@ -64,7 +64,7 @@ class ProjectItem(Resource):
     @api.expect(update_project_payload)
     @api.response(204, 'successfully updated')
     def patch(self, id=None, domain=None, type=None, biz_id=None):
-        """更新项目信息: owner, customers, leader, meta_data, scope_labels"""
+        """更新项目信息: owner, customers, leader, meta_data, scope_labels, class_labels"""
         app = current_application
         proj = biz.get_project(app, id, domain, type, biz_id)
         biz.update_project(proj, request.get_json())

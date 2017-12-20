@@ -25,7 +25,8 @@ def init_test_data():
         'getExtData': 'http://test.com/api/getExtData',
         'accessFunction': 'http://test.com/api/accessFunction',
         'sendChannelMsg': 'http://test.com/api/sendChannelMsg',
-    }, access_functions=['customerDetails'], staff_label_tree=sample_data.test_staff_label_tree))
+    }, access_functions=[dict(name='customerDetails', label='用户详情')],
+                          staff_label_tree=sample_data.test_staff_label_tree))
 
     # project_domain_type
     # app_biz.create_or_update_project_domain_type(
@@ -61,7 +62,8 @@ def init_prod_data():
         'getExtData': 'http://qqxb.com/api/getExtData',
         'accessFunction': 'http://qqxb.com/api/accessFunction',
         'sendChannelMsg': 'http://qqxb.com/api/sendChannelMsg',
-    }, access_functions=['addRemark', 'addTask', 'customerDetails'], staff_label_tree={}))
+    }, access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
+                         dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
 
     # customer
     app.create_customer('test', '测试客户')
