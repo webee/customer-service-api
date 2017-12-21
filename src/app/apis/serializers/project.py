@@ -1,15 +1,16 @@
 from flask_restplus import fields
 from app import ma
 from . import api
-from . import base_resource
+from . import base_resource, resource_id
 from .app import path_label, meta_data_item
 from .staff import raw_staff, RawStaffSchema
 from .customer import raw_customer, RawCustomerSchema
 
-project = api.inherit('Project', base_resource, {
+project = api.inherit('Project', resource_id, {
     'domain': fields.String(),
     'type': fields.String(),
     'biz_id': fields.String(),
+    'tags': fields.List(fields.String),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer))

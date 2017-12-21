@@ -185,7 +185,7 @@ class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineMo
     mobile = db.Column(db.String(16), nullable=False, default="")
     # 元数据
     # [{type, value, label}, ...]
-    meta_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
+    meta_data = db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[])
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
