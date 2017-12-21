@@ -20,6 +20,7 @@ new_project = api.model('New Project', {
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
     'biz_id': fields.String(required=True, min_length=1, max_length=32),
+    'tags': fields.List(fields.String, default=[]),
     'start_msg_id': fields.Integer(required=False, min=0),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
@@ -34,6 +35,7 @@ update_project = api.model('Update Project', {
     'domain': fields.String(),
     'type': fields.String(),
     'biz_id': fields.String(),
+    'tags': fields.List(fields.String, default=[]),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
@@ -43,6 +45,7 @@ update_project = api.model('Update Project', {
 })
 
 update_project_payload = api.model('Update Project Payload', {
+    'tags': fields.List(fields.String, default=[]),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
@@ -55,6 +58,7 @@ project_data = api.model('Project Data', {
     'id': fields.Integer(description='project id'),
     'biz_id': fields.String(),
     'is_online': fields.Boolean(),
+    'tags': fields.List(fields.String),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
@@ -64,12 +68,11 @@ project_data = api.model('Project Data', {
 
 class ProjectDataSchema(ma.Schema):
     class Meta:
-        fields = ("id", "biz_id", "is_online", "owner", "leader", "customers", "meta_data")
+        fields = ("id", "biz_id", "is_online", "tags", "owner", "leader", "customers", "meta_data")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
     customers = ma.List(ma.Nested(RawCustomerSchema))
-    meta_data = ma.List(ma.List(ma.Raw()))
 
 
 project_data_schema = ProjectDataSchema()

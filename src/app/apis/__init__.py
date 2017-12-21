@@ -16,6 +16,19 @@ authorizations = {
     }
     for role in ['app', 'customer', 'staff', 'any']
 }
+authorizations.update({
+    'test-app-appid': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'X-App-Id'
+    },
+    'test-app-token': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'X-Token'
+    }
+})
+
 api = Api(blueprint, version='1.0', doc='/',
           title='客服系统API', description='包括应用后端、客户端和客服端',
           authorizations=authorizations)
@@ -41,6 +54,9 @@ def init_api(app):
 
         from .namespaces.test.api import api as test_api
         api.add_namespace(test_api, path='/test')
+
+        from .namespaces.test_app.api import api as test_app_api
+        api.add_namespace(test_app_api, path='/test_app')
 
     from .namespaces.auth.api import api as auth_api
     api.add_namespace(auth_api, path='/auth')

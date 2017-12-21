@@ -55,7 +55,7 @@ def app_user(user_type, resource_name):
         __tablename__ = user_type
 
         uid = db.Column(db.String(32), nullable=False)
-        name = db.Column(db.String(16), nullable=False)
+        name = db.Column(db.String(100), nullable=False, default='')
         # 是否删除
         is_deleted = db.Column(db.Boolean, default=False)
 

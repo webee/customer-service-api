@@ -245,6 +245,8 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     # 业务id
     biz_id = db.Column(db.String(32), nullable=False)
 
+    # 项目tags
+    tags = db.Column(MutableList.as_mutable(db.ARRAY(db.Text)), nullable=False, default=[])
     # 项目范围标签
     scope_labels = deferred(
         db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
@@ -278,7 +280,7 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
     current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
     # 起始消息id
-    # TODO: 迁移消息各发送消息一样，先发送到xchat，再同步到cs
+    # TODO: 迁移消息和发送消息一样，先发送到xchat，再同步到cs
     start_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     # 消息id
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
@@ -308,6 +310,13 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
             xchat = ProjectXChat(project=self, chat_id=chat_id)
             dbs.session.add(xchat)
             return xchat
+
+    @dbs.transactional
+    def update_tags(self, tags):
+        if tags is not None:
+            self.tags = tags or []
+            flag_modified(self, 'tags')
+            db.session.add(self)
 
     @dbs.transactional
     def update_scope_labels(self, labels):

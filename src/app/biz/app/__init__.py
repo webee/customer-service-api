@@ -57,8 +57,7 @@ def create_project(app, data):
     customers = app_m.create_or_update_customers(app, data['customers'])
     if project is None:
         project = Project(app_name=app.name, app=app, domain=domain, type=type, biz_id=biz_id, owner=owner,
-                          leader=leader,
-                          customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
+                          leader=leader, customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
     else:
         project.owner = owner
         project.leader = leader
@@ -68,6 +67,8 @@ def create_project(app, data):
     chat_id = xchat_biz.create_chat(project)
     project.create_or_update_xchat(chat_id)
 
+    # tags
+    project.update_tags(data.get('tags'))
     # scope labels
     proj_m.update_scope_labels(project, data.get('scope_labels'))
     # class labels
@@ -102,6 +103,9 @@ def update_project(project, data):
     if 'customers' in data:
         project.customers = app_m.create_or_update_customers(app, data['customers'])
 
+    # tags
+    if 'tags' in data:
+        project.update_tags(data.get('tags'))
     # scope labels
     if 'scope_labels' in data:
         proj_m.update_scope_labels(project, data.get('scope_labels'))

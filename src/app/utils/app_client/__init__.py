@@ -17,7 +17,7 @@ class XChatClient(object):
 
         self._token = None
         self._token_exp = None
-        self._lock = threading.RLock()
+        self._lock = threading.RLock(blocking=False)
 
     def _is_current_token_valid(self):
         return self._token and self._token_exp > datetime.utcnow() + timedelta(minutes=10)
@@ -25,7 +25,7 @@ class XChatClient(object):
     @property
     def token(self):
         if not self._is_current_token_valid():
-            with self._lock(blocking=False) as locked:
+            with self._lock as locked:
                 if locked and not self._is_current_token_valid():
                     try:
                         res = self._get_token()

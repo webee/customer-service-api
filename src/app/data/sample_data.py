@@ -85,6 +85,7 @@ test_projects_data = [
                 "name": "用户002"
             }
         ],
+        "tags": ['测试类型2'],
         "scope_labels": [
             {"type": "all", "path": "1.1"},
             ["self", "1.2"]
@@ -112,6 +113,7 @@ test_projects_data = [
                 "uid": "test",
             }
         ],
+        "tags": ['超长的测试类型x'],
         "scope_labels": [
             ["self", "1.2:test"]
         ],

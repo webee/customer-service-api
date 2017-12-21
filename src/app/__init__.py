@@ -52,6 +52,7 @@ def init_config(app, env):
 
     os.environ['ENV'] = env
     pmc_config.register_config(config, env=env)
+    pmc_config.register_config(config, 'test_app', env=env)
     pmc_config.register_config(config, 'celery_task', env=env, require_upper=False)
 
     dictConfig(config.LOGGING)
