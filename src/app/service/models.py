@@ -1,6 +1,5 @@
 import json
 from sqlalchemy import desc
-from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.orm import deferred
 from sqlalchemy import text
@@ -32,20 +31,20 @@ class App(BaseModel):
     title = db.Column(db.String(32), nullable=False)
     desc = db.Column(db.String(64), nullable=False)
     # [{name, title, desc, types:[{name, title, desc}]}]
-    project_domains = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
+    project_domains = deferred(db.Column(db.JSON, nullable=False, default=[]))
 
     # 应用分配给客服系统的id和key，作为以后通信的认证元信息
     appid = deferred(db.Column(db.String(64), nullable=True, default=None), group='configs')
     appkey = deferred(db.Column(db.String(128), nullable=True, default=None), group='configs')
 
     # 应用提供的接口urls
-    urls = deferred(db.Column(MutableDict.as_mutable(pg.HSTORE), nullable=False, default={}), group='configs')
+    urls = deferred(db.Column(pg.HSTORE, nullable=False, default={}), group='configs')
 
     # 应用提供的访问功能列表
-    access_functions = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]), group='configs')
+    access_functions = deferred(db.Column(db.JSON, nullable=False, default=[]), group='configs')
 
     # 应用的客服标签树
-    staff_label_tree = deferred(db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={}))
+    staff_label_tree = deferred(db.Column(db.JSON, nullable=False, default={}))
 
     @property
     def project_domain_type_tree(self):
@@ -152,9 +151,9 @@ class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_
     type = db.Column(db.String(32), nullable=False)
 
     # 项目类型提供的访问功能列表
-    access_functions = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]), group='configs')
+    access_functions = deferred(db.Column(db.JSON, nullable=False, default=[]), group='configs')
     # 项目类型的分类标签树
-    class_label_tree = db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default={})
+    class_label_tree = db.Column(db.JSON, nullable=False, default={})
 
     # 每个域下面类型唯一
     __table_args__ = (db.UniqueConstraint('app_name', 'domain', 'type', name='uniq_app_project_domain_type'),)
@@ -185,7 +184,7 @@ class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineMo
     mobile = db.Column(db.String(16), nullable=False, default="")
     # 元数据
     # [{type, value, label}, ...]
-    meta_data = db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[])
+    meta_data = db.Column(db.JSON, nullable=False, default=[])
 
     def __repr__(self):
         return "<Customer: {}>".format(self.uid)
@@ -204,7 +203,7 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     # 客服定位标签
     # [{type, path}, ...]
     context_labels = deferred(
-        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
+        db.Column(db.ARRAY(db.Text, dimensions=2), nullable=False, default=DEFAULT_LABELS))
 
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)
@@ -246,20 +245,20 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
     biz_id = db.Column(db.String(32), nullable=False)
 
     # 项目tags
-    tags = db.Column(MutableList.as_mutable(db.ARRAY(db.Text)), nullable=False, default=[])
+    tags = db.Column(db.ARRAY(db.Text), nullable=False, default=[])
     # 项目范围标签
     scope_labels = deferred(
-        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
+        db.Column(db.ARRAY(db.Text, dimensions=2), nullable=False, default=DEFAULT_LABELS))
     # 项目分类标签
     class_labels = deferred(
-        db.Column(MutableList.as_mutable(db.ARRAY(db.Text, dimensions=2)), nullable=False, default=DEFAULT_LABELS))
+        db.Column(db.ARRAY(db.Text, dimensions=2), nullable=False, default=DEFAULT_LABELS))
 
     # 元数据
     # [{type, value, label}, ...]
-    meta_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
+    meta_data = deferred(db.Column(db.JSON, nullable=False, default=[]))
     # 扩展数据
     # [{type, value, label}, ...]
-    ext_data = deferred(db.Column(MutableList.as_mutable(db.JSON), nullable=False, default=[]))
+    ext_data = deferred(db.Column(db.JSON, nullable=False, default=[]))
 
     # 所属客户
     owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)

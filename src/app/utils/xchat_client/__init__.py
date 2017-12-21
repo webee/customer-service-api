@@ -50,7 +50,7 @@ class XChatClient(object):
         self.config = Config()
         self._token = None
         self._token_exp = None
-        self._lock = threading.RLock(blocking=False)
+        self._lock = threading.RLock()
 
         if env_config is not None:
             self.init_config(env_config)
@@ -76,8 +76,8 @@ class XChatClient(object):
     @property
     def token(self):
         if not self._is_current_token_valid():
-            with self._lock as locked:
-                if locked and not self._is_current_token_valid():
+            with self._lock:
+                if not self._is_current_token_valid():
                     self._token, self._token_exp = self._new_token()
                     logger.info('new token: %s, %s', self._token, self._token_exp)
         return self._token
@@ -101,6 +101,7 @@ class XChatClient(object):
         logger.debug('request: %s, %s, %s', method, url, data)
         headers = {'Authorization': 'Bearer ' + self.token}
         resp = requests.request(method, url, json=data, headers=headers, **kwargs)
+        logger.debug('response: %s, %s, %s, %s', method, url, resp.status_code, resp.headers)
         return RequestResult(resp)
 
     def _get(self, url, **kwargs):

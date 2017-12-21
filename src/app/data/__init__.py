@@ -12,6 +12,7 @@ def init_data():
 
 
 def init_test_data():
+    HOST_URL = os.getenv('CS_HOST_URL', 'http://localhost:5000')
     app = create_app(dict(name='test', password='test1234', title='测试应用', desc='测试应用客服', project_domains=[
         dict(name='test', title='测试', desc='测试域', types=[
             dict(name='test', title='测试', desc='测试类型')
@@ -21,10 +22,10 @@ def init_test_data():
             dict(name='test2', title='测试2', desc='测试类型2'),
         ]),
     ], appid='cs', appkey='cs1234', urls={
-        'getToken': 'http://test.com/api/getToken',
-        'getExtData': 'http://test.com/api/getExtData',
-        'accessFunction': 'http://test.com/api/accessFunction',
-        'sendChannelMsg': 'http://test.com/api/sendChannelMsg',
+        'getToken': HOST_URL + '/api/test_app/getToken',
+        'getExtData': HOST_URL + '/api/test_app/getExtData',
+        'accessFunction': HOST_URL + '/api/test_app/accessFunction',
+        'sendChannelMsg': HOST_URL + '/api/test_app/sendChannelMsg',
     }, access_functions=[dict(name='customerDetails', label='用户详情')],
                           staff_label_tree=sample_data.test_staff_label_tree))
 
@@ -57,13 +58,10 @@ def init_prod_data():
             dict(name='biz_order', title='专项业务订单', desc='专项业务订单类型'),
             dict(name='work_order', title='工单', desc='工单类型'),
         ]),
-    ], appid='cs', appkey='cs1234', urls={
-        'getToken': 'http://qqxb.com/api/getToken',
-        'getExtData': 'http://qqxb.com/api/getExtData',
-        'accessFunction': 'http://qqxb.com/api/accessFunction',
-        'sendChannelMsg': 'http://qqxb.com/api/sendChannelMsg',
-    }, access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
-                         dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
+    ], appid='cs', appkey='cs1234',
+                          urls={},
+                          access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
+                                            dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
 
     # customer
     app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客户"}])

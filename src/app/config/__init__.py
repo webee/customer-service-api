@@ -96,7 +96,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False
         },
-        'app.utils.xchat_client': {
+        'app.utils': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False
