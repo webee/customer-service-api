@@ -12,6 +12,7 @@ from .apis.utils.jwt import JWT
 from app.utils import dbs
 from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
+from .utils.app_client import AppClients
 
 # extensions
 profiler = Profiler()
@@ -23,6 +24,7 @@ bcrypt = Bcrypt()
 cors = CORS()
 
 xchat_client = XChatClient()
+app_clients = AppClients()
 
 
 def create_app(env='dev'):

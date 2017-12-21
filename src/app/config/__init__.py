@@ -75,7 +75,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            'format': '%(asctime)s [%(levelname)s] (%(process)d/%(thread)d) %(name)s: %(message)s'
         }
     },
     'handlers': {
