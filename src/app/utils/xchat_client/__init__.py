@@ -116,9 +116,11 @@ class XChatClient(object):
     def _delete(self, url, data=None, **kwargs):
         return self._request('delete', url, data, **kwargs)
 
-    def new_chat(self, chat_type, users=(), app_id=None, biz_id=None, start_msg_id=None, title=None, tag=None, ext=None):
+    def new_chat(self, chat_type, users=(), app_id=None, biz_id=None, start_msg_id=None, title=None, tag=None, ext=None,
+                 id=None):
         data = {'type': chat_type, 'users': users}
-        for k, v in dict(app_id=app_id, biz_id=biz_id, start_msg_id=start_msg_id, title=title, tag=tag, ext=ext).items():
+        for k, v in dict(app_id=app_id, biz_id=biz_id, start_msg_id=start_msg_id, title=title, tag=tag, ext=ext,
+                         id=id).items():
             if v is not None:
                 data[k] = v
 

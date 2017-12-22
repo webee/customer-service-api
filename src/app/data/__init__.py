@@ -39,8 +39,7 @@ def init_test_data():
     app_biz.batch_create_or_update_staffs(app, sample_data.test_staffs_data)
 
     # projects
-    for project_data in sample_data.test_projects_data:
-        app_biz.create_project(app, project_data)
+    app_biz.batch_create_projects(app, sample_data.test_projects_data)
 
 
 def init_prod_data():

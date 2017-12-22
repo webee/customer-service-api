@@ -18,6 +18,7 @@ project = api.inherit('Project', resource_id, {
 
 
 new_project = api.model('New Project', {
+    'id': fields.Integer(required=False),
     'domain': fields.String(required=True, min_length=1, max_length=32),
     'type': fields.String(required=True, min_length=1, max_length=32),
     'biz_id': fields.String(required=True, min_length=1, max_length=32),

@@ -49,7 +49,16 @@ def create_project(app, data):
 
     biz_id = data['biz_id']
     start_msg_id = data.get('start_msg_id', 0)
-    project = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+    id = data.get('id')
+    if id:
+        # 指定id时修改domain, type, biz_id
+        project = app.projects.filter_by(id=id).one_or_none()
+        project.domain = domain
+        project.type = type
+        project.biz_id = biz_id
+        # FIXME: 在存在活动会话时，尝试通知前端, 可能的项目域和类型变化
+
+    project = project or app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
     owner = app_m.create_or_update_customer(app, data['owner'])
     leader = app_m.create_or_update_staff(app, data['leader'])
     customers = app_m.create_or_update_customers(app, data['customers'])
@@ -76,6 +85,7 @@ def create_project(app, data):
 
     dbs.session.add(project)
 
+    # FIXME: 在存在活动会话时，尝试通知前端, 可能的标签、元数据变化
     return project
 
 
@@ -112,6 +122,7 @@ def update_project(project, data):
 
     dbs.session.add(project)
 
+    # FIXME: 在存在活动会话时，尝试通知前端
     return project
 
 
