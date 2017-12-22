@@ -7,12 +7,18 @@ access_function = api.model('Access Function', {
     'label': fields.String(required=True, min_length=1, max_length=16, example='添加备注'),
 })
 
+label_info = api.model('Label Info', {
+    'code': fields.String(required=True, min_length=1, example="1"),
+    'name': fields.String(required=True, min_lenght=1, example="角色#1"),
+    'children': fields.List(fields.Raw(title='Label Info'))
+})
+
 update_application_payload = api.model('Update Application Payload', {
     'appid': fields.String(),
     'appkey': fields.String(),
     'urls': any_of(['object']),
     'access_functions': fields.List(fields.Nested(access_function)),
-    'staff_label_tree': any_of(['object'])
+    'staff_label_tree': fields.List(fields.Nested(label_info))
 })
 
 application = api.model('Application', {

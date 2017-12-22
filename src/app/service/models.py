@@ -9,6 +9,8 @@ from app import db, dbs, bcrypt, config
 from app.utils.commons import merge_to_dict
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
+from .utils import normalize_label_tree, normalize_labels, normalize_data
+from .utils import ignore_none
 
 WIDEST_SCOPE_LABEL = ['all', '']
 HIGHEST_CONTEXT_LABEL = ['self', '']
@@ -79,24 +81,27 @@ class App(BaseModel):
             return True
 
     # biz
+    @ignore_none
     @dbs.transactional
     def update_urls(self, urls):
         self.urls = urls
         flag_modified(self, 'urls')
         db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_access_functions(self, functions):
         self.access_functions = functions
         flag_modified(self, 'access_functions')
         db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_staff_label_tree(self, tree):
-        App.update_app(self.id, dict(staff_label_tree=tree))
-        # self.staff_label_tree = tree
-        # flag_modified(self, 'staff_label_tree')
-        # db.session.add(self)
+        # App.update_app(self.id, dict(staff_label_tree=normalize_label_tree(tree)))
+        self.staff_label_tree = normalize_label_tree(tree)
+        flag_modified(self, 'staff_label_tree')
+        db.session.add(self)
 
     @dbs.transactional
     def create_customer(self, uid, name=None, mobile=None, meta_data=None):
@@ -133,10 +138,8 @@ class App(BaseModel):
         project_domain_type = self.project_domain_types.filter_by(domain=domain, type=type).one_or_none()
         if project_domain_type is None:
             project_domain_type = ProjectDomainType(app=self, domain=domain, type=type)
-        if access_functions is not None:
-            project_domain_type.access_functions = access_functions
-        if class_label_tree is not None:
-            project_domain_type.class_label_tree = class_label_tree
+        project_domain_type.update_access_functions(access_functions)
+        project_domain_type.update_class_label_tree(class_label_tree)
         db.session.add(project_domain_type)
         return project_domain_type
 
@@ -163,15 +166,17 @@ class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_
         return '%s:%s:%s' % (self.app_name, self.domain, self.type)
 
     # biz
+    @ignore_none
     @dbs.transactional
     def update_access_functions(self, functions):
         self.access_functions = functions
         flag_modified(self, 'access_functions')
         db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
-    def update_staff_label_tree(self, tree):
-        self.class_label_tree = tree
+    def update_class_label_tree(self, tree):
+        self.class_label_tree = normalize_label_tree(tree)
         flag_modified(self, 'class_label_tree')
         db.session.add(self)
 
@@ -190,12 +195,12 @@ class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineMo
         return "<Customer: {}>".format(self.uid)
 
     # biz
+    @ignore_none
     @dbs.transactional
     def update_meta_data(self, data):
-        if data is not None:
-            self.meta_data = data or []
-            flag_modified(self, 'meta_data')
-            db.session.add(self)
+        self.meta_data = normalize_data(data) or []
+        flag_modified(self, 'meta_data')
+        db.session.add(self)
 
 
 class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
@@ -217,12 +222,12 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
         return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
 
     # biz
+    @ignore_none
     @dbs.transactional
     def update_context_labels(self, context_labels):
-        if context_labels is not None:
-            self.context_labels = context_labels or DEFAULT_LABELS
-            flag_modified(self, 'context_labels')
-            dbs.session.add(self)
+        self.context_labels = normalize_labels(context_labels) or DEFAULT_LABELS
+        flag_modified(self, 'context_labels')
+        dbs.session.add(self)
 
 
 # many to many helpers
@@ -310,40 +315,40 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
             dbs.session.add(xchat)
             return xchat
 
+    @ignore_none
     @dbs.transactional
     def update_tags(self, tags):
-        if tags is not None:
-            self.tags = tags or []
-            flag_modified(self, 'tags')
-            db.session.add(self)
+        self.tags = tags or []
+        flag_modified(self, 'tags')
+        db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_scope_labels(self, labels):
-        if labels is not None:
-            self.scope_labels = labels or DEFAULT_LABELS
-            flag_modified(self, 'scope_labels')
-            db.session.add(self)
+        self.scope_labels = normalize_labels(labels) or DEFAULT_LABELS
+        flag_modified(self, 'scope_labels')
+        db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_class_labels(self, labels):
-        if labels is not None:
-            self.class_labels = labels or DEFAULT_LABELS
-            flag_modified(self, 'class_labels')
-            db.session.add(self)
+        self.class_labels = normalize_labels(labels) or DEFAULT_LABELS
+        flag_modified(self, 'class_labels')
+        db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_meta_data(self, data):
-        if data is not None:
-            self.meta_data = data or []
-            flag_modified(self, 'meta_data')
-            db.session.add(self)
+        self.meta_data = normalize_data(data) or []
+        flag_modified(self, 'meta_data')
+        db.session.add(self)
 
+    @ignore_none
     @dbs.transactional
     def update_ext_data(self, data):
-        if data is not None:
-            self.ext_data = data or []
-            flag_modified(self, 'ext_data')
-            db.session.add(self)
+        self.ext_data = normalize_data(data) or []
+        flag_modified(self, 'ext_data')
+        db.session.add(self)
 
 
 class ProjectXChat(BaseModel, project_resource('xchat')):

@@ -1,5 +1,4 @@
 import re
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import or_
 from app import dbs
 from app import errors
@@ -10,7 +9,6 @@ from app.biz.ds import parse_app_user_id_from_xchat_uid
 from app.utils.commons import batch_split
 from app.biz.notifies import task_project_notify, task_app_notify
 from . import app as app_m
-from . import proj as proj_m
 from .app import create_or_update_project_domain_type, create_or_update_project_domain_types
 
 NS_PT = re.compile(r':')
@@ -70,11 +68,11 @@ def create_project(app, data):
     # tags
     project.update_tags(data.get('tags'))
     # scope labels
-    proj_m.update_scope_labels(project, data.get('scope_labels'))
+    project.update_scope_labels(data.get('scope_labels'))
     # class labels
-    proj_m.update_class_labels(project, data.get('class_labels'))
+    project.update_class_labels(data.get('class_labels'))
     # meta data
-    proj_m.update_meta_data(project, data.get('meta_data'))
+    project.update_meta_data(data.get('meta_data'))
 
     dbs.session.add(project)
 
@@ -104,17 +102,13 @@ def update_project(project, data):
         project.customers = app_m.create_or_update_customers(app, data['customers'])
 
     # tags
-    if 'tags' in data:
-        project.update_tags(data.get('tags'))
+    project.update_tags(data.get('tags'))
     # scope labels
-    if 'scope_labels' in data:
-        proj_m.update_scope_labels(project, data.get('scope_labels'))
+    project.update_scope_labels(data.get('scope_labels'))
     # class labels
-    if 'class_labels' in data:
-        proj_m.update_class_labels(project, data.get('class_labels'))
+    project.update_class_labels(data.get('class_labels'))
     # meta data
-    if 'meta_data' in data:
-        proj_m.update_meta_data(project, data.get('meta_data'))
+    project.update_meta_data(data.get('meta_data'))
 
     dbs.session.add(project)
 

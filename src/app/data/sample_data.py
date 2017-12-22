@@ -6,10 +6,10 @@ test_customers_data = [
 ]
 
 test_staff_label_tree = {
-    "1": {"name": "角色#1", "children": {
-        "1": {"name": "分组#1"},
-        "2": {"name": "分组#2"}
-    }},
+    "1": {"name": "角色#1", "children": [
+        {"code": "1", "name": "分组#1"},
+        {"code": "2", "name": "分组#2"}
+    ]},
     "2": {"name": "角色#2", "children": {
         "1": {"name": "分组#1"}
     }},
