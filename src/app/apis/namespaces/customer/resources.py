@@ -1,11 +1,13 @@
 from flask import request
 from flask_restplus import Resource, abort
+from flask_restplus.marshalling import marshal
 from .api import api
 from app import config
 from app.apis.jwt import current_customer, require_customer
 from app.biz import xchat as xchat_biz
 from app.biz import app as app_biz
 from app.service.models import Project, UserType
+from .serializers import app_customer, app_staff
 
 
 @api.route('/xchat')
@@ -64,13 +66,9 @@ class AppUser(Resource):
         if user_type is not None:
             if user_type == UserType.customer:
                 customer = app.customers.filter_by(uid=uid).one()
-                name = customer.name
+                return marshal(customer, app_customer)
             elif user_type == UserType.staff:
                 staff = app.staffs.filter_by(uid=uid).one()
-                name = staff.name
-            else:
-                return abort(404, 'app user not found')
-        else:
+                return marshal(staff, app_staff)
             return abort(404, 'app user not found')
-
-        return dict(user_type=user_type, uid=uid, name=name)
+        return abort(404, 'app user not found')

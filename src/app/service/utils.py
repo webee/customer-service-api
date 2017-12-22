@@ -1,10 +1,11 @@
 from functools import wraps
+from .path_labels import LT_SUPER, LT_SELF, LT_SUB, LT_ALL
 
 LABEL_TYPE_MAP = {
-    'super': str(0b10),
-    'self': str(0b00),
-    'sub': str(0b01),
-    'all': str(0b11),
+    'super': LT_SUPER,
+    'self': LT_SELF,
+    'sub': LT_SUB,
+    'all': LT_ALL,
 }
 
 

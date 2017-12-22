@@ -50,10 +50,11 @@ def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=
     return AppResource
 
 
-def app_user(user_type, resource_name):
+def app_user(type, resource_name):
     class AppUser(app_resource(resource_name)):
-        __tablename__ = user_type
+        __tablename__ = type
 
+        user_type = type
         uid = db.Column(db.String(32), nullable=False)
         name = db.Column(db.String(100), nullable=False, default='')
         # 是否删除
