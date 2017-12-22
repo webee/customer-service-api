@@ -64,7 +64,7 @@ def app_user(type, resource_name):
 
         @property
         def app_uid(self):
-            return '%s:%s:%s' % (self.app_name, user_type, self.uid)
+            return '%s:%s:%s' % (self.app_name, type, self.uid)
 
     return AppUser
 
