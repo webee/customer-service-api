@@ -1,7 +1,11 @@
+import logging
 from flask_script import Manager, Shell, Server
 from flask_migrate import MigrateCommand
 from app import db, create_app
 from commands import Celery
+
+
+logger = logging.getLogger(__name__)
 
 
 manager = Manager(create_app)
@@ -37,11 +41,13 @@ def init_db(drop_all):
     init_data()
 
 
-@manager.option('-p', '--proj-id', type=int, dest="proj_id", required=True, help='project id')
-def sync_proj_msgs(proj_id):
+@manager.option('proj_ids', nargs='*', type=int, help='project id')
+def sync_proj_msgs(proj_ids):
     from app.task import tasks
 
-    tasks.try_sync_proj_xchat_msgs.delay(proj_id=proj_id)
+    for proj_id in proj_ids:
+        logging.info('sync: %d', proj_id)
+        tasks.try_sync_proj_xchat_msgs.delay(proj_id=proj_id)
 
 
 if __name__ == '__main__':
