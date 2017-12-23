@@ -43,7 +43,7 @@ class App(BaseModel):
     urls = deferred(db.Column(pg.HSTORE, nullable=False, default={}), group='configs')
 
     # 应用提供的访问功能列表
-    access_functions = deferred(db.Column(db.JSON, nullable=False, default=[]), group='configs')
+    access_functions = deferred(db.Column(db.JSON, nullable=False, default=[]))
 
     # 应用的客服标签树
     staff_label_tree = deferred(db.Column(db.JSON, nullable=False, default={}))

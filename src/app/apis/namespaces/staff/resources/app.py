@@ -12,5 +12,6 @@ class StaffApplicationInfo(Resource):
         """获取当前客服应用信息"""
         app = current_staff.app
         project_domains = app.project_domains
+        access_functions = app.access_functions
 
-        return dict(app=app, staff=current_staff, project_domains=project_domains)
+        return dict(app=app, staff=current_staff, project_domains=project_domains, access_functions=access_functions)

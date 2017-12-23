@@ -26,7 +26,8 @@ def init_test_data():
         'getExtData': HOST_URL + '/api/test_app/getExtData',
         'accessFunction': HOST_URL + '/api/test_app/accessFunction',
         'sendChannelMsg': HOST_URL + '/api/test_app/sendChannelMsg',
-    }, access_functions=[dict(name='customerDetails', label='用户详情')],
+    }, access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
+                         dict(name='customerDetails', label='用户详情')],
                           staff_label_tree=sample_data.test_staff_label_tree))
 
     # project_domain_type
