@@ -22,7 +22,7 @@ def get_project(app, id=None, domain=None, type=None, biz_id=None):
 
 
 def get_user_project(app, user, id=None, domain=None, type=None, biz_id=None):
-    q = app.projects;
+    q = app.projects
     if id is not None:
         q = q.filter_by(id=id)
     elif domain is not None and type is not None:
@@ -50,6 +50,7 @@ def create_project(app, data):
     biz_id = data['biz_id']
     start_msg_id = data.get('start_msg_id', 0)
     id = data.get('id')
+    project = None
     if id:
         # 指定id时修改domain, type, biz_id
         project = app.projects.filter_by(id=id).one_or_none()

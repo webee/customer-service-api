@@ -36,6 +36,6 @@ def ignore_none(fn):
     @wraps(fn)
     def wrap(self, arg):
         if arg is not None:
-            return fn(self, arg)
+            return fn(self, arg) or True
 
     return wrap

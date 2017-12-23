@@ -52,8 +52,8 @@ CREATE OR REPLACE FUNCTION scopes_match_ctx_path(scopes json, uid text, type tex
         T_SUB CONSTANT text := '1';
     BEGIN
 --         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when T_SELF then scopes_match_target(scopes, path) or scopes_match_target(scopes, concat(path, ':', uid))
-                    when T_SUB then scopes_match_target(scopes, concat(path, ':', uid))
+        return case type when T_SELF then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||':'||uid)
+                    when T_SUB then scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
     END;
@@ -116,8 +116,8 @@ CREATE OR REPLACE FUNCTION x_scopes_match_ctx_path(scopes text[][], uid text, ty
         T_SUB CONSTANT text := '1';
     BEGIN
         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when T_SELF then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, concat(path, ':', uid))
-                    when T_SUB then x_scopes_match_target(scopes, concat(path, ':', uid))
+        return case type when T_SELF then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||':'||uid)
+                    when T_SUB then x_scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
     END;
