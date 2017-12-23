@@ -18,6 +18,13 @@ class App:
     SQLALCHEMY_ECHO = not (os.environ.get('DISABLE_SQLALCHEMY_ECHO', False) or os.environ.get('CELERY_RUNNING', False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # cache
+    CACHE = {
+        'CACHE_TYPE': 'redis',
+        'CACHE_KEY_PREFIX': NAME + '_',
+        'CACHE_REDIS_URL': 'redis://127.0.0.1:6379/13'
+    }
+
     # jwt
     JWT_AUTH_HEADER = 'X-ANY-JWT'
     JWT_AUTH_HEADER_PATTERN = 'X-%s-JWT'

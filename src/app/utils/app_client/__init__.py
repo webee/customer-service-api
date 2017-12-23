@@ -1,7 +1,8 @@
 from urllib import parse
-import threading
+from threading import RLock
 import requests
 import logging
+import time
 from datetime import datetime, timedelta
 from . import constant
 from .constant import MethodType, ErrorCode, PARAM_HEADER_MAP
@@ -11,53 +12,40 @@ logger = logging.getLogger(__name__)
 
 
 class AppClients(object):
-    def __init__(self):
-        # appid -> [token, exp]
-        self.app_tokens = {}
-        self.count = 0
-        self._lock = threading.RLock()
+    def __init__(self, app=None, cache=None):
+        self.app = app
+        self.cache = cache
 
-    def _clear_expired(self):
-        with self._lock:
-            logger.info('AppClients: try clear expired')
-            n = datetime.utcnow()
-            new_app_tokens = dict(self.app_tokens)
-            has_expired = False
-            for appid, value in self.app_tokens.items():
-                token, exp = value
-                if exp <= n:
-                    del new_app_tokens[appid]
-                    has_expired = True
-                    logger.info('AppClients: clear expired [%s]' % appid)
-            if has_expired:
-                self.app_tokens = new_app_tokens
+    def init_app(self, app, cache):
+        self.app = app
+        self.cache = cache
 
     def update_app_token(self, appid, token, exp):
-        with self._lock:
-            new_app_tokens = dict(self.app_tokens)
-            new_app_tokens[appid] = (token, exp)
-            self.app_tokens = new_app_tokens
+        timeout = int(exp - (time.time() + time.timezone))
+        if timeout > 0:
+            self.cache.set(self._gen_key(appid), (token, exp), timeout=timeout)
+
+    @staticmethod
+    def _gen_key(appid):
+        return 'app_client_' + appid
 
     def get_client(self, appid, appkey, urls):
-        self.count += 1
-        if self.count % 30000 == 0:
-            self._clear_expired()
-        token, exp = self.app_tokens.get(appid, (None, None))
-        return AppClient(appid, appkey, urls, token=token, token_exp=exp, lock=self._lock, token_update_callback=self.update_app_token)
+        token, exp = self.cache.get(self._gen_key(appid)) or (None, None)
+        return AppClient(appid, appkey, urls, token=token, exp=exp, token_update_callback=self.update_app_token)
 
 
 class AppClient(object):
     constant = constant
 
-    def __init__(self, appid, appkey, urls, token=None, token_exp=None, lock=None, token_update_callback=None):
+    def __init__(self, appid, appkey, urls, token=None, exp=None, token_update_callback=None):
         self.appid = appid
         self.appkey = appkey
         self.urls = urls
 
         self._token_update_callback = token_update_callback
         self._token = token
-        self._token_exp = token_exp
-        self._lock = lock or threading.RLock()
+        self._token_exp = datetime.fromtimestamp(exp) if exp is not None else None
+        self._lock = RLock()
 
     def _is_current_token_valid(self):
         return self._token and self._token_exp > datetime.utcnow() + timedelta(minutes=10)
@@ -69,9 +57,10 @@ class AppClient(object):
                 if not self._is_current_token_valid():
                     try:
                         res = self._get_token()
-                        self._token, self._token_exp = res['token'], datetime.fromtimestamp(res['exp'])
+                        token, exp = res['token'], res['exp']
+                        self._token, self._token_exp = token, datetime.fromtimestamp(exp)
                         if self._token_update_callback:
-                            self._token_update_callback(self.appid, self._token, self._token_exp)
+                            self._token_update_callback(self.appid, token, exp)
                         logger.info('new token: %s, %s', self._token, self._token_exp)
                     except Exception as e:
                         raise RequestTokenError(e)

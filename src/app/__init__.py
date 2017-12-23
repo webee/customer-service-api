@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask.ext.cache import Cache
 from flask_marshmallow import Marshmallow
 from flask_profiler import Profiler
 from .apis.utils.jwt import JWT
@@ -18,8 +19,9 @@ from .utils.app_client import AppClients
 profiler = Profiler()
 jwt = JWT()
 db = SQLAlchemy()
-ma = Marshmallow()
 migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
+cache = Cache()
+ma = Marshmallow()
 bcrypt = Bcrypt()
 cors = CORS()
 
@@ -77,6 +79,8 @@ def register_mods(app):
 
 
 def init_extensions(app):
+    from . import config
+
     # jwt
     jwt.init_app(app)
 
@@ -89,6 +93,9 @@ def init_extensions(app):
     dbs.init_app(app, db)
     migrate.init_app(app, db)
 
+    # cache
+    cache.init_app(app, config=config.App.CACHE)
+
     ma.init_app(app)
 
     # bcrypt
@@ -97,8 +104,10 @@ def init_extensions(app):
     # cors
     cors.init_app(app)
 
+    # app clients
+    app_clients.init_app(app, cache)
+
     # xchat client
-    from . import config
     xchat_client.init_config(config.App.NAME, config.XChat.KEY, config.XChatClient)
 
 
