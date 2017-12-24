@@ -5,8 +5,9 @@ from app.apis.jwt import current_staff, require_staff
 from app.service.models import Project, Session
 from app.biz import project as proj_biz
 from app import app_clients
+from app import errors
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
-from ..parsers import fetch_msgs_arguments
+from ..parsers import fetch_msgs_arguments, access_function_args
 from ..serializers.project import session_item, fetch_msgs_result, session_item_schema, fetch_msgs_result_schema
 
 
@@ -62,6 +63,7 @@ class ProjectMsgs(Resource):
 @api.route('/projects/<int:id>/access_functions/<name>/url')
 class ProjectAccessFunctionURL(Resource):
     @require_staff
+    @api.expect(access_function_args)
     @api.response(404, 'project not found')
     def get(self, id, name):
         """访问项目功能"""
@@ -70,9 +72,15 @@ class ProjectAccessFunctionURL(Resource):
         # FIXME: 添加权限控制
         proj = staff.app.projects.filter_by(id=id).one()
 
+        args = access_function_args.parse_args()
+        uid = args.get('uid')
+        if uid and not (uid == proj.owner.uid or any(c.uid == uid for c in proj.customers)):
+            # 指定的uid不是owner也不是customers
+            raise errors.BizError(errors.ERR_INVALID_PARAMS, 'invalid uid', dict(uid=uid))
+
         app = staff.app
         app_client = app_clients.get_client(app.appid, app.appkey, app.urls)
         url = app_client.build_access_function_url(proj.domain, proj.type, proj.biz_id, proj.owner.uid, name,
-                                                   id=proj.id)
+                                                   id=proj.id, uid=uid)
 
         return dict(url=url)

@@ -1,6 +1,7 @@
 from flask_restplus import fields
 from app.apis import api
 from app.apis.serializers.project import project_data, ProjectDataSchema
+from app.apis.serializers.staff import RawStaffSchema
 from app import ma
 
 app_user = api.model('App User', {
@@ -48,9 +49,11 @@ class MessageSchema(ma.Schema):
 
 class SessionItemSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'project', 'msg_id', 'msg', 'msg_ts', 'sync_msg_id', 'handler_msg_id')
+        fields = ('id', 'project', 'closed', 'handler', 'msg_id', 'msg', 'msg_ts', 'sync_msg_id', 'handler_msg_id')
 
     project = ma.Nested(ProjectDataSchema)
+    closed = ma.Function(lambda s: s.closed and s.closed.timestamp())
+    handler = ma.Nested(RawStaffSchema)
     msg = ma.Nested(MessageSchema)
     msg_ts = ma.Function(lambda s: s.msg_ts.timestamp())
 

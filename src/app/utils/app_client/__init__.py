@@ -140,7 +140,7 @@ class AppClient(object):
         data.update({('project_' + k): v for k, v in (project_info or {}).items()})
         self._post(url, data)
 
-    def build_access_function_url(self, domain, type, biz_id, owner, func, id=None):
+    def build_access_function_url(self, domain, type, biz_id, owner, func, id=None, uid=None):
         return self._build_url(MethodType.ACCESS_FUNCTION, auth=True,
-                               params=dict(domain=domain, type=type, biz_id=biz_id, id=id, owner=owner,
+                               params=dict(domain=domain, type=type, biz_id=biz_id, id=id, owner=owner, uid=uid,
                                            function=func))

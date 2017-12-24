@@ -56,6 +56,7 @@ test_projects_data = [
                 "name": "用户001"
             }
         ],
+        "tags": ['测试类型1', '好长的一个标签啊好长啊好长啊好长啊好长啊好长啊'],
         "scope_labels": [
             {"type": "all", "path": "1.1"},
             ["self", "1.2"]
