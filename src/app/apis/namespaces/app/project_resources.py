@@ -5,7 +5,7 @@ from app import dbs
 from .api import api
 from app.biz import app as biz
 from app.apis.jwt import current_application, require_app
-from app.apis.serializers.project import project, new_project, update_project, update_project_payload, meta_data_item
+from app.apis.serializers.project import project, new_project, update_project, update_project_payload
 from .serializers import new_project_result
 
 

@@ -29,6 +29,7 @@ session_item = api.model('Session Item', {
     'msg': fields.Nested(message, allow_null=True, description='last msg'),
     'msg_ts': fields.Float(attribute=lambda s: s.msg_ts.timestamp()),
     'sync_msg_id': fields.Integer(),
+    'handler_msg_id': fields.Integer(),
 })
 
 fetch_msgs_result = api.model('Fetch Msgs Result', {
@@ -47,7 +48,7 @@ class MessageSchema(ma.Schema):
 
 class SessionItemSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'project', 'msg_id', 'msg', 'msg_ts', 'sync_msg_id')
+        fields = ('id', 'project', 'msg_id', 'msg', 'msg_ts', 'sync_msg_id', 'handler_msg_id')
 
     project = ma.Nested(ProjectDataSchema)
     msg = ma.Nested(MessageSchema)

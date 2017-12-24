@@ -1,5 +1,5 @@
 import json
-from sqlalchemy import desc
+from sqlalchemy import desc, orm
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.orm import deferred
 from sqlalchemy import text
@@ -216,7 +216,8 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     @property
     def handling_sessions(self):
         # return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
-        return self.as_handler_sessions.filter_by(is_active=True)
+        return self.as_handler_sessions.filter_by(is_active=True).options(
+            orm.defaultload('project').undefer_group('data'))
 
     def get_handling_session(self, session_id):
         return self.as_handler_sessions.filter_by(is_active=True, id=session_id).one_or_none()
@@ -260,10 +261,10 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
 
     # 元数据
     # [{type, value, label}, ...]
-    meta_data = deferred(db.Column(db.JSON, nullable=False, default=[]))
+    meta_data = deferred(db.Column(db.JSON, nullable=False, default=[]), group='data')
     # 扩展数据
     # [{type, value, label}, ...]
-    ext_data = deferred(db.Column(db.JSON, nullable=False, default=[]))
+    ext_data = deferred(db.Column(db.JSON, nullable=False, default=[]), group='data')
 
     # 所属客户
     owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)
@@ -432,6 +433,13 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     msg = db.relationship('Message', uselist=False,
                           primaryjoin="and_(Session.id == Message.session_id, Session.msg_id == Message.msg_id)",
                           lazy='joined')
+    # 处理者消息id, 0表示未指向任何消息
+    # TODO: 在客服发消息时，更新此消息id
+    handler_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
+    handler_msg = db.relationship('Message', uselist=False,
+                                  primaryjoin="and_(Session.id == Message.session_id, Session.handler_msg_id == Message.msg_id)",
+                                  lazy='joined')
+
     # 消息发送的时间
     msg_ts = db.Column(db.DateTime(timezone=True), index=True, default=db.func.current_timestamp())
 

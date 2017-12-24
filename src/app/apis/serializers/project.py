@@ -2,7 +2,7 @@ from flask_restplus import fields
 from app import ma
 from . import api
 from . import base_resource, resource_id
-from .app import path_label, meta_data_item
+from .app import path_label, data_item
 from .staff import raw_staff, RawStaffSchema
 from .customer import raw_customer, RawCustomerSchema
 
@@ -27,7 +27,7 @@ new_project = api.model('New Project', {
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
-    'meta_data': fields.List(fields.Nested(meta_data_item)),
+    'meta_data': fields.List(fields.Nested(data_item)),
     'scope_labels': fields.List(fields.Nested(path_label)),
     'class_labels': fields.List(fields.Nested(path_label))
 })
@@ -41,7 +41,7 @@ update_project = api.model('Update Project', {
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
-    'meta_data': fields.List(fields.Nested(meta_data_item)),
+    'meta_data': fields.List(fields.Nested(data_item)),
     'scope_labels': fields.List(fields.Nested(path_label)),
     'class_labels': fields.List(fields.Nested(path_label))
 })
@@ -51,7 +51,7 @@ update_project_payload = api.model('Update Project Payload', {
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
-    'meta_data': fields.List(fields.Nested(meta_data_item)),
+    'meta_data': fields.List(fields.Nested(data_item)),
     'scope_labels': fields.List(fields.Nested(path_label)),
     'class_labels': fields.List(fields.Nested(path_label))
 })
@@ -64,13 +64,14 @@ project_data = api.model('Project Data', {
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
     'customers': fields.List(fields.Nested(raw_customer)),
-    'meta_data': fields.List(fields.Nested(meta_data_item)),
+    'meta_data': fields.List(fields.Nested(data_item)),
+    'ext_data': fields.List(fields.Nested(data_item)),
 })
 
 
 class ProjectDataSchema(ma.Schema):
     class Meta:
-        fields = ("id", "biz_id", "is_online", "tags", "owner", "leader", "customers", "meta_data")
+        fields = ("id", "biz_id", "is_online", "tags", "owner", "leader", "customers", "meta_data", "ext_data")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)

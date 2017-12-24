@@ -32,7 +32,7 @@ path_label = api.model('Path Label', {
     'path': fields.String(required=True)
 })
 
-meta_data_item = api.model('meta data item', {
+data_item = api.model('data item', {
     'label': fields.String(required=True, example='用户名', description='显示名称'),
     'type': Any(required=False, default='value', example='value', description='类型'),
     'value': Any(required=True, example='测试用户', description='值'),
