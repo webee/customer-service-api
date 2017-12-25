@@ -3,6 +3,7 @@ import enum
 from app import db, dbs, config
 from pytoolbox.util.py import classproperty
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
 
 class BaseModel(db.Model):
@@ -119,7 +120,10 @@ class WithOnlineModel(object):
                 self.last_online_ts = db.func.current_timestamp()
         db.session.add(self)
 
-    @property
+    @hybrid_property
     def is_online(self):
-        return self.online and \
-               self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) < config.Biz.USER_ONLINE_DELTA
+        return self.online and self.last_online_ts is not None and (self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)
+
+    @is_online.expression
+    def is_online(self):
+        return self.online & (self.last_online_ts != None) & (self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)

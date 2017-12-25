@@ -35,9 +35,11 @@ def identity(role, payload):
     if role == 'app':
         return App.query.filter_by(name=payload['app_name']).one_or_none()
     elif role == 'customer':
-        return Customer.query.filter(Customer.app.has(name=payload['app_name']), Customer.uid == payload['uid']).one_or_none()
+        return Customer.query.filter(Customer.app.has(name=payload['app_name']), Customer.uid == payload['uid'],
+                                     Staff.is_deleted == False).one_or_none()
     elif role == 'staff':
-        return Staff.query.filter(Staff.app.has(name=payload['app_name']), Staff.uid == payload['uid']).one_or_none()
+        return Staff.query.filter(Staff.app.has(name=payload['app_name']), Staff.uid == payload['uid'],
+                                  Staff.is_deleted == False).one_or_none()
 
 
 @jwt.as_identity_secret_handler
@@ -53,7 +55,6 @@ def identity_secret(role, identity):
 require_app = jwt.auth_required('app')
 require_customer = jwt.auth_required('customer')
 require_staff = jwt.auth_required('staff')
-
 
 current_application: App = jwt.current_identity
 current_customer: Customer = jwt.current_identity
