@@ -8,12 +8,13 @@ raw_customer = api.model('Raw Customer', {
     'name': fields.String(required=False, max_length=100, default='', example='测试客户#1'),
     'mobile': fields.String(required=False, max_length=16, default='', example='18812345678'),
     'meta_data': fields.List(fields.Nested(data_item)),
+    'is_online': fields.Boolean(required=False, readonly=True),
 })
 
 
 class RawCustomerSchema(ma.Schema):
     class Meta:
-        fields = ("uid", "name", "mobile", "meta_data")
+        fields = ("uid", "name", "mobile", "meta_data", 'is_online')
 
 
 raw_customer_schema = RawCustomerSchema()

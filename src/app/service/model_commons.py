@@ -109,7 +109,7 @@ class WithOnlineModel(object):
 
     @dbs.transactional
     def update_online(self, online, offline_check=True):
-        if not online and offline_check:
+        if not online and self.online and offline_check:
             if self.last_online_ts and arrow.utcnow() - arrow.get(self.last_online_ts) > config.Biz.USER_OFFLINE_DELTA:
                 # offline check
                 self.online = False

@@ -17,7 +17,7 @@ def init_test_data():
         dict(name='test', title='测试', desc='测试域', types=[
             dict(name='test', title='测试', desc='测试类型')
         ]),
-        dict(name='test2', type='测试', title='测试域', types=[
+        dict(name='test2', title='测试2', desc='测试域2', types=[
             dict(name='test', title='测试', desc='测试类型'),
             dict(name='test2', title='测试2', desc='测试类型2'),
         ]),

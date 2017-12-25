@@ -12,6 +12,7 @@ _raw_staff_specs = {
 raw_staff = api.model('Raw Staff', {
     'uid': fields.String(),
     'name': fields.String(),
+    'is_online': fields.Boolean(required=False, readonly=True),
 })
 
 new_staff = api.model('New Staff', {
@@ -23,4 +24,4 @@ new_staff = api.model('New Staff', {
 
 class RawStaffSchema(ma.Schema):
     class Meta:
-        fields = ("uid", "name")
+        fields = ("uid", "name", "is_online")

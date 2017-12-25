@@ -77,6 +77,8 @@ class ProjectAccessFunctionURL(Resource):
         if uid and not (uid == proj.owner.uid or any(c.uid == uid for c in proj.customers)):
             # 指定的uid不是owner也不是customers
             raise errors.BizError(errors.ERR_INVALID_PARAMS, 'invalid uid', dict(uid=uid))
+        elif not uid:
+            uid = proj.owner.uid
 
         app = staff.app
         app_client = app_clients.get_client(app.appid, app.appkey, app.urls)
