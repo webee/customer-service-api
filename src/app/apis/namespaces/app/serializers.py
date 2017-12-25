@@ -17,3 +17,10 @@ new_channel_message = api.model('New Channel Message', {
     'type': fields.String(required=True, enum=('text', 'file', 'image', 'voice')),
     'content': any_of(['string', 'object'], required=True)
 })
+
+try_handle_project_result = api.model('Try Handle Project Result', {
+    'domain': fields.String(),
+    'type': fields.String(),
+    'id': fields.Integer(),
+    'current_session_id': fields.Integer()
+})

@@ -3,10 +3,17 @@ from flask_restplus import Resource, abort
 from sqlalchemy.orm.exc import NoResultFound
 from app import dbs
 from .api import api
+from app import errors
 from app.biz import app as biz
+from app.biz import project as proj_biz
 from app.apis.jwt import current_application, require_app
+from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.serializers.project import project, new_project, update_project, update_project_payload
+from app.apis.parsers.project import fetch_msgs_arguments
+from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
 from .serializers import new_project_result
+from .serializers import try_handle_project_result
+from .parsers import try_handle_project_arguments
 
 
 @api.route('/projects')
@@ -81,3 +88,51 @@ class IsProjectItemExists(Resource):
 
         is_exists = biz.is_project_exists(app, id, domain, type, biz_id)
         return dict(is_exists=is_exists)
+
+
+@api.route('/projects/<int:id>/msgs',
+           '/projects/<string:domain>/<string:type>/<string:biz_id>/msgs')
+class ProjectMsgs(Resource):
+    @require_app
+    @api.expect(fetch_msgs_arguments)
+    @api.doc(model=fetch_msgs_result)
+    @marshal_with(fetch_msgs_result_schema)
+    @api.response(404, 'project not found')
+    @api.response(200, 'fetch msgs ok')
+    def get(self, id, domain=None, type=None, biz_id=None):
+        """获取项目消息"""
+        app = current_application
+
+        proj = biz.get_project(app, id, domain, type, biz_id)
+
+        args = fetch_msgs_arguments.parse_args()
+        lid = args['lid']
+        rid = args['rid']
+        limit = args['limit']
+        desc = args['desc']
+        msgs, has_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
+        return dict(msgs=msgs, has_more=has_more)
+
+
+@api.route('/projects/<int:id>/try_handle',
+           '/projects/<string:domain>/<string:type>/<string:biz_id>/try_handle')
+class TryHandleProject(Resource):
+    @require_app
+    @api.expect(try_handle_project_arguments)
+    @api.marshal_with(try_handle_project_result)
+    @api.response(404, 'project or staff not found')
+    @api.response(200, 'try handle project ok')
+    def get(self, id, domain=None, type=None, biz_id=None):
+        """尝试接待项目"""
+        app = current_application
+
+        args = try_handle_project_arguments.parse_args()
+        uid = args['uid']
+        raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff can not handle this project', dict(uid=uid))
+
+        # staff = app.staffs.filter_by(uid=uid).one()
+        # proj = biz.get_project(app, id, domain, type, biz_id)
+        #
+        # proj_biz.try_handle_project(staff, proj)
+        #
+        # return proj

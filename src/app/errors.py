@@ -51,4 +51,5 @@ def with_error_msg(code, msg):
 # codes
 ERR_ITEM_NOT_FOUND = with_error_msg(1000001, 'item not found')
 ERR_INVALID_PARAMS = with_error_msg(1000002, 'invalid params')
+ERR_PERMISSION_DENIED = with_error_msg(1000100, 'permission denied')
 ERR_XXX = with_error_msg(999999, 'xxx')

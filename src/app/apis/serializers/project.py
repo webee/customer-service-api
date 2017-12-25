@@ -79,3 +79,41 @@ class ProjectDataSchema(ma.Schema):
 
 
 project_data_schema = ProjectDataSchema()
+
+
+message = api.model('Message Result', {
+    'channel': fields.String(),
+    'user_type': fields.String(),
+    'user_id': fields.String(),
+    'tx_key': fields.Integer(),
+    'rx_key': fields.Integer(),
+    'msg_id': fields.Integer(),
+    'domain': fields.String(),
+    'type': fields.String(),
+    'content': fields.String(),
+    'ts': fields.Float(attribute=lambda msg: msg.ts.timestamp()),
+    'session_id': fields.Integer(),
+})
+
+
+fetch_msgs_result = api.model('Fetch Msgs Result', {
+    'msgs': fields.List(fields.Nested(message)),
+    'has_more': fields.Boolean(description='is has more msgs?'),
+})
+
+
+class MessageSchema(ma.Schema):
+    class Meta:
+        fields = ("channel", "user_type", "user_id", "tx_key", "rx_key", "msg_id", "domain", "type", "content", "ts",
+                  "session_id")
+
+    ts = ma.Function(lambda msg: msg.ts.timestamp())
+
+
+class FetchMsgsResultSchema(ma.Schema):
+    class Meta:
+        fields = ("msgs", "has_more")
+
+    msgs = ma.List(ma.Nested(MessageSchema))
+
+fetch_msgs_result_schema = FetchMsgsResultSchema()

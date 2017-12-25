@@ -1,6 +1,6 @@
 from flask_restplus import fields
 from app.apis import api
-from app.apis.serializers.project import project_data, ProjectDataSchema
+from app.apis.serializers.project import project_data, ProjectDataSchema, MessageSchema, message
 from app.apis.serializers.staff import RawStaffSchema
 from app import ma
 
@@ -9,19 +9,6 @@ app_user = api.model('App User', {
     'name': fields.String(),
 })
 
-message = api.model('Message Result', {
-    'channel': fields.String(),
-    'user_type': fields.String(),
-    'user_id': fields.String(),
-    'tx_key': fields.Integer(),
-    'rx_key': fields.Integer(),
-    'msg_id': fields.Integer(),
-    'domain': fields.String(),
-    'type': fields.String(),
-    'content': fields.String(),
-    'ts': fields.Float(attribute=lambda msg: msg.ts.timestamp()),
-    'session_id': fields.Integer(),
-})
 
 session_item = api.model('Session Item', {
     'id': fields.Integer(description='session id'),
@@ -34,19 +21,6 @@ session_item = api.model('Session Item', {
     'sync_msg_id': fields.Integer(),
     'handler_msg_id': fields.Integer(),
 })
-
-fetch_msgs_result = api.model('Fetch Msgs Result', {
-    'msgs': fields.List(fields.Nested(message)),
-    'has_more': fields.Boolean(description='is has more msgs?'),
-})
-
-
-class MessageSchema(ma.Schema):
-    class Meta:
-        fields = ("channel", "user_type", "user_id", "tx_key", "rx_key", "msg_id", "domain", "type", "content", "ts",
-                  "session_id")
-
-    ts = ma.Function(lambda msg: msg.ts.timestamp())
 
 
 class SessionItemSchema(ma.Schema):
@@ -63,11 +37,3 @@ class SessionItemSchema(ma.Schema):
 
 session_item_schema = SessionItemSchema()
 
-
-class FetchMsgsResultSchema(ma.Schema):
-    class Meta:
-        fields = ("msgs", "has_more")
-
-    msgs = ma.List(ma.Nested(MessageSchema))
-
-fetch_msgs_result_schema = FetchMsgsResultSchema()

@@ -7,8 +7,10 @@ from app.biz import project as proj_biz
 from app import app_clients
 from app import errors
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
-from ..parsers import fetch_msgs_arguments, access_function_args
-from ..serializers.project import session_item, fetch_msgs_result, session_item_schema, fetch_msgs_result_schema
+from app.apis.parsers.project import fetch_msgs_arguments
+from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
+from ..parsers import access_function_args
+from ..serializers.project import session_item, session_item_schema
 
 
 @api.route('/projects/<string:domain>/<string:type>/my_handling_sessions')
