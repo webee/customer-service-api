@@ -48,7 +48,6 @@ def create_project(app, data):
         raise BizError(errors.ERR_INVALID_PARAMS, 'project domain/type not exists', dict(domain=domain, type=type))
 
     biz_id = data['biz_id']
-    start_msg_id = data.get('start_msg_id', 0)
     id = data.get('id')
     project = None
     if id:
@@ -64,6 +63,7 @@ def create_project(app, data):
     leader = app_m.create_or_update_staff(app, data['leader'])
     customers = app_m.create_or_update_customers(app, data['customers'])
     if project is None:
+        start_msg_id = data.get('start_msg_id', 0)
         project = Project(app_name=app.name, app=app, domain=domain, type=type, biz_id=biz_id, owner=owner,
                           leader=leader, customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
     else:
