@@ -17,19 +17,19 @@ test_staff_label_tree = {
 
 test_staffs_data = [
     {"uid": "test", "name": "测试客服",
-     "context_labels": [{"type": "self", "path": "1.1"}, {"type": "sub", "path": "2.1"}, ]},
+     "context_labels": [{"type": "self", "path": "1.1"}, {"type": "member", "path": "2.1"}, ]},
     {"uid": "test_x", "name": "测试客服#x",
      "context_labels": [["self", ""], ]},
     {"uid": "test_01", "name": "测试客服#1",
-     "context_labels": [["sub", "1.1"], ]},
+     "context_labels": [["member", "1.1"], ]},
     {"uid": "test_02", "name": "测试客服#2",
      "context_labels": [["self", "2.1"], ]},
     {"uid": "test_03", "name": "测试客服#3",
      "context_labels": [["self", "1.2"], ]},
     {"uid": "test_04", "name": "测试客服#4",
-     "context_labels": [["sub", "1.2"], ]},
+     "context_labels": [["member", "1.2"], ]},
     {"uid": "test_05", "name": "测试客服#5",
-     "context_labels": [["sub", "1.2"], ]},
+     "context_labels": [["member", "1.2"], ]},
     {"uid": "test_none", "name": "测试客服#none"},
 ]
 

@@ -38,6 +38,11 @@ def db_not_found_error_handler(err):
     return dict(message='item not found'), 404
 
 
+def db_found_multi_error_handler(err):
+    logger.warning(traceback.format_exc())
+    return dict(message='multi items found'), 400
+
+
 # error msgs and code
 _ERROR_MSGS = {
 }

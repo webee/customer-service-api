@@ -18,6 +18,14 @@ new_channel_message = api.model('New Channel Message', {
     'content': any_of(['string', 'object'], required=True)
 })
 
+project_current_session_info = api.model('Project Current Session Info', {
+    'id': fields.Integer(),
+    'handler': fields.String(attribute='handler.uid', help="handler's staff uid"),
+    'msg_id': fields.Integer(),
+    'sync_msg_id': fields.Integer(),
+    'handler_msg_id': fields.Integer(),
+})
+
 try_handle_project_result = api.model('Try Handle Project Result', {
     'domain': fields.String(),
     'type': fields.String(),

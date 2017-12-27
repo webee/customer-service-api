@@ -12,7 +12,7 @@ from app.apis.serializers.project import project, new_project, update_project, u
 from app.apis.parsers.project import fetch_msgs_arguments
 from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
 from .serializers import new_project_result
-from .serializers import try_handle_project_result
+from .serializers import try_handle_project_result, project_current_session_info
 from .parsers import try_handle_project_arguments
 
 
@@ -62,13 +62,12 @@ class ProjectItem(Resource):
         """获取项目"""
         app = current_application
         proj = biz.get_project(app, id, domain, type, biz_id)
-        if proj is None:
-            return abort(404, 'project not found')
 
         return proj
 
     @require_app
     @api.expect(update_project_payload)
+    @api.response(404, 'project not found')
     @api.response(204, 'successfully updated')
     def patch(self, id=None, domain=None, type=None, biz_id=None):
         """更新项目信息: owner, customers, leader, meta_data, scope_labels, class_labels"""
@@ -112,6 +111,24 @@ class ProjectMsgs(Resource):
         desc = args['desc']
         msgs, has_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
         return dict(msgs=msgs, has_more=has_more)
+
+
+@api.route('/projects/<int:id>/current_session',
+           '/projects/<string:domain>/<string:type>/<string:biz_id>/current_session')
+class ProjectCurrentSession(Resource):
+    @require_app
+    @api.marshal_with(project_current_session_info)
+    @api.response(404, 'project not found')
+    def get(self, id, domain=None, type=None, biz_id=None):
+        """获取项目当前会话信息"""
+        app = current_application
+
+        proj = biz.get_project(app, id, domain, type, biz_id)
+        current_session = proj.current_session
+        if current_session is None:
+            raise errors.BizError(errors.ERR_ITEM_NOT_FOUND, 'no current session', dict(id=proj.id))
+
+        return current_session
 
 
 @api.route('/projects/<int:id>/try_handle',

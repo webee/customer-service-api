@@ -2,8 +2,8 @@ import logging
 from flask_restplus import Api
 from flask import Blueprint
 from app.errors import BizError, biz_error_handler
-from sqlalchemy.orm.exc import NoResultFound
-from app.errors import db_not_found_error_handler
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from app.errors import db_not_found_error_handler, db_found_multi_error_handler
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ api = Api(blueprint, version='1.0', doc='/',
 # error handlers
 api.errorhandler(BizError)(biz_error_handler)
 api.errorhandler(NoResultFound)(db_not_found_error_handler)
+api.errorhandler(MultipleResultsFound)(db_found_multi_error_handler)
 
 
 def init_api(app):

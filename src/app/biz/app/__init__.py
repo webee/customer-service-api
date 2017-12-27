@@ -14,11 +14,15 @@ from .app import create_or_update_project_domain_type, create_or_update_project_
 NS_PT = re.compile(r':')
 
 
-def get_project(app, id=None, domain=None, type=None, biz_id=None):
+def get_project(app, id=None, domain=None, type=None, biz_id=None, none_if_not_exists=False):
+    q = app.projects
     if id is not None:
-        return app.projects.filter_by(id=id).one_or_none()
+        q = q.filter_by(id=id)
     elif domain is not None and type is not None:
-        return app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+        q = q.filter_by(domain=domain, type=type, biz_id=biz_id)
+    if none_if_not_exists:
+        return q.one_or_none()
+    return q.one()
 
 
 def get_user_project(app, user, id=None, domain=None, type=None, biz_id=None):
@@ -130,7 +134,7 @@ def update_project(project, data):
 @dbs.transactional
 def update_projects(app, data):
     for d in data:
-        project = get_project(app, d.get('id'), d.get('domain'), d.get('type'), d.get('biz_id'))
+        project = get_project(app, d.get('id'), d.get('domain'), d.get('type'), d.get('biz_id'), none_if_not_exists=True)
         if project:
             update_project(project, d)
 
