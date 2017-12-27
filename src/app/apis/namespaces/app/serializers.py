@@ -2,6 +2,7 @@ from flask_restplus import fields
 from app.apis import api
 from app.apis.serializers.xfields import any_of
 from app.apis.serializers import resource_id
+from app.apis.serializers.staff import raw_staff
 
 new_project_result = api.inherit('new project result', resource_id, {
     'xchat_chat_id': fields.String(attribute='xchat.chat_id', description='project xchat chat id'),
@@ -20,7 +21,7 @@ new_channel_message = api.model('New Channel Message', {
 
 project_current_session_info = api.model('Project Current Session Info', {
     'id': fields.Integer(),
-    'handler': fields.String(attribute='handler.uid', help="handler's staff uid"),
+    'handler': fields.Nested(raw_staff),
     'msg_id': fields.Integer(),
     'sync_msg_id': fields.Integer(),
     'handler_msg_id': fields.Integer(),
