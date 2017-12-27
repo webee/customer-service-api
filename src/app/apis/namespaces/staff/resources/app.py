@@ -13,9 +13,6 @@ class StaffApplicationInfo(Resource):
         current_staff.update_online(True)
         app = current_staff.app
         project_domains = app.project_domains
-        access_functions = app.access_functions
-        staff_label_tree = app.staff_label_tree
         staffs = app.staffs.all()
 
-        return dict(app=app, staff=current_staff, project_domains=project_domains, access_functions=access_functions,
-                    staff_label_tree=staff_label_tree, staffs=staffs)
+        return dict(app=app, staff=current_staff, project_domains=project_domains, staffs=staffs)

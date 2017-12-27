@@ -8,7 +8,5 @@ staff_app_info = api.model('Staff App Info', {
     'staff': fields.Nested(raw_staff),
     'app': fields.Nested(application),
     'project_domains': any_of(['array']),
-    'access_functions': fields.List(fields.Nested(access_function)),
-    'staff_label_tree': fields.Raw(),
     'staffs': fields.List(fields.Nested(raw_staff))
 })
