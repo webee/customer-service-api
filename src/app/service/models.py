@@ -9,7 +9,7 @@ from app import db, dbs, bcrypt, config
 from app.utils.commons import merge_to_dict
 from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
-from .utils import normalize_label_tree, normalize_labels, normalize_data
+from .utils import normalize_label_tree, normalize_labels, normalize_context_labels, normalize_data
 from .utils import ignore_none
 
 WIDEST_SCOPE_LABEL = ['all', '']
@@ -226,7 +226,7 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
     @ignore_none
     @dbs.transactional
     def update_context_labels(self, context_labels):
-        self.context_labels = normalize_labels(context_labels) or DEFAULT_LABELS
+        self.context_labels = normalize_context_labels(context_labels) or DEFAULT_LABELS
         flag_modified(self, 'context_labels')
         dbs.session.add(self)
 

@@ -4,11 +4,17 @@ from typing import Dict, Tuple, List
 t_path_label = List[str]
 t_path_labels = List[t_path_label]
 
-# label type
-LT_SUPER = str(0b10)
-LT_SELF = str(0b00)
-LT_SUB = str(0b01)
-LT_ALL = str(0b11)
+
+class LabelType(object):
+    UP = 'up'
+    SUPER = 'super'
+    SELF = 'self'
+    MEMBER = 'self.'
+    SELF_PLUS = 'self+'
+    SELF_PLUS_PLUS = 'self++'
+    SUB = 'sub'
+    MEMBER_PLUS = 'self.+'
+    ALL = 'all'
 
 
 def false_matcher(path, target):
@@ -16,10 +22,15 @@ def false_matcher(path, target):
 
 
 matchers = {
-    LT_SUPER: lambda path, target: path.startswith(target),
-    LT_SELF: lambda path, target: path == target,
-    LT_SUB: lambda path, target: target.startswith(path),
-    LT_ALL: lambda path, target: path.startswith(target) or target.startswith(path),
+    LabelType.UP: lambda path, target: path.startswith(target) and path != target,
+    LabelType.SUPER: lambda path, target: path.startswith(target),
+    LabelType.SELF: lambda path, target: path == target,
+    LabelType.MEMBER: lambda path, target: target.startswith(path + ':'),
+    LabelType.SELF_PLUS: lambda path, target: path == target or target.startswith(path + ':'),
+    LabelType.SELF_PLUS_PLUS: lambda path, target: target.startswith(path),
+    LabelType.SUB: lambda path, target: target.startswith(path + '.'),
+    LabelType.MEMBER_PLUS: lambda path, target: target.startswith(path) and path != target,
+    LabelType.ALL: lambda path, target: path.startswith(target) or target.startswith(path),
 }
 
 

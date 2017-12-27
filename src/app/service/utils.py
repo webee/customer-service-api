@@ -1,19 +1,36 @@
 from functools import wraps
-from .path_labels import LT_SUPER, LT_SELF, LT_SUB, LT_ALL
+from .path_labels import LabelType
 
 LABEL_TYPE_MAP = {
-    'super': LT_SUPER,
-    'self': LT_SELF,
-    'sub': LT_SUB,
-    'all': LT_ALL,
+    'up': LabelType.UP,
+    'super': LabelType.SUPER,
+    'self': LabelType.SELF,
+    'self.': LabelType.MEMBER,
+    'member': LabelType.MEMBER,
+    'sub': LabelType.SUB,
+    'self+': LabelType.SELF_PLUS,
+    'self++': LabelType.SELF_PLUS_PLUS,
+    'member+': LabelType.MEMBER_PLUS,
+    'all': LabelType.ALL
+}
+
+CONTEXT_LABEL_TYPE_MAP = {
+    'self': LabelType.SELF,
+    'self.': LabelType.MEMBER,
+    'member': LabelType.MEMBER,
+    'self+': LabelType.SELF_PLUS
 }
 
 
-def normalize_labels(labels):
+def normalize_labels(labels, type_map=LABEL_TYPE_MAP):
     if labels:
-        return [[LABEL_TYPE_MAP[l[0]], l[1]] if isinstance(l, list) else [LABEL_TYPE_MAP[l['type']], l['path']]
+        return [[type_map[l[0]], l[1]] if isinstance(l, list) else [type_map[l['type']], l['path']]
                 for l in labels]
     return labels
+
+
+def normalize_context_labels(labels):
+    return normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP)
 
 
 def normalize_label_tree(label_tree):

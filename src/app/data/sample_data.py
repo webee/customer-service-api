@@ -30,6 +30,7 @@ test_staffs_data = [
      "context_labels": [["sub", "1.2"], ]},
     {"uid": "test_05", "name": "测试客服#5",
      "context_labels": [["sub", "1.2"], ]},
+    {"uid": "test_none", "name": "测试客服#none"},
 ]
 
 test_projects_data = [
