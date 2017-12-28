@@ -10,20 +10,18 @@ order_func_map = {
 }
 
 
-def staff_fetch_staffs(app, staff, page, per_page, name=None, uid=None, context_label=None, is_online=None,
+def staff_fetch_staffs(app, staff, page, per_page, uid=None, context_label=None, is_online=None,
                        is_deleted=None,
                        sorter=None, order=None):
     q = app.staffs.options(orm.undefer('context_labels')).filter(
         func.x_targets_match_ctxes(path_labels.get_targets(staff.uid, staff.context_labels), Staff.uid,
                                    Staff.context_labels))
-    if name is not None:
-        q = q.filter(Staff.name.like(f'%{name}%'))
     if uid is not None:
-        q = q.filter(Staff.uid.like(f'%{uid}%'))
+        q = q.filter_by(uid=uid)
     if context_label is not None:
         path, uids = context_label
         q = q.filter(func.x_target_match_ctxes(path, Staff.uid, Staff.context_labels))
-        if len(uids) > 0:
+        if len(uids) > 0 and uid is not None:
             q = q.filter(Staff.uid.in_(uids))
     if is_online is not None:
         q = q.filter(Staff.is_online == is_online)
