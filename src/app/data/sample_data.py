@@ -59,8 +59,8 @@ test_projects_data = [
         ],
         "tags": ['测试类型1', '好长的一个标签啊好长啊好长啊好长啊好长啊好长啊'],
         "scope_labels": [
-            {"type": "all", "path": "1.1"},
-            ["self", "1.2"]
+            {"type": "super", "path": "1.1"},
+            ["super", "1.2"]
         ],
         "meta_data": [
             {"value": "测试用户", "label": "姓名"},
@@ -89,8 +89,8 @@ test_projects_data = [
         ],
         "tags": ['测试类型2'],
         "scope_labels": [
-            {"type": "all", "path": "1.1"},
-            ["self", "1.2"]
+            {"type": "super", "path": "1.1"},
+            ["super", "1.2"]
         ],
         "meta_data": [
             {"value": "用户002", "label": "姓名"},
@@ -117,7 +117,7 @@ test_projects_data = [
         ],
         "tags": ['超长的测试类型x'],
         "scope_labels": [
-            ["self", "1.2:test"]
+            ["super", "1.2:test"]
         ],
         "meta_data": [
             {"value": "用户002", "label": "姓名"},

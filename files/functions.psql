@@ -1,20 +1,14 @@
--- super: 10 -> 2
--- self: 00 -> 0
--- sub: 01 -> 1
--- all: 11 -> 3
 -- 路径匹配目标
 CREATE OR REPLACE FUNCTION path_match_target(type text, path text, target text) RETURNS BOOLEAN AS $$
-    DECLARE
-        T_SUPER CONSTANT text := '2';
-        T_SELF CONSTANT text := '0';
-        T_SUB CONSTANT text := '1';
-        T_ALL CONSTANT text := '3';
     BEGIN
-        RAISE NOTICE 'path_match_target: %, %, %', type, path, target;
-        return case type when T_SUPER then path like target||'%'
-                when T_SELF then path = target
-                when T_SUB then target like path||'%'
-                when T_ALL then path like target||'%' or target like path||'%'
+--        RAISE NOTICE 'path_match_target: %, %, %', type, path, target;
+        return case type when 'up+' then path like target||'%'
+                when 'super' then path like target||'%'
+                when 'all' then path like target||'%' or target like path||':%'
+                when 'self' then path = target
+                when 'up' then path like target||'%' and path != target
+                when 'sub' then target like path||'.%'
+                when 'self.' then target like path||':%'
                 else false
             end;
     END;
@@ -47,13 +41,11 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- 多scopes匹配单context路径
 CREATE OR REPLACE FUNCTION scopes_match_ctx_path(scopes json, uid text, type text, path text) RETURNS BOOLEAN AS $$
-    DECLARE
-        T_SELF CONSTANT text := '0';
-        T_SUB CONSTANT text := '1';
     BEGIN
 --         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when T_SELF then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||':'||uid)
-                    when T_SUB then scopes_match_target(scopes, path||':'||uid)
+        return case type when 'self+' then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||':'||uid)
+                    when 'self' then scopes_match_target(scopes, path)
+                    when 'self.' then scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
     END;
@@ -111,13 +103,11 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 -- 多scopes匹配单context路径
 CREATE OR REPLACE FUNCTION x_scopes_match_ctx_path(scopes text[][], uid text, type text, path text) RETURNS BOOLEAN AS $$
-    DECLARE
-        T_SELF CONSTANT text := '0';
-        T_SUB CONSTANT text := '1';
     BEGIN
-        RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when T_SELF then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||':'||uid)
-                    when T_SUB then x_scopes_match_target(scopes, path||':'||uid)
+--        RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
+        return case type when 'self+' then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||':'||uid)
+                    when 'self' then x_scopes_match_target(scopes, path)
+                    when 'self.' then x_scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
     END;
@@ -132,7 +122,7 @@ CREATE OR REPLACE FUNCTION x_scopes_match_ctx(scopes text[][], uid text, ctx tex
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 
--- 多scopes匹配多context
+-- 多scopes匹配多contextes
 CREATE OR REPLACE FUNCTION x_scopes_match_ctxes(scopes text[][], uid text, ctxes text[][]) RETURNS BOOLEAN AS $$
     DECLARE
         ctx text[];
@@ -140,6 +130,50 @@ CREATE OR REPLACE FUNCTION x_scopes_match_ctxes(scopes text[][], uid text, ctxes
         foreach ctx slice 1 in array ctxes
         loop
             if x_scopes_match_ctx_path(scopes, uid, ctx[1], ctx[2]) then
+                return true;
+            end if;
+        end loop;
+        return false;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- 单context匹配单路径
+CREATE OR REPLACE FUNCTION x_target_match_ctx(target text, uid text, type text, path text) RETURNS BOOLEAN AS $$
+    BEGIN
+        return case type when 'self+' then path like target||'%'
+                    when 'self' then path like target||'%'
+                    when 'self.' then path||':'||uid like target||'%'
+                    else false
+        end;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- 多contextes匹配单路径
+CREATE OR REPLACE FUNCTION x_target_match_ctxes(target text, uid text, ctxes text[][]) RETURNS BOOLEAN AS $$
+    DECLARE
+        ctx text[];
+    BEGIN
+        foreach ctx slice 1 in array ctxes
+        loop
+            if x_target_match_ctx(target, uid, ctx[1], ctx[2]) then
+                return true;
+            end if;
+        end loop;
+        return false;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- 多contextes匹配多路径
+CREATE OR REPLACE FUNCTION x_targets_match_ctxes(targets text[], uid text, ctxes text[][]) RETURNS BOOLEAN AS $$
+    DECLARE
+        target text;
+    BEGIN
+        foreach target in array targets
+        loop
+            if x_target_match_ctxes(target, uid, ctxes) then
                 return true;
             end if;
         end loop;

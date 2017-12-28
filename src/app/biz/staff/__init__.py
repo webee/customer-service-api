@@ -1,7 +1,8 @@
 from app.utils.commons import compose
-from sqlalchemy import orm, desc, asc
+from sqlalchemy import orm, desc, asc, func
 from sqlalchemy.sql.expression import nullslast, nullsfirst
 from app.service.models import Staff
+from app.service import path_labels
 
 order_func_map = {
     'ascend': compose(nullsfirst, asc),
@@ -9,10 +10,21 @@ order_func_map = {
 }
 
 
-def fetch_staffs(app, page, per_page, name=None, is_online=None, is_deleted=None, sorter=None, order=None):
-    q = app.staffs.options(orm.undefer('context_labels'))
+def staff_fetch_staffs(app, staff, page, per_page, name=None, uid=None, context_label=None, is_online=None,
+                       is_deleted=None,
+                       sorter=None, order=None):
+    q = app.staffs.options(orm.undefer('context_labels')).filter(
+        func.x_targets_match_ctxes(path_labels.get_targets(staff.uid, staff.context_labels), Staff.uid,
+                                   Staff.context_labels))
     if name is not None:
-        pass
+        q = q.filter(Staff.name.like(f'%{name}%'))
+    if uid is not None:
+        q = q.filter(Staff.uid.like(f'%{uid}%'))
+    if context_label is not None:
+        path, uids = context_label
+        q = q.filter(func.x_target_match_ctxes(path, Staff.uid, Staff.context_labels))
+        if len(uids) > 0:
+            q = q.filter(Staff.uid.in_(uids))
     if is_online is not None:
         q = q.filter(Staff.is_online == is_online)
     if is_deleted is not None:

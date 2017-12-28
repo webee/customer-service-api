@@ -3,6 +3,7 @@ from .path_labels import LabelType
 
 LABEL_TYPE_MAP = {
     'up': LabelType.UP,
+    'up+': LabelType.SUPER,
     'super': LabelType.SUPER,
     'self': LabelType.SELF,
     'self.': LabelType.MEMBER,

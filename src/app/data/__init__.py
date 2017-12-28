@@ -66,4 +66,4 @@ def init_prod_data():
     # customer
     app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客户"}])
     # staff
-    app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客服", "context_labels": [['self', '']]}])
+    app_biz.batch_create_or_update_staffs(app, [{"uid": "test", "name": "测试客服", "context_labels": [['self', '']]}])
