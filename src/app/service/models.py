@@ -455,27 +455,41 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
 
     @hybrid_property
     def msg_count(self):
-        return 0 if self.msg_id == 0 else self.msg_id - self.start_msg_id
+        if self.msg_id == 0:
+            return 0
+        return self.msg_id - self.start_msg_id
+
+    @hybrid_property
+    def unsynced_count(self):
+        if self.msg_id == 0:
+            return 0
+        elif self.sync_msg_id == 0:
+            return self.msg_id - self.start_msg_id
+        return self.msg_id - self.sync_msg_id
+
+    @hybrid_property
+    def unhandled_count(self):
+        if self.msg_id == 0:
+            return 0
+        elif self.handler_msg_id == 0:
+            return self.msg_id - self.start_msg_id
+        return self.msg_id - self.handler_msg_id
 
     @msg_count.expression
     def msg_count(self):
         return expression.case([(self.msg_id == 0, 0)], else_=self.msg_id - self.start_msg_id)
 
-    @hybrid_property
+    @unsynced_count.expression
     def unsynced_count(self):
-        return self.msg_id if self.sync_msg_id == 0 else self.msg_id - self.sync_msg_id
+        return expression.case([(self.msg_id == 0, 0),
+                                (self.sync_msg_id == 0, self.msg_id - self.start_msg_id)],
+                               else_=self.msg_id - self.sync_msg_id)
 
-    @msg_count.expression
-    def unsynced_count(self):
-        return expression.case([(self.sync_msg_id == 0, 0)], else_=self.msg_id - self.sync_msg_id)
-
-    @hybrid_property
+    @unhandled_count.expression
     def unhandled_count(self):
-        return self.msg_id if self.handler_msg_id == 0 else self.msg_id - self.handler_msg_id
-
-    @msg_count.expression
-    def unhandled_count(self):
-        return expression.case([(self.handler_msg_id == 0, 0)], else_=self.msg_id - self.handler_msg_id)
+        return expression.case([(self.msg_id == 0, 0),
+                                (self.handler_msg_id == 0, self.msg_id - self.start_msg_id)],
+                               else_=self.msg_id - self.handler_msg_id)
 
 
 class Message(base_model(False, False), project_resource('messages', backref_uselist=True),
