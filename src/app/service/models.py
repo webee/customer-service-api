@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import expression
 from sqlalchemy import types
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method, Comparator, ExprComparator
 from app import db, dbs, bcrypt, config
 from app.utils.commons import merge_to_dict
 from .model_commons import base_model, app_resource, project_resource, session_resource, app_user
@@ -449,8 +449,9 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
     channel_user_id = db.Column(db.String(32), nullable=True, default=None)
 
     def __repr__(self):
-        return "<Session: {0}, {1}, {2}>".format(self.project.app_biz_id, 'active' if self.is_active else 'closed',
-                                                 self.msg_id)
+        return "<Session: {0}, {1}, {2}/{3}/{4}>".format(self.project.app_biz_id,
+                                                         'active' if self.is_active else 'closed', self.unsynced_count,
+                                                         self.unhandled_count, self.msg_count)
 
     @hybrid_property
     def msg_count(self):

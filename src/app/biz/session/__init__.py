@@ -46,6 +46,12 @@ def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, user
             q = q.order_by(order_func(Project.last_online_ts))
         elif sorter == 'created':
             q = q.order_by(order_func(Session.created))
+        elif sorter == 'unsynced_count':
+            q = q.order_by(order_func(Session.unsynced_count))
+        elif sorter == 'unhandled_count':
+            q = q.order_by(order_func(Session.unhandled_count))
+        elif sorter == 'msg_count':
+            q = q.order_by(order_func(Session.msg_count))
         else:
             q = q.order_by(order_func(Session.updated))
     else:

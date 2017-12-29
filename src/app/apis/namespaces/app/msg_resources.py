@@ -12,7 +12,7 @@ class ChannelMessages(Resource):
     @require_app
     @api.expect(new_channel_message)
     @api.response(204, 'project is created')
-    def post(self, id):
+    def post(self):
         """接收其它渠道的消息"""
         app = current_application
         data = request.get_json()
