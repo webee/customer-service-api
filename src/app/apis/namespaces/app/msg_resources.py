@@ -16,7 +16,7 @@ class ChannelMessages(Resource):
         """接收其它渠道的消息"""
         app = current_application
         data = request.get_json()
-        proj = biz.get_project(app, data.get('project_id', data.get('project_domain'), data.get('project_type'), data.get('biz_id')))
+        # proj = biz.get_project(app, data.get('project_id', data.get('project_domain'), data.get('project_type'), data.get('biz_id')))
         # TODO:
         logger.debug('SendChannelMessages: %s', data)
         return None, 204
