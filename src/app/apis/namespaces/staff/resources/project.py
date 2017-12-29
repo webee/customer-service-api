@@ -38,14 +38,8 @@ class HandlingSessions(Resource):
         app = staff.app
 
         args = fetch_handling_sessions_args.parse_args()
-        page = args['page']
-        per_page = args['per_page']
-        is_online = args['is_online']
-        sorter = args['sorter']
-        order = args['order']
 
-        return session_biz.staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, is_online=is_online,
-                                                         sorter=sorter, order=order)
+        return session_biz.staff_fetch_handling_sessions(app, staff, domain, type, **args)
 
 
 @api.route('/projects/<string:domain>/<string:type>/<int:id>')

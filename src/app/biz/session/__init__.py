@@ -1,8 +1,7 @@
 from app.utils.commons import compose
 from sqlalchemy import orm, desc, asc, func, or_
 from sqlalchemy.sql.expression import nullslast, nullsfirst
-from app.service.models import Session, Project, Staff, Customer
-from time import time
+from app.service.models import Session, Project, Staff, Customer, Message
 
 order_func_map = {
     'ascend': compose(nullsfirst, asc),
@@ -10,33 +9,71 @@ order_func_map = {
 }
 
 
-def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, user=None, handler=None, context_label=None,
-                                  is_online=None,
-                                  sorter=None, order=None):
-    st = time()
+def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, context_label=None, handler=None,
+                                  owner=None, is_online=None, unhandled_msg_count_range=None, msg_ts_range=None,
+                                  tag=None, exclude_self=None, sorter=None, order=None):
     q = Session.query.join('project').options(orm.undefer('project.*')) \
         .filter(Session.is_active == True,
                 Session.project.has(
                     app_name=app.name,
-                    domain=domain, type=type),
-                or_(
-                    Session.handler_id == staff.id,
-                    Session.project.has(
-                        func.x_scopes_match_ctxes(
-                            Project.scope_labels,
-                            staff.uid,
-                            staff.context_labels))
-                )
-                )
-    if user is not None:
-        q = q.filter(Session.project.has(Project.owner.has(uid=user)))
+                    domain=domain, type=type))
+    if owner is not None:
+        s = f'%{owner}%'
+        q = q.filter(Session.project.has(
+            Project.owner.has(or_(Customer.name.like(s), Customer.mobile.like(s), Customer.uid.like(s)))))
+
+    if exclude_self:
+        q = q.filter(
+            or_(
+                Session.project.has(leader_id=staff.id),
+                Session.project.has(
+                    func.x_scopes_match_ctxes(
+                        Project.scope_labels,
+                        staff.uid,
+                        staff.context_labels))
+            )
+        )
+    else:
+        q = q.filter(
+            or_(
+                Session.handler_id == staff.id,
+                Session.project.has(leader_id=staff.id),
+                Session.project.has(
+                    func.x_scopes_match_ctxes(
+                        Project.scope_labels,
+                        staff.uid,
+                        staff.context_labels))
+            )
+        )
+
     if handler is not None:
         q = q.filter(Session.handler.has(uid=handler))
+    elif exclude_self:
+        q = q.filter(Session.handler_id != staff.id)
+
     if context_label is not None:
         path, uids = context_label
         q = q.filter(Session.project.has(func.x_scopes_match_target(Project.scope_labels, path)))
         if len(uids) > 0 and handler is None:
             q = q.filter(Session.handler.has(Staff.uid.in_(uids)))
+
+    if unhandled_msg_count_range is not None:
+        start, end = unhandled_msg_count_range
+        if start is not None:
+            q = q.filter(Session.unhandled_count >= start)
+        if end is not None:
+            q = q.filter(Session.unhandled_count <= end)
+
+    if msg_ts_range is not None:
+        start, end = msg_ts_range
+        if start is not None:
+            q = q.filter(Session.msg.has(Message.ts >= start))
+        if end is not None:
+            q = q.filter(Session.msg.has(Message.ts <= end))
+
+    if tag is not None:
+        q = q.filter(Session.project.has(func.array_to_string(Project.tags, '*', ',').like('%')))
+
     if is_online is not None:
         q = q.filter(Session.project.has(Project.is_online == is_online))
 
@@ -57,5 +94,4 @@ def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, user
     else:
         q = q.order_by(order_func(Session.updated))
     res = q.paginate(page, per_page, error_out=False, max_per_page=100)
-    print('t: ', (time() - st) * 1000)
     return res
