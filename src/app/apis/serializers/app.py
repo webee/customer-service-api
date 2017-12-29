@@ -31,7 +31,9 @@ application = api.model('Application', {
 })
 
 path_label = api.model('Path Label', {
-    'type': fields.String(required=True, enum=['super', 'self', 'sub', 'all']),
+    'type': fields.String(required=True,
+                          enum=['up', 'up+', 'super', 'self', 'self.', 'member', 'sub', 'self+', 'self++', 'member+',
+                                'all']),
     'path': fields.String(required=True)
 })
 
