@@ -1,5 +1,5 @@
 from app.utils.commons import compose
-from sqlalchemy import orm, desc, asc, func
+from sqlalchemy import orm, desc, asc, func, or_
 from sqlalchemy.sql.expression import nullslast, nullsfirst
 from app.service.models import Session, Project, Staff, Customer
 from time import time
@@ -19,11 +19,14 @@ def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, user
                 Session.project.has(
                     app_name=app.name,
                     domain=domain, type=type),
-                Session.project.has(
-                    func.x_scopes_match_ctxes(
-                        Project.scope_labels,
-                        staff.uid,
-                        staff.context_labels))
+                or_(
+                    Session.handler_id == staff.id,
+                    Session.project.has(
+                        func.x_scopes_match_ctxes(
+                            Project.scope_labels,
+                            staff.uid,
+                            staff.context_labels))
+                )
                 )
     if user is not None:
         q = q.filter(Session.project.has(Project.owner.has(uid=user)))

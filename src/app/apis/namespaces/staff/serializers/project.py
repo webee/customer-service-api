@@ -21,6 +21,9 @@ session_item = api.model('Session Item', {
     'msg': fields.Nested(message, allow_null=True, description='last msg'),
     'sync_msg_id': fields.Integer(description='synced msg id'),
     'handler_msg_id': fields.Integer(descripton="handler's last msg id"),
+    'msg_count': fields.Integer(),
+    'unsynced_count': fields.Integer(),
+    'unhandled_count': fields.Integer()
 })
 
 
@@ -28,7 +31,7 @@ class SessionItemSchema(ma.Schema):
     class Meta:
         fields = (
             'id', 'project', 'created', 'closed', 'handler', 'start_msg_id', 'msg_id', 'msg', 'sync_msg_id',
-            'handler_msg_id')
+            'handler_msg_id', 'msg_count', 'unsynced_count', 'unhandled_count')
 
     project = ma.Nested(ProjectDataSchema)
     created = ma.Function(lambda s: s.created.timestamp())

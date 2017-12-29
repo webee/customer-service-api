@@ -4,7 +4,9 @@ from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.orm import deferred
 from sqlalchemy import text
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.sql import expression
 from sqlalchemy import types
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from app import db, dbs, bcrypt, config
 from app.utils.commons import merge_to_dict
 from .model_commons import base_model, app_resource, project_resource, session_resource, app_user
@@ -437,8 +439,7 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
     # TODO: 在客服发消息时，更新此消息id
     handler_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     handler_msg = db.relationship('Message', uselist=False,
-                                  primaryjoin="and_(Session.id == Message.session_id, Session.handler_msg_id == Message.msg_id)",
-                                  lazy='joined')
+                                  primaryjoin="and_(Session.id == Message.session_id, Session.handler_msg_id == Message.msg_id)")
 
     # 已经同步的消息id(已读id)
     sync_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
@@ -450,6 +451,30 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
     def __repr__(self):
         return "<Session: {0}, {1}, {2}>".format(self.project.app_biz_id, 'active' if self.is_active else 'closed',
                                                  self.msg_id)
+
+    @hybrid_property
+    def msg_count(self):
+        return 0 if self.msg_id == 0 else self.msg_id - self.start_msg_id
+
+    @msg_count.expression
+    def msg_count(self):
+        return expression.case([(self.msg_id == 0, 0)], else_=self.msg_id - self.start_msg_id)
+
+    @hybrid_property
+    def unsynced_count(self):
+        return self.msg_id if self.sync_msg_id == 0 else self.msg_id - self.sync_msg_id
+
+    @msg_count.expression
+    def unsynced_count(self):
+        return expression.case([(self.sync_msg_id == 0, 0)], else_=self.msg_id - self.sync_msg_id)
+
+    @hybrid_property
+    def unhandled_count(self):
+        return self.msg_id if self.handler_msg_id == 0 else self.msg_id - self.handler_msg_id
+
+    @msg_count.expression
+    def unhandled_count(self):
+        return expression.case([(self.handler_msg_id == 0, 0)], else_=self.msg_id - self.handler_msg_id)
 
 
 class Message(base_model(False, False), project_resource('messages', backref_uselist=True),
