@@ -16,7 +16,6 @@ project = api.inherit('Project', resource_id, {
     'customers': fields.List(fields.Nested(raw_customer))
 })
 
-
 new_project = api.model('New Project', {
     'id': fields.Integer(required=False),
     'domain': fields.String(required=True, min_length=1, max_length=32),
@@ -60,6 +59,7 @@ project_data = api.model('Project Data', {
     'id': fields.Integer(description='project id'),
     'biz_id': fields.String(),
     'is_online': fields.Boolean(),
+    'last_online_ts': fields.Float(attribute=lambda s: s.last_online_ts and s.last_online_ts.timestamp()),
     'tags': fields.List(fields.String),
     'owner': fields.Nested(raw_customer),
     'leader': fields.Nested(raw_staff),
@@ -71,15 +71,16 @@ project_data = api.model('Project Data', {
 
 class ProjectDataSchema(ma.Schema):
     class Meta:
-        fields = ("id", "biz_id", "is_online", "tags", "owner", "leader", "customers", "meta_data", "ext_data")
+        fields = (
+        "id", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers", "meta_data", "ext_data")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
     customers = ma.List(ma.Nested(RawCustomerSchema))
+    last_online_ts = ma.Function(lambda s: s.last_online_ts and s.last_online_ts.timestamp())
 
 
 project_data_schema = ProjectDataSchema()
-
 
 message = api.model('Message Result', {
     'channel': fields.String(),
@@ -94,7 +95,6 @@ message = api.model('Message Result', {
     'ts': fields.Float(attribute=lambda msg: msg.ts.timestamp()),
     'session_id': fields.Integer(),
 })
-
 
 fetch_msgs_result = api.model('Fetch Msgs Result', {
     'msgs': fields.List(fields.Nested(message)),
@@ -115,5 +115,6 @@ class FetchMsgsResultSchema(ma.Schema):
         fields = ("msgs", "has_more")
 
     msgs = ma.List(ma.Nested(MessageSchema))
+
 
 fetch_msgs_result_schema = FetchMsgsResultSchema()

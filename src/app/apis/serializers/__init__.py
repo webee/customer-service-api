@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from flask_restplus import fields
+from app import ma
 from .. import api
 
 
@@ -76,9 +77,19 @@ resource_id = api.model('Resource ID', {
     'id': fields.Integer(readonly=True, description='resource id')
 })
 
-
 # 资源基本信息id, created, updated
 base_resource = api.inherit('Resource Base', resource_id, {
     'created': fields.DateTime(readonly=True, descrption='created time'),
     'updated': fields.DateTime(readonly=True, description='updated time')
 })
+
+
+# schemas
+class PaginationSchema(ma.Schema):
+    page = ma.Integer()
+    pages = ma.Integer()
+    per_page = ma.Integer()
+    total = ma.Integer()
+
+
+pagination_schema = PaginationSchema()

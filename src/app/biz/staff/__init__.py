@@ -21,7 +21,7 @@ def staff_fetch_staffs(app, staff, page, per_page, uid=None, context_label=None,
     if context_label is not None:
         path, uids = context_label
         q = q.filter(func.x_target_match_ctxes(path, Staff.uid, Staff.context_labels))
-        if len(uids) > 0 and uid is not None:
+        if len(uids) > 0 and uid is None:
             q = q.filter(Staff.uid.in_(uids))
     if is_online is not None:
         q = q.filter(Staff.is_online == is_online)

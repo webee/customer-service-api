@@ -7,7 +7,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import types
 from app import db, dbs, bcrypt, config
 from app.utils.commons import merge_to_dict
-from .model_commons import BaseModel, app_resource, project_resource, session_resource, app_user
+from .model_commons import base_model, app_resource, project_resource, session_resource, app_user
 from .model_commons import WithOnlineModel
 from .utils import normalize_label_tree, normalize_labels, normalize_context_labels, normalize_data
 from .utils import ignore_none
@@ -24,7 +24,7 @@ class UserType:
     app = 'app'
 
 
-class App(BaseModel):
+class App(base_model()):
     """系统应用"""
     __tablename__ = 'app'
 
@@ -144,7 +144,7 @@ class App(BaseModel):
         return project_domain_type
 
 
-class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_cascade="all, delete-orphan")):
+class ProjectDomainType(base_model(), app_resource('project_domain_types', backref_cascade="all, delete-orphan")):
     """项目类型"""
     __tablename__ = 'project_domain_type'
 
@@ -184,7 +184,7 @@ class ProjectDomainType(BaseModel, app_resource('project_domain_types', backref_
         return "<ProjectDomainType: {}>".format(self.app_biz_id)
 
 
-class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineModel):
+class Customer(base_model(False, False), app_user(UserType.customer, 'customers'), WithOnlineModel):
     """客户"""
     mobile = db.Column(db.String(16), nullable=False, default="")
     # 元数据
@@ -203,7 +203,7 @@ class Customer(BaseModel, app_user(UserType.customer, 'customers'), WithOnlineMo
         db.session.add(self)
 
 
-class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
+class Staff(base_model(), app_user(UserType.staff, 'staffs'), WithOnlineModel):
     """客服"""
     # 客服定位标签
     # [{type, path}, ...]
@@ -215,7 +215,6 @@ class Staff(BaseModel, app_user(UserType.staff, 'staffs'), WithOnlineModel):
 
     @property
     def handling_sessions(self):
-        # return self.as_handler_sessions.filter_by(is_active=True).order_by(desc(Session.msg_ts))
         return self.as_handler_sessions.filter_by(is_active=True).options(
             orm.defaultload('project').undefer_group('data'))
 
@@ -239,7 +238,7 @@ project_customers = db.Table('project_customers',
                              )
 
 
-class Project(BaseModel, app_resource('projects'), WithOnlineModel):
+class Project(base_model(), app_resource('projects'), WithOnlineModel):
     """表示一个客服项目"""
     __tablename__ = 'project'
 
@@ -352,7 +351,7 @@ class Project(BaseModel, app_resource('projects'), WithOnlineModel):
         db.session.add(self)
 
 
-class ProjectXChat(BaseModel, project_resource('xchat')):
+class ProjectXChat(base_model(), project_resource('xchat')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
@@ -407,7 +406,7 @@ class ProjectXChat(BaseModel, project_resource('xchat')):
         return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
 
 
-class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
+class Session(base_model(), project_resource('sessions', backref_uselist=True)):
     """表示一个客服项目的一次会话"""
     __tablename__ = 'session'
 
@@ -433,15 +432,13 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
     msg = db.relationship('Message', uselist=False,
                           primaryjoin="and_(Session.id == Message.session_id, Session.msg_id == Message.msg_id)",
                           lazy='joined')
+
     # 处理者消息id, 0表示未指向任何消息
     # TODO: 在客服发消息时，更新此消息id
     handler_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     handler_msg = db.relationship('Message', uselist=False,
                                   primaryjoin="and_(Session.id == Message.session_id, Session.handler_msg_id == Message.msg_id)",
                                   lazy='joined')
-
-    # 消息发送的时间
-    msg_ts = db.Column(db.DateTime(timezone=True), index=True, default=db.func.current_timestamp())
 
     # 已经同步的消息id(已读id)
     sync_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
@@ -455,7 +452,7 @@ class Session(BaseModel, project_resource('sessions', backref_uselist=True)):
                                                  self.msg_id)
 
 
-class Message(BaseModel, project_resource('messages', backref_uselist=True),
+class Message(base_model(False, False), project_resource('messages', backref_uselist=True),
               session_resource('messages', backref_uselist=True)):
     __tablename__ = 'message'
 

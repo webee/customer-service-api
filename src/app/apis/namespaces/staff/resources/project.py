@@ -4,13 +4,14 @@ from ..api import api
 from app.apis.jwt import current_staff, require_staff
 from app.service.models import Project, Session
 from app.biz import project as proj_biz
+from app.biz import session as session_biz
 from app import app_clients
 from app import errors
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.parsers.project import fetch_msgs_arguments
 from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
-from ..parsers import access_function_args
-from ..serializers.project import session_item, session_item_schema
+from ..parsers import access_function_args, fetch_handling_sessions_args, fetch_handled_sessions_args
+from ..serializers.project import session_item, session_item_schema, page_of_sessions, page_of_sessions_schema
 
 
 @api.route('/projects/<string:domain>/<string:type>/my_handling_sessions')
@@ -23,6 +24,28 @@ class MyHandlingSessions(Resource):
         staff = current_staff
 
         return staff.handling_sessions.filter(Session.project.has(domain=domain, type=type)).all()
+
+
+@api.route('/projects/<string:domain>/<string:type>/handling_sessions')
+class HandlingSessions(Resource):
+    @require_staff
+    @api.expect(fetch_handling_sessions_args)
+    @api.doc(model=page_of_sessions)
+    @marshal_with(page_of_sessions_schema)
+    def get(self, domain, type):
+        """获取正在接待中的会话列表"""
+        staff = current_staff
+        app = staff.app
+
+        args = fetch_handling_sessions_args.parse_args()
+        page = args['page']
+        per_page = args['per_page']
+        is_online = args['is_online']
+        sorter = args['sorter']
+        order = args['order']
+
+        return session_biz.staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, is_online=is_online,
+                                                         sorter=sorter, order=order)
 
 
 @api.route('/projects/<string:domain>/<string:type>/<int:id>')

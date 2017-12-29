@@ -58,7 +58,6 @@ def new_messages(proj_id, msgs=()):
 
     # open session
     proj = try_open_session(proj_id)
-    msg_ts = None
     for i, (id, domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
         message = Message(project=proj, session=proj.current_session,
                           rx_key=id,
@@ -67,13 +66,12 @@ def new_messages(proj_id, msgs=()):
                           domain=domain, type=type, content=content,
                           ts=ts)
         dbs.session.add(message)
-        msg_ts = ts
 
     # update project & session msg_id
-    return __next_msg_id(proj, n=len(msgs), msg_ts=msg_ts)
+    return __next_msg_id(proj, n=len(msgs))
 
 
-def __next_msg_id(proj, n=1, msg_ts=db.func.current_timestamp()):
+def __next_msg_id(proj, n=1):
     try_open_session(proj.id)
 
     proj.msg_id = Project.msg_id + n
@@ -81,7 +79,6 @@ def __next_msg_id(proj, n=1, msg_ts=db.func.current_timestamp()):
     dbs.session.flush()
 
     proj.current_session.msg_id = proj.msg_id
-    proj.current_session.msg_ts = msg_ts
     dbs.session.add(proj.current_session)
 
     return proj.msg_id

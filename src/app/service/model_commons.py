@@ -6,18 +6,24 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
 
-class BaseModel(db.Model):
-    """基本模型"""
-    __abstract__ = True
+def base_model(index_created=True, index_updated=True):
+    class BaseModel(db.Model):
+        """基本模型"""
+        __abstract__ = True
 
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    created = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp())
-    updated = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp(),
-                        onupdate=db.func.current_timestamp())
+        id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+        created = db.Column(db.DateTime(timezone=True), index=index_created, default=db.func.current_timestamp())
+        updated = db.Column(db.DateTime(timezone=True), index=index_updated, default=db.func.current_timestamp(),
+                            onupdate=db.func.current_timestamp())
 
-    @classproperty
-    def t_query(cls):
-        return dbs.session.query(cls)
+        @classproperty
+        def t_query(cls):
+            return dbs.session.query(cls)
+
+    return BaseModel
+
+
+BaseModel = base_model(False, False)
 
 
 def foreign_key(key, backref_uselist=False, index=True, type=db.BigInteger):
@@ -122,8 +128,10 @@ class WithOnlineModel(object):
 
     @hybrid_property
     def is_online(self):
-        return self.online and self.last_online_ts is not None and (self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)
+        return self.online and self.last_online_ts is not None and (
+        self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)
 
     @is_online.expression
     def is_online(self):
-        return self.online & (self.last_online_ts != None) & (self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)
+        return self.online & (self.last_online_ts != None) & (
+        self.last_online_ts > arrow.utcnow().datetime - config.Biz.USER_ONLINE_DELTA)
