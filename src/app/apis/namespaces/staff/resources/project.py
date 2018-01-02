@@ -42,6 +42,22 @@ class HandlingSessions(Resource):
         return session_biz.staff_fetch_handling_sessions(app, staff, domain, type, **args)
 
 
+@api.route('/projects/<string:domain>/<string:type>/handled_sessions')
+class HandledSessions(Resource):
+    @require_staff
+    @api.expect(fetch_handled_sessions_args)
+    @api.doc(model=page_of_sessions)
+    @marshal_with(page_of_sessions_schema)
+    def get(self, domain, type):
+        """获取正在完成接待的会话列表"""
+        staff = current_staff
+        app = staff.app
+
+        args = fetch_handling_sessions_args.parse_args()
+
+        return session_biz.staff_fetch_handled_sessions(app, staff, domain, type, **args)
+
+
 @api.route('/projects/<string:domain>/<string:type>/<int:id>')
 class SessionItem(Resource):
     @require_staff
