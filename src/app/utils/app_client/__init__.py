@@ -62,6 +62,8 @@ class AppClient(object):
                         if self._token_update_callback:
                             self._token_update_callback(self.appid, token, exp)
                         logger.info('new token: %s, %s', self._token, self._token_exp)
+                    except (MethodTypeNotSupportedError, ConnectionError):
+                        raise
                     except Exception as e:
                         raise RequestTokenError(e)
         return self._token
