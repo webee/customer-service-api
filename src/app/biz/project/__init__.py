@@ -1,10 +1,10 @@
 import logging
-
+from app import config
 from sqlalchemy.orm import lazyload
 from sqlalchemy import desc as order_desc
 
 from app import dbs, xchat_client
-from app.biz.utils import TypeMsgPacker
+from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
 from app.service.models import Message, Session
 from .constants import NotifyTypes
 from app.biz.notifies import task_project_notify
@@ -16,16 +16,31 @@ MAX_MSGS_FETCH_SIZE = 3000
 logger = logging.getLogger(__name__)
 
 
-def send_message(staff, session, domain, type, content):
-    # 发送到xchat
-    proj_xchat = session.project.xchat
+def send_channel_message(proj, customer, channel, domain, type, content):
+    proj_xchat = proj.xchat
+    chat_id = proj_xchat.chat_id
+    user = customer.app_uid
+
+    return _send_message(chat_id, user, channel, domain, type, content)
+
+
+def send_message(proj, staff, domain, type, content):
+    # 1. 发送到xchat
+    proj_xchat = proj.xchat
     chat_id = proj_xchat.chat_id
     user = staff.app_uid
+
+    return _send_message(chat_id, user, None, domain, type, content)
+
+
+def _send_message(chat_id, user, channel, domain, type, content):
+    # 1. 发送到xchat
+    domain = ChannelDomainPacker.pack(domain, channel=channel)
     msg = TypeMsgPacker.pack(type, content)
     id, ts = xchat_client.send_chat_msg(chat_id, user, msg, domain=domain)
 
-    msg_data = dict(chat_id=chat_id, id=id, ts=ts, user='cs:%s' % user, msg=msg, domain=domain)
-    # send celery task request
+    msg_data = dict(chat_id=chat_id, id=id, ts=ts, user=f'{config.App.NAME}:{user}', msg=msg, domain=domain)
+    # 2. send celery task request
     tasks.sync_xchat_msgs.delay(msg_data)
 
     # rx_key, ts

@@ -1,3 +1,12 @@
+class ChannelDomainPacker:
+    @staticmethod
+    def pack(domain, channel=None):
+        return f'{channel}/{domain}' if channel is not None else domain
+
+    @staticmethod
+    def unpack(p, default_channel=None):
+        return p.split('/', 1) if '/' in p else (default_channel, p)
+
 
 class TypeMsgPacker:
     @staticmethod
@@ -8,11 +17,11 @@ class TypeMsgPacker:
         return True
 
     @staticmethod
-    def pack(t, msg):
-        return '%s:%s' % (t, msg)
+    def pack(t, content):
+        return f'{t}:{content}'
 
     @staticmethod
-    def unpack(p):
+    def unpack(p, default_type=''):
         is_ok = False
 
         idx = 0
@@ -25,6 +34,6 @@ class TypeMsgPacker:
                 idx = i + 1
                 continue
 
-            return None
+            return default_type, p
 
-        return p[:idx] if is_ok else None
+        return (p[:idx], p[idx + 1:]) if is_ok else (default_type, p)

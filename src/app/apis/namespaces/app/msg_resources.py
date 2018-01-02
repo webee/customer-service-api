@@ -1,8 +1,11 @@
+import json
 from flask import request
 from flask_restplus import Resource, abort
+from app import errors
 from app.apis import logger
 from .api import api
 from app.biz import app as biz
+from app.biz import project as proj_biz
 from app.apis.jwt import current_application, require_app
 from .serializers import new_channel_message
 
@@ -11,12 +14,23 @@ from .serializers import new_channel_message
 class ChannelMessages(Resource):
     @require_app
     @api.expect(new_channel_message)
-    @api.response(204, 'project is created')
+    @api.response(204, 'send msg successfully')
     def post(self):
-        """接收其它渠道的消息"""
+        """转发其它渠道的消息到客服系统"""
         app = current_application
         data = request.get_json()
-        # proj = biz.get_project(app, data.get('project_id', data.get('project_domain'), data.get('project_type'), data.get('biz_id')))
-        # TODO:
-        logger.debug('SendChannelMessages: %s', data)
+        proj = biz.get_project(app, data.get('project_id', data.get('id')), data.get('project_domain'),
+                               data.get('project_type'), data.get('project_biz_id', data.get('biz_id')))
+
+        uid = data['uid']
+        try:
+            customer = next(filter(lambda c: c.uid == uid, proj.customers))
+        except StopIteration:
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'customer is not the member of the project', dict(uid=uid))
+
+        content = data['content']
+        if isinstance(content, dict):
+            content = json.dumps(content)
+
+        proj_biz.send_channel_message(proj, customer, data['channel'], data.get('domain', ''), data['type'], content)
         return None, 204

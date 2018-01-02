@@ -1,7 +1,7 @@
 import arrow
 from app import db, dbs, config
 from sqlalchemy import orm
-from app.service.models import Project, Session, Message
+from app.service.models import Project, Session, Message, UserType
 
 
 def lock_project(id, options=None, read=False):
@@ -53,31 +53,39 @@ def close_current_session(proj_id, session_id=None):
 
 @dbs.transactional
 def new_messages(proj_id, msgs=()):
-    if len(msgs) == 0:
-        return
-
     # open session
     proj = try_open_session(proj_id)
-    for i, (id, domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
-        message = Message(project=proj, session=proj.current_session,
-                          rx_key=id,
-                          user_type=user_type, user_id=user_id,
-                          msg_id=proj.msg_id + i,
-                          domain=domain, type=type, content=content,
-                          ts=ts)
-        dbs.session.add(message)
+    current_session = proj.current_session
+    messages = []
+    has_user_msg = False
+    activated_channel = None
+    channel_user_id = None
+    for i, (id, channel, domain, type, content, user_type, user_id, ts) in enumerate(msgs, 1):
+        messages.append(Message(project_id=proj.id, session_id=current_session.id,
+                                rx_key=id,
+                                user_type=user_type, user_id=user_id,
+                                msg_id=proj.msg_id + i,
+                                channel=channel, domain=domain, type=type, content=content, ts=ts))
+        if user_type == UserType.customer:
+            has_user_msg = True
+            activated_channel = channel
+            if channel is not None:
+                channel_user_id = user_id
+
+    dbs.session.bulk_save_objects(messages)
 
     # update project & session msg_id
-    return __next_msg_id(proj, n=len(msgs))
+    return __next_msg_id(proj, len(msgs), has_user_msg, activated_channel, channel_user_id)
 
 
-def __next_msg_id(proj, n=1):
-    try_open_session(proj.id)
-
+def __next_msg_id(proj, n=1, has_user_msg=False, activated_channel=None, channel_user_id=None):
     proj.msg_id = Project.msg_id + n
     dbs.session.add(proj)
     dbs.session.flush()
 
+    if has_user_msg:
+        proj.current_session.activated_channel = activated_channel
+        proj.current_session.channel_user_id = channel_user_id
     proj.current_session.msg_id = proj.msg_id
     dbs.session.add(proj.current_session)
 

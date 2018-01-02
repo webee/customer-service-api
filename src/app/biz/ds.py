@@ -2,10 +2,10 @@ from collections import namedtuple
 
 import arrow
 
-from app.biz.utils import TypeMsgPacker
+from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
 
 AppUserID = namedtuple('AppUserID', ['app_name', 'user_type', 'uid'])
-MessageData = namedtuple('MessageData', ['domain', 'type', 'content'])
+MessageData = namedtuple('MessageData', ['channel', 'domain', 'type', 'content'])
 XChatMessage = namedtuple('XChatMessage', ['chat_id', 'app_user_id', 'id', 'msg_data', 'ts'])
 
 
@@ -22,12 +22,10 @@ def parse_xchat_msg_from_data(data):
     app_user_id = parse_app_user_id_from_xchat_uid(data['user'])
     msg = data['msg']
     ts = arrow.get(data['ts']).datetime
-    msg_domain = data.get('domain', '')
 
-    msg_type = TypeMsgPacker.unpack(msg)
-    msg_content = msg[len(msg_type) + 1:] if msg_type is not None else msg
-    msg_type = msg_type if msg_type is not None else ''
+    channel, msg_domain = ChannelDomainPacker.unpack(data.get('domain', ''))
+    msg_type, msg_content = TypeMsgPacker.unpack(msg)
 
-    message_data = MessageData(msg_domain, msg_type, msg_content)
+    message_data = MessageData(channel, msg_domain, msg_type, msg_content)
 
     return XChatMessage(chat_id, app_user_id, id, message_data, ts)
