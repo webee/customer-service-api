@@ -73,7 +73,7 @@ def close_current_session(proj_id, session_id=None):
 @dbs.transactional
 def new_messages(proj_id, msgs=()):
     # open session
-    proj = try_open_session(proj_id)
+    _, proj = try_open_session(proj_id)
     current_session = proj.current_session
     messages = []
     has_user_msg = False
