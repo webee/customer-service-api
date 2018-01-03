@@ -11,15 +11,26 @@ def lock_project(id, options=None, read=False):
     return Project.query.options(*options).with_for_update(read=read, of=Project).filter_by(id=id).one()
 
 
+def try_handle_project(proj, handler):
+    if proj.current_session is not None and proj.current_session.handler_id == handler.id:
+        # 就是当前handler
+        return proj
+    prev_handler, proj = try_open_session(proj.id, handler)
+    # TODO: 1. 通知新接待者添加session
+    # TODO: 2. 通知旧接待者删除session
+    return proj
+
+
 @dbs.transactional
-def try_open_session(proj_id):
+def try_open_session(proj_id, handler=None):
     # 锁住project
     proj = lock_project(proj_id, options=[orm.joinedload('last_session'), orm.joinedload('current_session')])
+    prev_handler = None
     if proj.current_session is None:
         last_session = proj.last_session
         if last_session is None or arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
             # 没有上次session或者已经超过存活时间
-            proj.current_session = Session(project=proj, handler=proj.leader,
+            proj.current_session = Session(project=proj, handler=proj.leader if handler is None else handler,
                                            start_msg_id=proj.msg_id, sync_msg_id=proj.msg_id)
 
             dbs.session.add(proj)
@@ -27,11 +38,18 @@ def try_open_session(proj_id):
             # 重新打开上一次的会话
             last_session.closed = None
             last_session.is_active = True
+            if handler is not None:
+                last_session.handler = handler
             proj.current_session = last_session
 
             dbs.session.add(proj)
+    elif handler is not None:
+        current_session = proj.current_session
+        prev_handler = current_session.handler
+        current_session.handler = handler
+        dbs.session.add(current_session)
 
-    return proj
+    return prev_handler, proj
 
 
 @dbs.transactional

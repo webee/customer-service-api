@@ -209,8 +209,7 @@ class Staff(base_model(), app_user(UserType.staff, 'staffs'), WithOnlineModel):
     """客服"""
     # 客服定位标签
     # [{type, path}, ...]
-    context_labels = deferred(
-        db.Column(db.ARRAY(db.Text, dimensions=2), nullable=False, default=DEFAULT_LABELS))
+    context_labels = db.Column(db.ARRAY(db.Text, dimensions=2), nullable=False, default=DEFAULT_LABELS)
 
     def __repr__(self):
         return "<Staff: {}>".format(self.uid)

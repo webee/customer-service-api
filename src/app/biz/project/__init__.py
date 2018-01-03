@@ -3,6 +3,7 @@ from app import config
 from sqlalchemy.orm import lazyload
 from sqlalchemy import desc as order_desc
 
+from app.service import path_labels
 from app import dbs, xchat_client
 from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
 from app.service.models import Message, Session
@@ -106,3 +107,8 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
         has_more = len(msgs) >= limit
 
     return msgs, has_more
+
+
+# permissions
+def staff_has_perm_for_project(staff, proj):
+    return staff.id == proj.leader_id or path_labels.scopes_match_ctxes(proj.scope_labels, staff.uid, staff.context_labels)

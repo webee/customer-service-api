@@ -6,6 +6,7 @@ from .api import api
 from app import errors
 from app.biz import app as biz
 from app.biz import project as proj_biz
+from app.biz.project import proj as proj_proj_biz
 from app.apis.jwt import current_application, require_app
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.serializers.project import project, new_project, update_project, update_project_payload
@@ -145,11 +146,12 @@ class TryHandleProject(Resource):
 
         args = try_handle_project_arguments.parse_args()
         uid = args['uid']
-        raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff can not handle this project', dict(uid=uid))
 
-        # staff = app.staffs.filter_by(uid=uid).one()
-        # proj = biz.get_project(app, id, domain, type, biz_id)
-        #
-        # proj_biz.try_handle_project(staff, proj)
-        #
-        # return proj
+        staff = app.staffs.filter_by(uid=uid).one()
+        proj = biz.get_project(app, id, domain, type, biz_id)
+        # 判断是否有权限
+        if not proj_biz.staff_has_perm_for_project(staff, proj):
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff can not handle this project',
+                                  dict(uid=uid, id=proj.id))
+
+        return proj_proj_biz.try_handle_project(proj, staff)

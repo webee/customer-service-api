@@ -36,6 +36,7 @@ project_current_session_info = api.model('Project Current Session Info', {
 try_handle_project_result = api.model('Try Handle Project Result', {
     'domain': fields.String(),
     'type': fields.String(),
+    'biz_id': fields.String(),
     'id': fields.Integer(),
     'current_session_id': fields.Integer()
 })

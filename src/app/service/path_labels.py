@@ -79,13 +79,8 @@ def scopes_match_ctx(scopes: t_path_labels, uid: str, ctx: t_path_label):
 
 
 def scopes_match_ctx_path(scopes: t_path_labels, uid: str, type: str, path: str):
-    if type == LabelType.SELF_PLUS:
-        return scopes_match_target(scopes, path) or scopes_match_target(scopes, path + ':' + uid)
-    elif type == LabelType.SELF:
-        return scopes_match_target(scopes, path)
-    elif type == LabelType.MEMBER:
-        return scopes_match_target(scopes, path + ':' + uid)
-    return False
+    return any(scopes_match_target(scopes, target) for target in
+               ctx_targets_generators.get(type, empty_targets_generator)(uid, path))
 
 
 def scopes_match_target(scopes: t_path_labels, target: str):
