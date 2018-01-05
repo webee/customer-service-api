@@ -72,7 +72,8 @@ project_data = api.model('Project Data', {
 class ProjectDataSchema(ma.Schema):
     class Meta:
         fields = (
-        "id", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers", "meta_data", "ext_data")
+            "id", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers", "meta_data",
+            "ext_data", "start_msg_id", "msg_id")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
@@ -98,7 +99,8 @@ message = api.model('Message Result', {
 
 fetch_msgs_result = api.model('Fetch Msgs Result', {
     'msgs': fields.List(fields.Nested(message)),
-    'has_more': fields.Boolean(description='is has more msgs?'),
+    'has_more': fields.Boolean(description='has more msgs for this request?'),
+    'no_more': fields.Boolean(description='no more msgs for this project?'),
 })
 
 
@@ -112,7 +114,7 @@ class MessageSchema(ma.Schema):
 
 class FetchMsgsResultSchema(ma.Schema):
     class Meta:
-        fields = ("msgs", "has_more")
+        fields = ("msgs", "has_more", "no_more")
 
     msgs = ma.List(ma.Nested(MessageSchema))
 

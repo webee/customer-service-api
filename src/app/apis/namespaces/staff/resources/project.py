@@ -91,8 +91,8 @@ class ProjectMsgs(Resource):
         rid = args['rid']
         limit = args['limit']
         desc = args['desc']
-        msgs, has_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
-        return dict(msgs=msgs, has_more=has_more)
+        msgs, has_more, no_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
+        return dict(msgs=msgs, has_more=has_more, no_more=no_more)
 
 
 @api.route('/projects/<int:id>/access_functions/<name>/url')

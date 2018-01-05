@@ -13,6 +13,7 @@ from app.task import tasks
 from .proj import close_current_session
 
 MAX_MSGS_FETCH_SIZE = 3000
+DEFAULT_MSGS_FETCH_SIZE = 256
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
         origin_limit = rid - lid - 1
 
     if limit <= 0:
-        limit = 256
+        limit = DEFAULT_MSGS_FETCH_SIZE
     elif limit > MAX_MSGS_FETCH_SIZE:
         limit = MAX_MSGS_FETCH_SIZE
 
@@ -102,11 +103,14 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
     msgs = q.all()
     has_more = False
+    no_more = False
     if origin_limit <= 0 or origin_limit > MAX_MSGS_FETCH_SIZE:
         # 没有指定limit或者指定范围超出的情况
         has_more = len(msgs) >= limit
+    else:
+        no_more = len(msgs) < limit
 
-    return msgs, has_more
+    return msgs, has_more, no_more
 
 
 # permissions
