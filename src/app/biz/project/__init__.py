@@ -103,12 +103,10 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
     msgs = q.all()
     has_more = False
-    no_more = False
     if origin_limit <= 0 or origin_limit > MAX_MSGS_FETCH_SIZE:
         # 没有指定limit或者指定范围超出的情况
         has_more = len(msgs) >= limit
-    else:
-        no_more = len(msgs) < limit
+    no_more = len(msgs) < limit
 
     return msgs, has_more, no_more
 
