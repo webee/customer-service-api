@@ -80,17 +80,23 @@ def new_messages(proj_id, msgs=()):
     activated_channel = current_session.activated_channel
     channel_user_id = current_session.channel_user_id
     channel_msgs = []
+    msg_id = None
+    handler_msg_id = None
     for i, msg in enumerate(msgs, 1):
         id, channel, domain, type, content, user_type, user_id, ts = msg
-        messages.append(Message(project_id=proj.id, session_id=current_session.id,
-                                rx_key=id,
-                                user_type=user_type, user_id=user_id,
-                                msg_id=proj.msg_id + i,
-                                channel=channel, domain=domain, type=type, content=content, ts=ts))
+        message = Message(project_id=proj.id, session_id=current_session.id,
+                          rx_key=id,
+                          user_type=user_type, user_id=user_id,
+                          msg_id=proj.msg_id + i,
+                          channel=channel, domain=domain, type=type, content=content, ts=ts)
+        messages.append(message)
 
-        if user_type == UserType.staff and activated_channel:
-            channel_msgs.append((proj.app_name, activated_channel, channel_user_id, user_id, type, content,
-                                 dict(domain=proj.domain, type=proj.type, biz_id=proj.biz_id, id=proj.id)))
+        msg_id = message.msg_id
+        if user_type == UserType.staff:
+            handler_msg_id = message.msg_id
+            if activated_channel:
+                channel_msgs.append((proj.app_name, activated_channel, channel_user_id, user_id, type, content,
+                                     dict(domain=proj.domain, type=proj.type, biz_id=proj.biz_id, id=proj.id)))
         elif user_type == UserType.customer:
             has_user_msg = True
             activated_channel = channel
@@ -101,18 +107,22 @@ def new_messages(proj_id, msgs=()):
 
     tasks.send_channel_msgs.delay(channel_msgs)
     # update project & session msg_id
-    return __next_msg_id(proj, len(msgs), has_user_msg, activated_channel, channel_user_id)
+    return __next_msg_id(proj, msg_id=msg_id, handler_msg_id=handler_msg_id, has_user_msg=has_user_msg,
+                         activated_channel=activated_channel, channel_user_id=channel_user_id)
 
 
-def __next_msg_id(proj, n=1, has_user_msg=False, activated_channel=None, channel_user_id=None):
-    proj.msg_id = Project.msg_id + n
+def __next_msg_id(proj, msg_id=None, handler_msg_id=None, has_user_msg=False, activated_channel=None,
+                  channel_user_id=None):
+    if msg_id is not None:
+        proj.msg_id = msg_id
     dbs.session.add(proj)
-    dbs.session.flush()
 
     if has_user_msg:
         proj.current_session.activated_channel = activated_channel
         proj.current_session.channel_user_id = channel_user_id
     proj.current_session.msg_id = proj.msg_id
+    if handler_msg_id is not None:
+        proj.current_session.handler_msg_id = handler_msg_id
     dbs.session.add(proj.current_session)
 
     return proj.msg_id
