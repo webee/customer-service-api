@@ -49,11 +49,11 @@ class HandledSessions(Resource):
     @api.doc(model=page_of_sessions)
     @marshal_with(page_of_sessions_schema)
     def get(self, domain, type):
-        """获取正在完成接待的会话列表"""
+        """获取已经完成接待的会话列表"""
         staff = current_staff
         app = staff.app
 
-        args = fetch_handling_sessions_args.parse_args()
+        args = fetch_handled_sessions_args.parse_args()
 
         return session_biz.staff_fetch_handled_sessions(app, staff, domain, type, **args)
 
