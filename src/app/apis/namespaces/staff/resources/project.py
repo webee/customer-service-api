@@ -9,7 +9,7 @@ from app import app_clients
 from app import errors
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.parsers.project import fetch_msgs_arguments
-from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
+from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema, project_data, project_data_schema
 from ..parsers import access_function_args, fetch_handling_sessions_args, fetch_handled_sessions_args
 from ..serializers.project import session_item, session_item_schema, page_of_sessions, page_of_sessions_schema
 
@@ -58,7 +58,7 @@ class HandledSessions(Resource):
         return session_biz.staff_fetch_handled_sessions(app, staff, domain, type, **args)
 
 
-@api.route('/projects/<string:domain>/<string:type>/<int:id>')
+@api.route('/projects/<string:domain>/<string:type>/sessions/<int:id>')
 class SessionItem(Resource):
     @require_staff
     @api.doc(model=session_item)
@@ -69,6 +69,19 @@ class SessionItem(Resource):
         staff = current_staff
 
         return staff.handling_sessions.filter(Session.project.has(domain=domain, type=type)).filter_by(id=id).one()
+
+
+@api.route('/projects/<int:id>')
+class ProjectItem(Resource):
+    @require_staff
+    @api.doc(model=project_data)
+    @marshal_with(project_data_schema)
+    @api.response(404, 'project not found')
+    def get(self, id):
+        """获取项目数据"""
+        staff = current_staff
+
+        return proj_biz.get_staff_project(staff, id)
 
 
 @api.route('/projects/<int:id>/msgs')

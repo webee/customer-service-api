@@ -1,12 +1,12 @@
 import logging
 from app import config
 from sqlalchemy.orm import lazyload
-from sqlalchemy import desc as order_desc
+from sqlalchemy import desc as order_desc, func, or_
 
 from app.service import path_labels
 from app import dbs, xchat_client
 from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
-from app.service.models import Message, Session
+from app.service.models import Message, Session, Project
 from .constants import NotifyTypes
 from app.biz.notifies import task_project_notify
 from app.task import tasks
@@ -117,4 +117,12 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
 
 # permissions
 def staff_has_perm_for_project(staff, proj):
-    return staff.id == proj.leader_id or path_labels.scopes_match_ctxes(proj.scope_labels, staff.uid, staff.context_labels)
+    return staff.id == proj.leader_id or path_labels.scopes_match_ctxes(proj.scope_labels, staff.uid,
+                                                                        staff.context_labels)
+
+
+def get_staff_project(staff, id):
+    return staff.app.projects.filter_by(id=id) \
+        .filter(func.x_scopes_match_ctxes(Project.scope_labels,
+                                          staff.uid,
+                                          staff.context_labels)).one()
