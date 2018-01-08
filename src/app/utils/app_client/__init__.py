@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta
 from . import constant
 from .constant import MethodType, ErrorCode, PARAM_HEADER_MAP
-from .errors import MethodTypeNotSupportedError, RequestError, RequestFailedError, RequestTokenError
+from .errors import MethodTypeNotSupportedError, RequestError, RequestFailedError, RequestTokenError, RequestAuthFailedError
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,10 @@ class AppClient(object):
         if 200 <= resp.status_code < 300:
             data = resp.json()
             if not data.get('ret'):
-                raise RequestFailedError(data.get('error_code', ErrorCode.REQUEST_FAILED), data.get('error_msg'))
+                error_code = data.get('error_code', ErrorCode.REQUEST_FAILED)
+                if error_code <= 3:
+                    raise RequestAuthFailedError(error_code, data.get('error_msg'))
+                raise RequestFailedError(error_code, data.get('error_msg'))
             return data.get('data')
         raise RequestError(resp)
 

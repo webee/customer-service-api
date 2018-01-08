@@ -30,6 +30,7 @@ task_queues = (
     Queue('sync_user_statuses', Exchange('sync_user_statuses', 'direct'), routing_key='sync_user_statuses'),
     Queue('notify_client', Exchange('notify_client', 'direct'), routing_key='notify_client'),
     Queue('send_channel_msg', Exchange('send_channel_msg', 'direct'), routing_key='send_channel_msg'),
+    Queue('fetch_ext_data', Exchange('fetch_ext_data', 'direct'), routing_key='fetch_ext_data'),
 )
 
 task_routes = {

@@ -22,6 +22,13 @@ class RequestFailedError(Exception):
         super().__init__('request failed: [%d, %s]' % (code, msg))
 
 
+class RequestAuthFailedError(RequestFailedError):
+    """请求认证失败"""
+
+    def __init__(self, code, msg):
+        super().__init__(code, msg)
+
+
 class RequestTokenError(Exception):
     """请求token错误"""
 

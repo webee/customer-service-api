@@ -83,8 +83,11 @@ class ProjectMsgs(Resource):
         """获取项目消息"""
         staff = current_staff
 
-        # FIXME: 添加权限控制
         proj = staff.app.projects.filter_by(id=id).one()
+        # 判断是否有权限
+        if not proj_biz.staff_has_perm_for_project(staff, proj):
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff has no permission for this project',
+                                  dict(uid=staff.uid, id=proj.id))
 
         args = fetch_msgs_arguments.parse_args()
         lid = args['lid']
@@ -104,8 +107,11 @@ class ProjectAccessFunctionURL(Resource):
         """访问项目功能"""
         staff = current_staff
 
-        # FIXME: 添加权限控制
         proj = staff.app.projects.filter_by(id=id).one()
+        # 判断是否有权限
+        if not proj_biz.staff_has_perm_for_project(staff, proj):
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff has no permission for this project',
+                                  dict(uid=staff.uid, id=proj.id))
 
         args = access_function_args.parse_args()
         uid = args.get('uid')
@@ -121,3 +127,21 @@ class ProjectAccessFunctionURL(Resource):
                                                    id=proj.id, uid=uid)
 
         return dict(url=url)
+
+
+@api.route('/projects/<int:id>/fetch_ext_data')
+class ProjectFetchExtData(Resource):
+    @require_staff
+    @api.response(204, 'fetch ext data started successfully')
+    def get(self, id):
+        """获取项目扩展数据"""
+        staff = current_staff
+
+        proj = staff.app.projects.filter_by(id=id).one()
+        # 判断是否有权限
+        if not proj_biz.staff_has_perm_for_project(staff, proj):
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff has no permission for this project',
+                                  dict(uid=staff.uid, id=proj.id))
+
+        proj_biz.fetch_ext_data(proj)
+        return None, 204

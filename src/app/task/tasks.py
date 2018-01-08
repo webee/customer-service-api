@@ -4,6 +4,7 @@ from app.biz.project import sync as proj_biz_sync
 from app.biz import app as app_biz
 from app.biz.app import client as app_client_biz
 from app.biz import notify as notify_biz
+from app.utils.app_client.errors import RequestAuthFailedError
 
 logger = logging.getLogger(__name__)
 
@@ -100,12 +101,20 @@ def notify_client(user, ns, type, details, domain=''):
 @app.task(ignore_result=True, queue='send_channel_msg', routing_key='send_channel_msg')
 def send_channel_msgs(msgs):
     for msg in msgs:
-        print('xxxxxxxxx: ', msg)
         send_channel_msg.delay(*msg)
 
 
 @app.task(ignore_result=True, queue='send_channel_msg', routing_key='send_channel_msg',
-          autoretry_for=(ConnectionError,), retry_kwargs={'max_retries': 3}, retry_backoff=True, retry_jitter=True,
+          autoretry_for=(ConnectionError, RequestAuthFailedError), retry_kwargs={'max_retries': 3}, retry_backoff=True,
+          retry_jitter=True,
           retry_backoff_max=600)
 def send_channel_msg(app_name, channel, uid, staff, type, content, project_info):
     app_client_biz.send_channel_msg(app_name, channel, uid, staff, type, content, project_info)
+
+
+@app.task(ignore_result=True, queue='fetch_ext_data', routing_key='fetch_ext_data',
+          autoretry_for=(ConnectionError, RequestAuthFailedError), retry_kwargs={'max_retries': 2}, retry_backoff=True,
+          retry_jitter=True,
+          retry_backoff_max=600)
+def fetch_ext_data(app_name, domain, type, biz_id, id=None):
+    app_client_biz.fetch_ext_data(app_name, domain, type, biz_id, id=id)

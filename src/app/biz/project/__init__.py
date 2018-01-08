@@ -62,6 +62,10 @@ def sync_session_msg_id(staff, session, msg_id):
         task_project_notify(session.project, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=session.id))
 
 
+def fetch_ext_data(proj):
+    tasks.fetch_ext_data.delay(proj.app.name, proj.domain, proj.type, proj.biz_id, id=proj.id)
+
+
 def finish_session(staff, session):
     if close_current_session(session.project_id, session_id=session.id):
         # # notify client

@@ -50,6 +50,8 @@ class App(base_model()):
     # 应用的客服标签树
     staff_label_tree = deferred(db.Column(db.JSON, nullable=False, default={}))
 
+    #  TODO: 添加应用配置信息
+
     @property
     def project_domain_type_tree(self):
         project_domains = self.project_domains
