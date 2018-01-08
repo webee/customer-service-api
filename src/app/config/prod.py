@@ -19,10 +19,6 @@ class App:
     }
 
 
-class Biz:
-    CLOSED_SESSION_ALIVE_TIME = timedelta(hours=24)
-
-
 class XChat:
     # TODO:
     # KEY = 'demo app cs key.'
