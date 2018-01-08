@@ -116,5 +116,5 @@ def send_channel_msg(app_name, channel, uid, staff, type, content, project_info)
           autoretry_for=(ConnectionError, RequestAuthFailedError), retry_kwargs={'max_retries': 2}, retry_backoff=True,
           retry_jitter=True,
           retry_backoff_max=600)
-def fetch_ext_data(app_name, domain, type, biz_id, id=None):
-    app_client_biz.fetch_ext_data(app_name, domain, type, biz_id, id=id)
+def fetch_ext_data(app_name, domain, type, biz_id, id=None, staff_uid=None):
+    app_client_biz.fetch_ext_data(app_name, domain, type, biz_id, id=id, staff_uid=staff_uid)

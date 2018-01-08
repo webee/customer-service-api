@@ -1,14 +1,15 @@
 import logging
-from app import config
-from sqlalchemy.orm import lazyload
-from sqlalchemy import desc as order_desc, func, or_
 
-from app.service import path_labels
+from sqlalchemy import desc as order_desc, func, or_
+from sqlalchemy.orm import lazyload
+
+from app import config
 from app import dbs, xchat_client
-from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
-from app.service.models import Message, Session, Project
-from .constants import NotifyTypes
+from app.biz.constants import NotifyTypes
 from app.biz.notifies import task_project_notify
+from app.biz.utils import TypeMsgPacker, ChannelDomainPacker
+from app.service import path_labels
+from app.service.models import Message, Session, Project
 from app.task import tasks
 from .proj import close_current_session
 
@@ -62,8 +63,8 @@ def sync_session_msg_id(staff, session, msg_id):
         task_project_notify(session.project, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=session.id))
 
 
-def fetch_ext_data(proj):
-    tasks.fetch_ext_data.delay(proj.app.name, proj.domain, proj.type, proj.biz_id, id=proj.id)
+def fetch_ext_data(staff, proj):
+    tasks.fetch_ext_data.delay(proj.app.name, proj.domain, proj.type, proj.biz_id, id=proj.id, staff_uid=staff.uid)
 
 
 def finish_session(staff, session):
@@ -123,6 +124,9 @@ def staff_has_perm_for_project(staff, proj):
 
 def get_staff_project(staff, id):
     return staff.app.projects.filter_by(id=id) \
-        .filter(func.x_scopes_match_ctxes(Project.scope_labels,
-                                          staff.uid,
-                                          staff.context_labels)).one()
+        .filter(or_(Project.leader_id == staff.id,
+                    func.x_scopes_match_ctxes(Project.scope_labels,
+                                              staff.uid,
+                                              staff.context_labels),
+                    Project.current_session.has(Session.handler_id == staff.id)
+                    )).one()

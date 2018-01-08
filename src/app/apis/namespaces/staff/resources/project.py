@@ -58,17 +58,17 @@ class HandledSessions(Resource):
         return session_biz.staff_fetch_handled_sessions(app, staff, domain, type, **args)
 
 
-@api.route('/projects/<string:domain>/<string:type>/sessions/<int:id>')
+@api.route('/sessions/<int:id>')
 class SessionItem(Resource):
     @require_staff
     @api.doc(model=session_item)
     @marshal_with(session_item_schema)
     @api.response(404, 'session not found')
-    def get(self, domain, type, id):
+    def get(self, id):
         """获取我正在接待的一个会话"""
         staff = current_staff
 
-        return staff.handling_sessions.filter(Session.project.has(domain=domain, type=type)).filter_by(id=id).one()
+        return staff.handling_sessions.filter_by(id=id).one()
 
 
 @api.route('/projects/<int:id>')
@@ -156,5 +156,5 @@ class ProjectFetchExtData(Resource):
             raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'staff has no permission for this project',
                                   dict(uid=staff.uid, id=proj.id))
 
-        proj_biz.fetch_ext_data(proj)
+        proj_biz.fetch_ext_data(staff, proj)
         return None, 204
