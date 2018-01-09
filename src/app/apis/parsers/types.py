@@ -13,7 +13,7 @@ class ContextLabel(object):
             if len(parts) != 2:
                 raise ValueError('invalid context label')
             path = parts[0]
-            uids = parts[1].split('|')
+            uids = parts[1].split('|') if parts[1] else []
             return _ContextLabel(path, uids)
         except:
             pass
