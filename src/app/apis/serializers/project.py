@@ -120,3 +120,12 @@ class FetchMsgsResultSchema(ma.Schema):
 
 
 fetch_msgs_result_schema = FetchMsgsResultSchema()
+
+
+try_handle_project_result = api.model('Try Handle Project Result', {
+    'domain': fields.String(),
+    'type': fields.String(),
+    'biz_id': fields.String(),
+    'id': fields.Integer(),
+    'current_session_id': fields.Integer()
+})

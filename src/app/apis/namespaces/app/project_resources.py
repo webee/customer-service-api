@@ -11,9 +11,9 @@ from app.apis.jwt import current_application, require_app
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.serializers.project import project, new_project, update_project, update_project_payload
 from app.apis.parsers.project import fetch_msgs_arguments
-from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema
+from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema, try_handle_project_result
 from .serializers import new_project_result
-from .serializers import try_handle_project_result, project_current_session_info
+from .serializers import project_current_session_info
 from .parsers import try_handle_project_arguments
 
 
