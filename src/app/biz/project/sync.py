@@ -3,8 +3,8 @@ import time
 import traceback
 
 from app import dbs, xchat_client
-from app.biz.constants import NotifyTypes
 from app.biz.ds import parse_xchat_msg_from_data
+from app.biz.constants import NotifyTypes
 from app.biz.notifies import task_project_notify
 from app.service.models import Project, ProjectXChat
 from app.utils.commons import batch_split

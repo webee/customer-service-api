@@ -3,6 +3,8 @@ from app import db, dbs, config
 from sqlalchemy import orm
 from app.service.models import Project, Session, Message, UserType
 from app.task import tasks
+from app.biz.constants import NotifyTypes
+from app.biz.notifies import task_project_notify
 
 
 def lock_project(id, options=None, read=False):
@@ -16,8 +18,16 @@ def try_handle_project(proj, handler):
         # 就是当前handler
         return proj
     prev_handler, proj = try_open_session(proj.id, handler)
-    # TODO: 1. 通知新接待者添加session
-    # TODO: 2. 通知旧接待者删除session
+    # # notify client
+    # 1. 通知新接待者添加session
+    task_project_notify(proj, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=proj.current_session_id))
+    if prev_handler:
+        # 2. 通知旧接待者删除session
+        current_session = proj.current_session
+        handler = current_session.handler
+        task_project_notify(proj, NotifyTypes.MY_HANDLING_SESSION_TRANSFERRED,
+                            dict(sessionID=current_session.id, uid=handler.uid, name=handler.name),
+                            handler=prev_handler)
     return proj
 
 
@@ -27,12 +37,28 @@ def try_open_session(proj_id, handler=None):
     proj = lock_project(proj_id, options=[orm.joinedload('last_session'), orm.joinedload('current_session')])
     prev_handler = None
     if proj.current_session is None:
+        handler = proj.leader if handler is None else handler
         last_session = proj.last_session
-        if last_session is None or arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
-            # 没有上次session或者已经超过存活时间
-            proj.current_session = Session(project=proj, handler=proj.leader if handler is None else handler,
-                                           start_msg_id=proj.msg_id, sync_msg_id=proj.msg_id)
+        if last_session is None:
+            # 没有上次session
+            proj.current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
+                                           sync_msg_id=proj.msg_id)
 
+            dbs.session.add(proj)
+        elif arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
+            # 上次session已经超过存活时间
+            if last_session.msg_id > 0:
+                # 有发送过消息
+                proj.current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
+                                               sync_msg_id=proj.msg_id)
+            else:
+                # 没有发送过消息
+                # 则重新打开上一次的会话
+                last_session.closed = None
+                last_session.is_active = True
+                last_session.handler = handler
+                last_session.created = db.func.current_timestamp()
+                proj.current_session = last_session
             dbs.session.add(proj)
         else:
             # 重新打开上一次的会话
