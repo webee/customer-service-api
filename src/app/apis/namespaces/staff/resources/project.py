@@ -4,12 +4,13 @@ from ..api import api
 from app.apis.jwt import current_staff, require_staff
 from app.service.models import Project, Session
 from app.biz import project as proj_biz
+from app.biz.project import proj as proj_proj_biz
 from app.biz import session as session_biz
 from app import app_clients
 from app import errors
 from app.apis.utils.xrestplus import marshal_with, marshal_list_with
 from app.apis.parsers.project import fetch_msgs_arguments
-from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema, project_data, project_data_schema
+from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema, project_data, project_data_schema, try_handle_project_result
 from ..parsers import access_function_args, fetch_handling_sessions_args, fetch_handled_sessions_args
 from ..serializers.project import session_item, session_item_schema, page_of_sessions, page_of_sessions_schema
 
@@ -158,3 +159,21 @@ class ProjectFetchExtData(Resource):
 
         proj_biz.fetch_ext_data(staff, proj)
         return None, 204
+
+
+@api.route('/projects/<int:id>/try_handle')
+class TryHandleProject(Resource):
+    @require_staff
+    @api.marshal_with(try_handle_project_result)
+    @api.response(200, 'try handle project ok')
+    def get(self, id):
+        """尝试接待项目"""
+        staff = current_staff
+
+        proj = staff.app.projects.filter_by(id=id).one()
+        # 判断是否有权限
+        if not proj_biz.staff_has_perm_for_project(staff, proj):
+            raise errors.BizError(errors.ERR_PERMISSION_DENIED, 'can not handle this project',
+                                  dict(uid=staff.uid, id=proj.id))
+
+        return proj_proj_biz.try_handle_project(proj, staff)
