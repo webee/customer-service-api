@@ -30,7 +30,6 @@ def fetch_ext_data(app_name, domain, type, biz_id, id=None, staff_uid=None):
         handler = app.staffs.filter_by(uid=staff_uid).one_or_none()
 
     try:
-        raise Exception('xxx')
         app_client = app_clients.get_client(app.appid, app.appkey, app.urls)
 
         data = app_client.get_ext_data(domain, type, biz_id, id=id)
