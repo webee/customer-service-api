@@ -55,7 +55,7 @@ class App:
 
 
 class Biz:
-    CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=5)
+    CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=0)
 
     USER_ONLINE_DELTA = timedelta(minutes=3)
     USER_OFFLINE_DELTA = timedelta(seconds=3)

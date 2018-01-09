@@ -1,4 +1,3 @@
-import json
 from sqlalchemy import desc, orm
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.orm import deferred
@@ -437,7 +436,6 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
                           lazy='joined')
 
     # 处理者消息id, 0表示未指向任何消息
-    # TODO: 在客服发消息时，更新此消息id
     handler_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
     handler_msg = db.relationship('Message', uselist=False,
                                   primaryjoin="and_(Session.id == Message.session_id, Session.handler_msg_id == Message.msg_id)")
