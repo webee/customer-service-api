@@ -118,8 +118,11 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
 
 # permissions
 def staff_has_perm_for_project(staff, proj):
-    return staff.id == proj.leader_id or path_labels.scopes_match_ctxes(proj.scope_labels, staff.uid,
-                                                                        staff.context_labels)
+    return staff.id == proj.leader_id or (
+        proj.current_session is not None and proj.current_session.handler_id == staff.id
+    ) or path_labels.scopes_match_ctxes(
+        proj.scope_labels, staff.uid,
+        staff.context_labels)
 
 
 def get_staff_project(staff, id):
