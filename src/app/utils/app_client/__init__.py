@@ -1,3 +1,4 @@
+import arrow
 from urllib import parse
 from threading import RLock
 import requests
@@ -58,7 +59,7 @@ class AppClient(object):
                     try:
                         res = self._get_token()
                         token, exp = res['token'], res['exp']
-                        self._token, self._token_exp = token, datetime.fromtimestamp(exp)
+                        self._token, self._token_exp = token, arrow.get(exp).datetime
                         if self._token_update_callback:
                             self._token_update_callback(self.appid, token, exp)
                         logger.info('new token: %s, %s', self._token, self._token_exp)
