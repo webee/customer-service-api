@@ -44,7 +44,7 @@ class AppClient(object):
 
         self._token_update_callback = token_update_callback
         self._token = token
-        self._token_exp = datetime.fromtimestamp(exp) if exp is not None else None
+        self._token_exp = datetime.utcfromtimestamp(exp) if exp is not None else None
         self._lock = RLock()
 
     def _is_current_token_valid(self):
@@ -58,7 +58,7 @@ class AppClient(object):
                     try:
                         res = self._get_token()
                         token, exp = res['token'], res['exp']
-                        self._token, self._token_exp = token, datetime.fromtimestamp(exp)
+                        self._token, self._token_exp = token, datetime.utcfromtimestamp(exp)
                         if self._token_update_callback:
                             self._token_update_callback(self.appid, token, exp)
                         logger.info('new token: %s, %s', self._token, self._token_exp)
