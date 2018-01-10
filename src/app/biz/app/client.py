@@ -38,6 +38,7 @@ def fetch_ext_data(app_name, domain, type, biz_id, id=None, staff_uid=None):
         # # notify client
         task_project_notify(proj, NotifyTypes.MY_HANDLING_PROJECT, dict(projectID=proj.id), handler=handler)
     except:
+        logger.exception('get ext data error: %s, %s, %s', domain, type, biz_id)
         # # notify client
         task_project_notify(proj, NotifyTypes.MY_HANDLING_PROJECT,
                             dict(projectID=proj.id, isFailed=True, biz_id=proj.biz_id), handler=handler)
