@@ -23,7 +23,7 @@ def append_process_time(response):
 
 @app.before_request
 def log_request():
-    info = dict(method=request.method, url=request.url)
+    info = dict(method=request.method, url=request.url, headers=request.headers)
     if request.content_length is not None and 0 < request.content_length <= 64 * 1024:
         info['data'] = request.get_data()
 
