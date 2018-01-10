@@ -308,12 +308,12 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
 
     # biz
     @dbs.transactional
-    def create_or_update_xchat(self, chat_id):
+    def create_or_update_xchat(self, chat_id, start_msg_id):
         if self.xchat:
             assert chat_id == self.xchat.chat_id, 'chat_id should not change'
             return self.xchat
         else:
-            xchat = ProjectXChat(project=self, chat_id=chat_id)
+            xchat = ProjectXChat(project=self, chat_id=chat_id, start_msg_id=start_msg_id)
             dbs.session.add(xchat)
             return xchat
 

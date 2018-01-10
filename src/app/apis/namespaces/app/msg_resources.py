@@ -2,7 +2,6 @@ import json
 from flask import request
 from flask_restplus import Resource, abort
 from app import errors
-from app.apis import logger
 from .api import api
 from app.biz import app as biz
 from app.biz import project as proj_biz
@@ -14,7 +13,7 @@ from .serializers import new_channel_message
 class ChannelMessages(Resource):
     @require_app
     @api.expect(new_channel_message)
-    @api.response(204, 'send msg successfully')
+    @api.response(200, 'send msg successfully')
     def post(self):
         """转发其它渠道的消息到客服系统"""
         app = current_application
@@ -32,5 +31,5 @@ class ChannelMessages(Resource):
         if isinstance(content, dict):
             content = json.dumps(content)
 
-        proj_biz.send_channel_message(proj, customer, data['channel'], data.get('domain', ''), data['type'], content)
-        return None, 204
+        rx_key, ts = proj_biz.send_channel_message(proj, customer, data['channel'], data.get('domain', ''), data['type'], content)
+        return dict(rx_key=rx_key, ts=ts), 200
