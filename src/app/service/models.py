@@ -276,7 +276,7 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
     leader = db.relationship('Staff', lazy='joined', backref=db.backref('as_leader_projects', lazy='dynamic'))
 
     # 当事人
-    customers = db.relationship('Customer', secondary=project_customers, lazy='joined',
+    customers = db.relationship('Customer', secondary=project_customers, lazy='joined', order_by="Customer.id",
                                 backref=db.backref('as_customer_projects', lazy='dynamic'))
 
     # 上一次会话
