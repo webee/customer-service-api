@@ -66,8 +66,8 @@ def create_project(app, data):
     owner = app_m.create_or_update_customer(app, data['owner'])
     leader = app_m.create_or_update_staff(app, data['leader'])
     customers = app_m.create_or_update_customers(app, data['customers'])
+    start_msg_id = data.get('start_msg_id', 0)
     if project is None:
-        start_msg_id = data.get('start_msg_id', 0)
         project = Project(app_name=app.name, app=app, domain=domain, type=type, biz_id=biz_id, owner=owner,
                           leader=leader, customers=customers, start_msg_id=start_msg_id, msg_id=start_msg_id)
     else:
@@ -77,7 +77,7 @@ def create_project(app, data):
 
     # create or update xchat chat
     chat_id = xchat_biz.create_chat(project)
-    project.create_or_update_xchat(chat_id)
+    project.create_or_update_xchat(chat_id, start_msg_id)
 
     # tags
     project.update_tags(data.get('tags'))
