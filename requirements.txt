@@ -6,7 +6,6 @@ flask
 flask-script
 psycopg2
 flask-sqlalchemy
-flask-migrate
 flask-restplus
 flask-marshmallow
 flask-cache
@@ -14,6 +13,8 @@ marshmallow-sqlalchemy
 markdown
 Flask-Bcrypt
 Flask-Cors
+
+# deploy
 gevent
 gunicorn
 
