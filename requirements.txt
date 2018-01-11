@@ -8,7 +8,7 @@ psycopg2
 flask-sqlalchemy
 flask-restplus
 flask-marshmallow
-flask-cache
+flask-caching
 marshmallow-sqlalchemy
 markdown
 Flask-Bcrypt
