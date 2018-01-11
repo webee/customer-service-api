@@ -11,7 +11,7 @@ VENV_DIR=${PROJ_ROOT}/venv
 LOG_LEVEL=${GUNICORN_LOG_LEVEL:-debug}
 ENV_FILE=${PROJ_ROOT}/conf/env.sh
 
-echo "Starting $NAME $env"
+#echo "Starting $NAME $env"
 if [ -d ${VENV_DIR} ]; then
   source ${VENV_DIR}/bin/activate
 fi
