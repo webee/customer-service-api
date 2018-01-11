@@ -29,7 +29,7 @@ class App:
     JWT_AUTH_HEADER = 'X-ANY-JWT'
     JWT_AUTH_HEADER_PATTERN = 'X-%s-JWT'
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') or '.yek tset'
-    JWT_EXPIRATION_DELTA = timedelta(days=2)
+    JWT_EXPIRATION_DELTA = timedelta(days=3)
     JWT_LEEWAY = timedelta(minutes=10)
     JWT_DEFAULT_ROLE = 'app'
 

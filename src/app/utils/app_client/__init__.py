@@ -24,6 +24,8 @@ class AppClients(object):
         timeout = int(exp - (time.time() + time.timezone))
         if timeout > 0:
             self.cache.set(self._gen_key(appid), (token, exp), timeout=timeout)
+        else:
+            self.cache.delete(self._gen_key(appid))
 
     @staticmethod
     def _gen_key(appid):
@@ -114,6 +116,9 @@ class AppClient(object):
             if not data.get('ret'):
                 error_code = data.get('error_code', ErrorCode.REQUEST_FAILED)
                 if error_code <= 3:
+                    if self._token_update_callback:
+                        # delete token cache
+                        self._token_update_callback(self.appid, None, 0)
                     raise RequestAuthFailedError(error_code, data.get('error_msg'))
                 raise RequestFailedError(error_code, data.get('error_msg'))
             return data.get('data')
