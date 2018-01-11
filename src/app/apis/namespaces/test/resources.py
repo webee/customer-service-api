@@ -28,7 +28,7 @@ class TestBizError(Resource):
         raise BizError(errors.ERR_XXX, 'what ever xxx', dict(ns='test', path='/biz_error'))
 
 
-tlock = threading.RLock(blocking=False)
+tlock = threading.RLock()
 
 
 @api.route('/test_threads')
