@@ -280,10 +280,10 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
                                 backref=db.backref('as_customer_projects', lazy='dynamic'))
 
     # 上一次会话
-    last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
+    last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_last_session_id'), nullable=True)
     last_session = db.relationship('Session', foreign_keys=last_session_id, lazy='joined', post_update=True)
     # 当前会话
-    current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id'), nullable=True)
+    current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_current_session_id'), nullable=True)
     current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
     # 起始消息id
     # TODO: 迁移消息和发送消息一样，先发送到xchat，再同步到cs
