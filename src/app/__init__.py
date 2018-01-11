@@ -1,5 +1,6 @@
 import os
 # from werkzeug.contrib.profiler import ProfilerMiddleware
+from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
@@ -29,6 +30,7 @@ app_clients = AppClients()
 
 def create_app(env='dev'):
     app = Flask(__name__)
+    app.wsgi_app = ProxyFix(app.wsgi_app)
     # if env == 'dev':
     #     app.wsgi_app = ProfilerMiddleware(app.wsgi_app)
     # 最先初始化配置
