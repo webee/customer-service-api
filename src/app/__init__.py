@@ -1,9 +1,8 @@
 import os
-from werkzeug.contrib.profiler import ProfilerMiddleware
+# from werkzeug.contrib.profiler import ProfilerMiddleware
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_cache import Cache
 from flask_marshmallow import Marshmallow
@@ -19,7 +18,6 @@ from .utils.app_client import AppClients
 profiler = Profiler()
 jwt = JWT()
 db = SQLAlchemy()
-migrate = Migrate(directory=os.path.join(os.path.dirname(__file__), 'migrations'))
 cache = Cache()
 ma = Marshmallow()
 bcrypt = Bcrypt()
@@ -91,7 +89,6 @@ def init_extensions(app):
 
     db.init_app(app)
     dbs.init_app(app, db)
-    migrate.init_app(app, db)
 
     # cache
     cache.init_app(app, config=config.App.CACHE)

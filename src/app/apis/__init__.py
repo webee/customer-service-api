@@ -56,8 +56,8 @@ def init_api(app):
         from .namespaces.test.api import api as test_api
         api.add_namespace(test_api, path='/test')
 
-        from .namespaces.test_app.api import api as test_app_api
-        api.add_namespace(test_app_api, path='/test_app')
+    from .namespaces.test_app.api import api as test_app_api
+    api.add_namespace(test_app_api, path='/test_app')
 
     from .namespaces.auth.api import api as auth_api
     api.add_namespace(auth_api, path='/auth')

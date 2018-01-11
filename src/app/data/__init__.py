@@ -5,9 +5,7 @@ from . import sample_data
 
 def init_data():
     # project domain/type
-    if os.getenv('env') != 'prod':
-        init_test_data()
-
+    init_test_data()
     init_prod_data()
 
 
@@ -62,8 +60,3 @@ def init_prod_data():
                           urls={},
                           access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
                                             dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
-
-    # customer
-    app_biz.batch_create_or_update_customers(app, [{"uid": "test", "name": "测试客户"}])
-    # staff
-    app_biz.batch_create_or_update_staffs(app, [{"uid": "test", "name": "测试客服", "context_labels": [['self', '']]}])

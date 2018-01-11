@@ -8,7 +8,6 @@ u=${2:-$(whoami)}
 db_name=cs_${p}
 sudo -u ${u} dropdb --if-exists ${db_name}
 sudo -u ${u} createdb ${db_name} -O cs_dev
-sudo -u ${u} psql ${db_name} < ./files/init.psql
-sudo -u ${u} psql ${db_name} < ./files/functions.psql
+sudo -u ${u} ./scripts/prepare_db.sh ${db_name}
 
 ./cmd.sh -e ${p} init_db
