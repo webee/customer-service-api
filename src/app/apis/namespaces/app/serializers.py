@@ -25,6 +25,13 @@ new_channel_message = api.model('New Channel Message', {
     'content': any_of(['string', 'object'], required=True)
 })
 
+project_state_info = api.model('Project State Info', {
+    'start_msg_id': fields.Integer(),
+    'msg_id': fields.Integer(),
+    'current_session_id': fields.Integer(),
+    'last_session_id': fields.Integer(),
+})
+
 project_current_session_info = api.model('Project Current Session Info', {
     'id': fields.Integer(),
     'handler': fields.Nested(raw_staff),
