@@ -13,7 +13,7 @@ from app.apis.serializers.project import project, new_project, update_project, u
 from app.apis.parsers.project import fetch_msgs_arguments
 from app.apis.serializers.project import fetch_msgs_result, fetch_msgs_result_schema, try_handle_project_result
 from .serializers import new_project_result
-from .serializers import project_current_session_info
+from .serializers import project_current_session_info, project_state_info
 from .parsers import try_handle_project_arguments
 
 
@@ -112,6 +112,19 @@ class ProjectMsgs(Resource):
         desc = args['desc']
         msgs, has_more, no_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
         return dict(msgs=msgs, has_more=has_more, no_more=no_more)
+
+
+@api.route('/projects/<int:id>/state',
+           '/projects/<string:domain>/<string:type>/<string:biz_id>/state')
+class ProjectState(Resource):
+    @require_app
+    @api.marshal_with(project_state_info)
+    @api.response(404, 'project not found')
+    def get(self, id, domain=None, type=None, biz_id=None):
+        """获取项目状态信息"""
+        app = current_application
+
+        return biz.get_project(app, id, domain, type, biz_id)
 
 
 @api.route('/projects/<int:id>/current_session',
