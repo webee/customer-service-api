@@ -73,12 +73,17 @@ def staff_fetch_handled_sessions(app, staff, domain, type, page, per_page, conte
     if tag is not None:
         q = q.filter(Session.project.has(func.array_to_string(Project.tags, '*', ',').like('%')))
 
+    if is_online is not None:
+        q = q.filter(Session.project.has(Project.is_online == is_online))
+
     order_func = order_func_map.get(order, order_func_map['descend'])
     if sorter is not None:
         if sorter == 'created':
             q = q.order_by(order_func(Session.created))
         elif sorter == 'closed':
             q = q.order_by(order_func(Session.closed))
+        elif sorter == 'start_msg_id':
+            q = q.order_by(order_func(Session.start_msg_id))
         else:
             q = q.order_by(order_func(Session.updated))
     else:
