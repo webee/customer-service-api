@@ -99,7 +99,7 @@ class ProjectMsgs(Resource):
     @marshal_with(fetch_msgs_result_schema)
     @api.response(404, 'project not found')
     @api.response(200, 'fetch msgs ok')
-    def get(self, id, domain=None, type=None, biz_id=None):
+    def get(self, id=None, domain=None, type=None, biz_id=None):
         """获取项目消息"""
         app = current_application
 
@@ -120,7 +120,7 @@ class ProjectState(Resource):
     @require_app
     @api.marshal_with(project_state_info)
     @api.response(404, 'project not found')
-    def get(self, id, domain=None, type=None, biz_id=None):
+    def get(self, id=None, domain=None, type=None, biz_id=None):
         """获取项目状态信息"""
         app = current_application
 
@@ -133,7 +133,7 @@ class ProjectCurrentSession(Resource):
     @require_app
     @api.marshal_with(project_current_session_info)
     @api.response(404, 'project not found')
-    def get(self, id, domain=None, type=None, biz_id=None):
+    def get(self, id=None, domain=None, type=None, biz_id=None):
         """获取项目当前会话信息"""
         app = current_application
 
@@ -153,7 +153,7 @@ class TryHandleProject(Resource):
     @api.marshal_with(try_handle_project_result)
     @api.response(404, 'project or staff not found')
     @api.response(200, 'try handle project ok')
-    def get(self, id, domain=None, type=None, biz_id=None):
+    def get(self, id=None, domain=None, type=None, biz_id=None):
         """尝试接待项目"""
         app = current_application
 
