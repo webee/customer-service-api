@@ -296,6 +296,10 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
         db.UniqueConstraint('app_name', 'domain', 'type', 'biz_id', name='uniq_app_project_domain_type_biz'),)
 
     @property
+    def current_session_id_value(self):
+        return self.current_session_id if self.current_session_id is not None else 0
+
+    @property
     def app_biz_id(self):
         return '%s:%s:%s:%s' % (self.app_name, self.domain, self.type, self.biz_id)
 

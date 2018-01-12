@@ -66,6 +66,7 @@ project_data = api.model('Project Data', {
     'customers': fields.List(fields.Nested(raw_customer)),
     'meta_data': fields.List(fields.Nested(data_item)),
     'ext_data': fields.List(fields.Nested(data_item)),
+    'current_session_id': fields.Integer(description='current session id', attribute="current_session_id_value"),
 })
 
 
@@ -73,12 +74,13 @@ class ProjectDataSchema(ma.Schema):
     class Meta:
         fields = (
             "id", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers", "meta_data",
-            "ext_data", "start_msg_id", "msg_id")
+            "ext_data", "start_msg_id", "msg_id", "current_session_id")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
     customers = ma.List(ma.Nested(RawCustomerSchema))
     last_online_ts = ma.Function(lambda s: s.last_online_ts and s.last_online_ts.timestamp())
+    current_session_id = ma.Function(lambda s: s.current_session_id_value)
 
 
 project_data_schema = ProjectDataSchema()
