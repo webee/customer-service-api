@@ -82,6 +82,8 @@ def staff_fetch_handled_sessions(app, staff, domain, type, page, per_page, conte
             q = q.order_by(order_func(Session.created))
         elif sorter == 'closed':
             q = q.order_by(order_func(Session.closed))
+        elif sorter == 'start_msg_id':
+            q = q.order_by(order_func(Session.start_msg_id))
         else:
             q = q.order_by(order_func(Session.updated))
     else:
