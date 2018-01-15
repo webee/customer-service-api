@@ -93,7 +93,7 @@ class XChatClient(object):
         for k, v in kwargs.items():
             if v is not None:
                 qs[k] = v
-        query = parse.urlencode(qs)
+        query = parse.urlencode(qs, doseq=True)
 
         return parse.urlunparse((scheme, netloc, path, params, query, fragment))
 
