@@ -10,6 +10,7 @@ SRC_DIR=${PROJ_ROOT}/src
 VENV_DIR=${PROJ_ROOT}/venv
 LOG_LEVEL=${GUNICORN_LOG_LEVEL:-debug}
 ENV_FILE=${PROJ_ROOT}/conf/env.sh
+LOG_DIR=${LOG_DIR:-${PROJ_ROOT}/logs}
 
 #echo "Starting $NAME $env"
 if [ -d ${VENV_DIR} ]; then
@@ -27,6 +28,6 @@ exec gunicorn main:app \
   -b 0.0.0.0:${port} \
   -k gevent \
   -w ${NUM_WORKERS} \
-  --access-logfile ${PROJ_ROOT}/logs/access.log \
-  --error-logfile ${PROJ_ROOT}/logs/error.log \
+  --access-logfile ${LOG_DIR}/access.log \
+  --error-logfile ${LOG_DIR}/error.log \
   --log-level ${LOG_LEVEL}
