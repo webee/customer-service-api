@@ -3,6 +3,7 @@
 env=${1:-dev}
 port=${2:-5000}
 NUM_WORKERS=${3:-4}
+ID=${4}
 
 PROJ_ROOT=$(dirname $0)
 NAME=$(basename $PROJ_ROOT)
@@ -28,6 +29,6 @@ exec gunicorn main:app \
   -b 0.0.0.0:${port} \
   -k gevent \
   -w ${NUM_WORKERS} \
-  --access-logfile ${LOG_DIR}/access.log \
-  --error-logfile ${LOG_DIR}/error.log \
+  --access-logfile ${LOG_DIR}/access${ID}.log \
+  --error-logfile ${LOG_DIR}/error${ID}.log \
   --log-level ${LOG_LEVEL}
