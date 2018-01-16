@@ -13,6 +13,9 @@ test_staff_label_tree = {
     "2": {"name": "角色#2", "children": {
         "1": {"name": "分组#1"}
     }},
+    "3": {"name": "角色#3", "children": {
+        "1": {"name": "分组#1", "alias_to": "1"}
+    }},
 }
 
 test_staffs_data = [

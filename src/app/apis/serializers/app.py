@@ -10,6 +10,7 @@ access_function = api.model('Access Function', {
 label_info = api.model('Label Info', {
     'code': fields.String(required=True, min_length=1, example="1"),
     'name': fields.String(required=True, min_lenght=1, example="角色#1"),
+    'alias_to': any_of(["string", "null"], required=False, example="a.b.c"),
     'children': fields.List(fields.Raw(title='Label Info'))
 })
 
