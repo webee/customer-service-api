@@ -34,14 +34,24 @@ def normalize_context_labels(labels):
     return normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP)
 
 
+def _get_alias_to(label):
+    alias_to = label.get('alias_to')
+    if alias_to is None:
+        return {}
+    return dict(alias_to=alias_to)
+
+
+def _normalize_label(label):
+    if label.get('children'):
+        return {'name': label['name'], 'children': normalize_label_tree(label['children']), **_get_alias_to(label)}
+
+    return {'name': label['name'], **_get_alias_to(label)}
+
+
 def normalize_label_tree(label_tree):
     if isinstance(label_tree, dict):
-        return {code: {'name': label['name'], 'children': normalize_label_tree(label['children'])}
-        if label.get('children') else {'name': label['name']}
-                for code, label in label_tree.items()}
-    return {label['code']: {
-        'name': label['name'], 'children': normalize_label_tree(label['children'])} if label.get('children') else {
-        'name': label['name']} for label in label_tree}
+        return {code: _normalize_label(label) for code, label in label_tree.items()}
+    return {label['code']: _normalize_label(label) for label in label_tree}
 
 
 def normalize_data(data):
