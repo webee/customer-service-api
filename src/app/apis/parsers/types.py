@@ -10,11 +10,15 @@ class ContextLabel(object):
             if not value:
                 return None
             parts = value.split(',')
-            if len(parts) != 2:
-                raise ValueError('invalid context label')
-            path = parts[0]
-            uids = parts[1].split('|') if parts[1] else []
-            return _ContextLabel(path, uids)
+            if len(parts) == 1:
+                return _ContextLabel(parts[0], [])
+
+            if len(parts) == 2:
+                path = parts[0]
+                uids = parts[1].split('|') if parts[1] else []
+                return _ContextLabel(path, uids)
+
+            raise ValueError('invalid context label')
         except:
             pass
         raise ValueError('invalid context label')
