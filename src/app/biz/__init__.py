@@ -19,6 +19,7 @@ def create_app(data):
     app.update_urls(data.get('urls'))
     app.update_access_functions(data.get('access_functions'))
     app.update_staff_label_tree(data.get('staff_label_tree'))
+    app.update_configs(data.get('configs'))
 
     db.session.add(app)
 
@@ -40,6 +41,7 @@ def update_app(app, data):
     app.update_urls(data.get('urls'))
     app.update_access_functions(data.get('access_functions'))
     app.update_staff_label_tree(data.get('staff_label_tree'))
+    app.update_configs(data.get('configs'))
 
     dbs.session.add(app)
 
