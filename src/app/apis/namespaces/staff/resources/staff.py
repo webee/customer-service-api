@@ -18,15 +18,5 @@ class Staffs(Resource):
         app = staff.app
 
         args = fetch_staffs_args.parse_args()
-        page = args['page']
-        per_page = args['per_page']
-        uid = args['uid']
-        context_label = args['context_label']
-        is_online = args['is_online']
-        is_deleted = args['is_deleted']
-        sorter = args['sorter']
-        order = args['order']
 
-        return biz.staff_fetch_staffs(app, staff, page, per_page, uid=uid, context_label=context_label,
-                                      is_online=is_online, is_deleted=is_deleted,
-                                      sorter=sorter, order=order)
+        return biz.staff_fetch_staffs(app, staff, **args)
