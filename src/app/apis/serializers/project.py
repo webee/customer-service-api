@@ -73,8 +73,8 @@ project_data = api.model('Project Data', {
 class ProjectDataSchema(ma.Schema):
     class Meta:
         fields = (
-            "id", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers", "meta_data",
-            "ext_data", "start_msg_id", "msg_id", "current_session_id")
+            "id", "domain", "type", "biz_id", "is_online", "last_online_ts", "tags", "owner", "leader", "customers",
+            "meta_data", "ext_data", "start_msg_id", "msg_id", "current_session_id")
 
     owner = ma.Nested(RawCustomerSchema)
     leader = ma.Nested(RawStaffSchema)
@@ -121,7 +121,6 @@ class FetchMsgsResultSchema(ma.Schema):
 
 
 fetch_msgs_result_schema = FetchMsgsResultSchema()
-
 
 try_handle_project_result = api.model('Try Handle Project Result', {
     'domain': fields.String(),
