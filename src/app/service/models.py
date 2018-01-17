@@ -49,7 +49,8 @@ class App(base_model()):
     # 应用的客服标签树
     staff_label_tree = deferred(db.Column(db.JSON, nullable=False, default={}))
 
-    #  TODO: 添加应用配置信息
+    # 应用配置信息
+    configs = deferred(db.Column(db.JSON, nullable=False, default={}))
 
     @property
     def project_domain_type_tree(self):
@@ -104,6 +105,13 @@ class App(base_model()):
         # App.update_app(self.id, dict(staff_label_tree=normalize_label_tree(tree)))
         self.staff_label_tree = normalize_label_tree(tree)
         flag_modified(self, 'staff_label_tree')
+        db.session.add(self)
+
+    @ignore_none
+    @dbs.transactional
+    def update_configs(self, configs):
+        self.configs = configs
+        flag_modified(self, 'configs')
         db.session.add(self)
 
     @dbs.transactional

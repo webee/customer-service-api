@@ -19,7 +19,8 @@ update_application_payload = api.model('Update Application Payload', {
     'appkey': fields.String(),
     'urls': any_of(['object']),
     'access_functions': fields.List(fields.Nested(access_function)),
-    'staff_label_tree': fields.List(fields.Nested(label_info))
+    'staff_label_tree': fields.List(fields.Nested(label_info)),
+    'configs': fields.Raw(example={})
 })
 
 application = api.model('Application', {
@@ -28,6 +29,7 @@ application = api.model('Application', {
     'desc': fields.String(example='测试应用客服', description='app description'),
     'access_functions': fields.List(fields.Nested(access_function)),
     'staff_label_tree': fields.Raw(),
+    'configs': fields.Raw(),
     'updated': fields.Float(attribute=lambda x: x.updated.timestamp()),
 })
 
