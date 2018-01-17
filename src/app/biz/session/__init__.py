@@ -9,13 +9,14 @@ order_func_map = {
 }
 
 
-def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, context_label=None, handler=None,
-                                  customer=None,
+def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, context_label=None,
+                                  handler_context_label=None, leader_context_label=None, customer=None,
                                   owner=None, is_online=None, unhandled_msg_count_range=None, msg_ts_range=None,
-                                  tag=None, filter_self=None, sorter=None, order=None):
-    q = _query_session(app, staff, domain, type, is_active=True, context_label=context_label, handler=handler,
-                       owner=owner,
-                       filter_self=filter_self, tag=tag, is_online=is_online, customer=customer)
+                                  tag=None, handler_filter_self=None, leader_filter_self=None, sorter=None, order=None):
+    q = _query_session(app, staff, domain, type, is_active=True, context_label=context_label,
+                       handler_context_label=handler_context_label, leader_context_label=leader_context_label,
+                       owner=owner, handler_filter_self=handler_filter_self, leader_filter_self=leader_filter_self,
+                       tag=tag, is_online=is_online, customer=customer)
 
     if unhandled_msg_count_range is not None:
         start, end = unhandled_msg_count_range
@@ -51,12 +52,14 @@ def staff_fetch_handling_sessions(app, staff, domain, type, page, per_page, cont
     return res
 
 
-def staff_fetch_handled_sessions(app, staff, domain, type, page, per_page, context_label=None, handler=None,
+def staff_fetch_handled_sessions(app, staff, domain, type, page, per_page, context_label=None,
+                                 handler_context_label=None, leader_context_label=None,
                                  owner=None, closed_ts_range=None, is_online=None, customer=None,
-                                 tag=None, filter_self=None, sorter=None, order=None):
-    q = _query_session(app, staff, domain, type, is_active=False, context_label=context_label, handler=handler,
-                       owner=owner,
-                       filter_self=filter_self, tag=tag, is_online=is_online, customer=customer)
+                                 tag=None, handler_filter_self=None, leader_filter_self=None, sorter=None, order=None):
+    q = _query_session(app, staff, domain, type, is_active=False, context_label=context_label,
+                       handler_context_label=handler_context_label, leader_context_label=leader_context_label,
+                       owner=owner, handler_filter_self=handler_filter_self, leader_filter_self=leader_filter_self,
+                       tag=tag, is_online=is_online, customer=customer)
 
     if closed_ts_range is not None:
         start, end = closed_ts_range
@@ -81,56 +84,83 @@ def staff_fetch_handled_sessions(app, staff, domain, type, page, per_page, conte
     return res
 
 
-def _query_session(app, staff, domain, type, is_active, context_label=None, handler=None, owner=None, filter_self=None,
-                   tag=None, is_online=None, customer=None):
+def _query_session(app, staff, domain, type, is_active, context_label=None, handler_context_label=None,
+                   leader_context_label=None, owner=None, handler_filter_self=None, leader_filter_self=None, tag=None,
+                   is_online=None, customer=None):
     q = Session.query.join('project').options(orm.undefer('project.*')) \
         .filter(Session.is_active == is_active,
                 Session.project.has(
                     app_name=app.name,
                     domain=domain, type=type))
+
+    filter_project_scopes = Session.project.has(
+        func.x_scopes_match_ctxes(
+            Project.scope_labels,
+            staff.uid,
+            staff.context_labels))
+
+    leader_only_self = leader_filter_self == 'only'
+    handler_only_self = handler_filter_self == 'only'
+    if handler_only_self:
+        # 仅自己接待的
+        q = q.filter(Session.handler_id == staff.id)
+        if leader_only_self:
+            # 仅自己负责的
+            q = q.filter(Session.project.has(leader_id=staff.id))
+        elif leader_filter_self == 'exclude':
+            # 排除自己负责的
+            q = q.filter(Session.project.has(Project.leader_id != staff.id))
+    elif handler_filter_self == 'exclude':
+        # 排除自己接待的
+        q = q.filter(Session.handler_id != staff.id)
+        if leader_only_self:
+            # 仅自己负责的
+            q = q.filter(Session.project.has(leader_id=staff.id))
+        elif leader_filter_self == 'exclude':
+            # 排除自己负责的
+            q = q.filter(Session.project.has(Project.leader_id != staff.id), filter_project_scopes)
+        else:
+            # 包含自己负责的
+            q = q.filter(or_(Session.project.has(leader_id=staff.id), filter_project_scopes))
+    else:
+        # 包含自己接待的
+        if leader_only_self:
+            # 仅自己负责的
+            q = q.filter(Session.project.has(leader_id=staff.id))
+        elif leader_filter_self == 'exclude':
+            # 排除自己负责的
+            q = q.filter(Session.project.has(Project.leader_id != staff.id), filter_project_scopes)
+        else:
+            # 包含自己负责的
+            q = q.filter(
+                or_(
+                    Session.handler_id == staff.id,
+                    Session.project.has(leader_id=staff.id),
+                    filter_project_scopes
+                )
+            )
+
+    if context_label is not None:
+        path, _ = context_label
+        q = q.filter(Session.project.has(func.x_scopes_match_target(Project.scope_labels, path)))
+
+    if handler_context_label is not None:
+        path, uids = handler_context_label
+        q = q.filter(Session.handler.has(func.x_target_match_ctxes(path, Staff.uid, Staff.context_labels)))
+        if len(uids) > 0 and not handler_only_self:
+            q = q.filter(Session.handler.has(Staff.uid.in_(uids)))
+
+    if leader_context_label is not None:
+        path, uids = leader_context_label
+        q = q.filter(
+            Session.project.has(Project.leader.has(func.x_target_match_ctxes(path, Staff.uid, Staff.context_labels))))
+        if len(uids) > 0 and not leader_filter_self:
+            q = q.filter(Session.handler.has(Project.leader.has(Staff.uid.in_(uids))))
+
     if owner:
         s = f'%{owner}%'
         q = q.filter(Session.project.has(
             Project.owner.has(or_(Customer.name.like(s), Customer.mobile.like(s), Customer.uid.like(s)))))
-
-    only_self = filter_self == 'only'
-    if filter_self == 'exclude':
-        # 排除自己接待的
-        q = q.filter(
-            Session.handler_id != staff.id,
-            or_(
-                Session.project.has(leader_id=staff.id),
-                Session.project.has(
-                    func.x_scopes_match_ctxes(
-                        Project.scope_labels,
-                        staff.uid,
-                        staff.context_labels))
-            )
-        )
-    elif only_self:
-        # 仅自己接待的
-        q = q.filter(Session.handler_id == staff.id)
-    else:
-        # 包含自己接待的
-        q = q.filter(
-            or_(
-                Session.handler_id == staff.id,
-                Session.project.has(leader_id=staff.id),
-                Session.project.has(
-                    func.x_scopes_match_ctxes(
-                        Project.scope_labels,
-                        staff.uid,
-                        staff.context_labels))
-            )
-        )
-    if handler is not None and not only_self:
-        q = q.filter(Session.handler.has(uid=handler))
-
-    if context_label is not None:
-        path, uids = context_label
-        q = q.filter(Session.project.has(func.x_scopes_match_target(Project.scope_labels, path)))
-        if len(uids) > 0 and handler is None and not only_self:
-            q = q.filter(Session.handler.has(Staff.uid.in_(uids)))
 
     if customer:
         s = f'%{customer}%'
