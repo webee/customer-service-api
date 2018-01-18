@@ -141,8 +141,11 @@ def _query_session(app, staff, domain, type, is_active, context_label=None, hand
             )
 
     if context_label is not None:
-        path, _ = context_label
-        q = q.filter(Session.project.has(func.x_scopes_match_target(Project.scope_labels, path)))
+        path, uids = context_label
+        if len(uids) > 0:
+            q = q.filter(Session.project.has(func.x_scopes_match_targets(Project.scope_labels, [path + ':' + uid for uid in uids])))
+        else:
+            q = q.filter(Session.project.has(func.x_scopes_match_target(Project.scope_labels, path)))
 
     if handler_context_label is not None:
         path, uids = handler_context_label
