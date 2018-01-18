@@ -101,6 +101,22 @@ CREATE OR REPLACE FUNCTION x_scopes_match_target(scopes text[][], target text) R
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 
+-- 多scopes匹配多目标
+CREATE OR REPLACE FUNCTION x_scopes_match_targets(scopes text[][], targets text[]) RETURNS BOOLEAN AS $$
+    DECLARE
+        target text;
+    BEGIN
+        foreach target in array targets
+        loop
+            if x_scopes_match_target(scopes, target) then
+                return true;
+            end if;
+        end loop;
+        return false;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
 -- 多scopes匹配单context路径
 CREATE OR REPLACE FUNCTION x_scopes_match_ctx_path(scopes text[][], uid text, type text, path text) RETURNS BOOLEAN AS $$
     BEGIN
