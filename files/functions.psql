@@ -2,10 +2,10 @@
 CREATE OR REPLACE FUNCTION path_match_target(type text, path text, target text) RETURNS BOOLEAN AS $$
     BEGIN
 --        RAISE NOTICE 'path_match_target: %, %, %', type, path, target;
-        return case type when 'up+' then path like target||'%'
-                when 'super' then path like target||'%'
-                when 'all' then path like target||'%' or target like path||':%'
-                when 'self' then path = target
+        return case type when 'up+' then path like target||'%' or target like path||'=%'
+                when 'super' then path like target||'%' or target like path||'=%'
+                when 'all' then path like target||'%' or target like path||':%' or target like path||'=%'
+                when 'self' then path = target or target like path||'=%'
                 when 'up' then path like target||'%' and path != target
                 when 'sub' then target like path||'.%'
                 when 'self.' then target like path||':%'
@@ -43,8 +43,8 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION scopes_match_ctx_path(scopes json, uid text, type text, path text) RETURNS BOOLEAN AS $$
     BEGIN
 --         RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when 'self+' then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||':'||uid)
-                    when 'self' then scopes_match_target(scopes, path)
+        return case type when 'self+' then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||':'||uid) or scopes_match_target(scopes, path||'='||uid)
+                    when 'self' then scopes_match_target(scopes, path) or scopes_match_target(scopes, path||'='||uid)
                     when 'self.' then scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
@@ -121,8 +121,8 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION x_scopes_match_ctx_path(scopes text[][], uid text, type text, path text) RETURNS BOOLEAN AS $$
     BEGIN
 --        RAISE NOTICE 'scopes_match_ctx_path: %, %, %, %', scopes, uid, type, path;
-        return case type when 'self+' then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||':'||uid)
-                    when 'self' then x_scopes_match_target(scopes, path)
+        return case type when 'self+' then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||':'||uid) or x_scopes_match_target(scopes, path||'='||uid)
+                    when 'self' then x_scopes_match_target(scopes, path) or x_scopes_match_target(scopes, path||'='||uid)
                     when 'self.' then x_scopes_match_target(scopes, path||':'||uid)
                     else false
         end;
