@@ -25,10 +25,10 @@ class GetExtData(Resource):
     def get(self):
         # args = get_ext_data_args.parse_args()
         data = [{
-            'label': '数据#%d' % x,
+            'label': '数据#%d' % i,
             'type': ('value', 'link')[x],
             'value': ('数据值[%d]' % i, {"value": "链接<%d>" % i, "href": "https://www.baidu.com/"})[x]
-        } for i, x in enumerate([random.randint(0, 1) for i in range(random.randint(2, 6))])]
+        } for i, x in enumerate([random.randint(0, 1) for _ in range(random.randint(2, 6))])]
         return resp.success(data)
 
 

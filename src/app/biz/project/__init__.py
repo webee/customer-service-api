@@ -1,4 +1,5 @@
 import logging
+import arrow
 
 from sqlalchemy import desc as order_desc, func, or_
 from sqlalchemy.orm import lazyload
@@ -64,7 +65,9 @@ def sync_session_msg_id(staff, session, msg_id):
 
 
 def fetch_ext_data(staff, proj):
-    tasks.fetch_ext_data.delay(proj.app.name, proj.domain, proj.type, proj.biz_id, id=proj.id, staff_uid=staff.uid)
+    ext_data_updated = proj.ext_data_updated
+    if ext_data_updated is None or arrow.now() - arrow.get(ext_data_updated) > config.Biz.FETCH_EXT_DATA_INTERVAL:
+        tasks.fetch_ext_data.delay(proj.app.name, proj.domain, proj.type, proj.biz_id, id=proj.id, staff_uid=staff.uid)
 
 
 def finish_session(staff, session):
