@@ -1,9 +1,8 @@
 import os
-from datetime import timedelta
 
 
 class App:
-    DEBUG = False
+    DEBUG = os.getenv('DEBUG') in {'1', 'True'}
 
     SECRET_KEY = os.getenv('SECRET_KEY')
 

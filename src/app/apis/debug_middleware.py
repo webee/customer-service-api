@@ -27,4 +27,4 @@ def log_request():
     if request.content_length is not None and 0 < request.content_length <= 64 * 1024:
         info['data'] = request.get_data()
 
-    logger.debug(info)
+    logger.info(info)
