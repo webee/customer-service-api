@@ -36,8 +36,8 @@ matchers = {
 }
 
 ctx_matchers = {
-    LabelType.SELF_PLUS: lambda target, uid, path: path.startswith(target),
-    LabelType.SELF: lambda target, uid, path: path.startswith(target),
+    LabelType.SELF_PLUS: lambda target, uid, path: (path + '=' + uid).startswith(target) or (path + ':' + uid).startswith(target),
+    LabelType.SELF: lambda target, uid, path: (path + '=' + uid).startswith(target),
     LabelType.MEMBER: lambda target, uid, path: (path + ':' + uid).startswith(target),
 }
 
@@ -47,8 +47,8 @@ def empty_targets_generator(*args, **kwargs):
 
 
 ctx_targets_generators = {
-    LabelType.SELF_PLUS: lambda uid, path: [path, path + ':' + uid, path + '=' + uid],
     LabelType.SELF: lambda uid, path: [path, path + '=' + uid],
+    LabelType.SELF_PLUS: lambda uid, path: [path, path + ':' + uid, path + '=' + uid],
     LabelType.MEMBER: lambda uid, path: [path + ':' + uid],
 }
 
