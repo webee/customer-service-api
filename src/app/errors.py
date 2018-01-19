@@ -29,12 +29,12 @@ class BizError(Exception):
 
 
 def biz_error_handler(err: BizError):
-    logger.error(traceback.format_exc())
+    logger.debug(traceback.format_exc())
     return dict(code=err.code, message=err.message, description=err.description, details=err.details), err.status_code, err.headers
 
 
 def db_not_found_error_handler(err):
-    logger.warning(traceback.format_exc())
+    logger.debug(traceback.format_exc())
     return dict(message='item not found'), 404
 
 
