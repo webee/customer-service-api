@@ -55,6 +55,9 @@ class App:
 
 
 class Biz:
+    # 获取项目扩展数据的最小时间间隔
+    FETCH_EXT_DATA_INTERVAL = timedelta(seconds=5)
+    # 已经结束的会话的复活最大时间间隔
     CLOSED_SESSION_ALIVE_TIME = timedelta(minutes=0)
 
     USER_ONLINE_DELTA = timedelta(minutes=3)

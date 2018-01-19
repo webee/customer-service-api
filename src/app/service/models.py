@@ -274,6 +274,7 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
     # 扩展数据
     # [{type, value, label}, ...]
     ext_data = deferred(db.Column(db.JSON, nullable=False, default=[]), group='data')
+    ext_data_updated = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # 所属客户
     owner_id = db.Column(db.BigInteger, db.ForeignKey('customer.id'), nullable=False)
@@ -357,6 +358,7 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
     @dbs.transactional
     def update_ext_data(self, data):
         self.ext_data = normalize_data(data) or []
+        self.ext_data_updated = db.func.current_timestamp()
         flag_modified(self, 'ext_data')
         db.session.add(self)
 
