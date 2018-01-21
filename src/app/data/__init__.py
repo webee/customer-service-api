@@ -25,7 +25,7 @@ def init_test_data():
         'accessFunction': HOST_URL + '/api/test_app/accessFunction',
         'sendChannelMsg': HOST_URL + '/api/test_app/sendChannelMsg',
     }, access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
-                         dict(name='customerDetails', label='用户详情')],
+                         dict(name='bizDetails', label='业务详情'), dict(name='customerDetails', label='用户详情')],
                           staff_label_tree=sample_data.test_staff_label_tree))
 
     # project_domain_type
@@ -59,4 +59,5 @@ def init_prod_data():
     ], appid='cs', appkey='cs1234',
                           urls={},
                           access_functions=[dict(name='addRemark', label='添加备注'), dict(name='addTask', label='添加任务'),
+                                            dict(name='bizDetails', label='业务详情'),
                                             dict(name='customerDetails', label='用户详情')], staff_label_tree={}))
