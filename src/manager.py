@@ -3,9 +3,7 @@ from flask_script import Manager, Shell, Server
 from app import db, create_app
 from commands import Celery
 
-
 logger = logging.getLogger(__name__)
-
 
 manager = Manager(create_app)
 manager.add_option('-e', '--env', dest='env', default='dev', required=False)
@@ -46,6 +44,21 @@ def sync_proj_msgs(proj_ids):
     for proj_id in proj_ids:
         logging.info('sync: %d', proj_id)
         tasks.try_sync_proj_xchat_msgs.delay(proj_id=proj_id)
+
+
+@manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
+@manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=100, help='batch size')
+def create_projects(app_name, batch_size):
+    import sys
+    import json
+    from app.service.models import App
+    from app.biz import app as app_biz
+
+    app = App.query.filter_by(name=app_name).one()
+
+    data = [json.loads(line) for line in sys.stdin.readlines()]
+
+    app_biz.batch_create_projects(app, data, batch_size=batch_size)
 
 
 if __name__ == '__main__':
