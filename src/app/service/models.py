@@ -289,10 +289,12 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
                                 backref=db.backref('as_customer_projects', lazy='dynamic'))
 
     # 上一次会话
-    last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_last_session_id'), nullable=True)
+    last_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_last_session_id'),
+                                nullable=True)
     last_session = db.relationship('Session', foreign_keys=last_session_id, lazy='joined', post_update=True)
     # 当前会话
-    current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_current_session_id'), nullable=True)
+    current_session_id = db.Column(db.BigInteger, db.ForeignKey('session.id', name='fk_project_current_session_id'),
+                                   nullable=True)
     current_session = db.relationship('Session', foreign_keys=current_session_id, lazy='joined', post_update=True)
     # 起始消息id
     # TODO: 迁移消息和发送消息一样，先发送到xchat，再同步到cs
@@ -381,41 +383,53 @@ class ProjectXChat(base_model(), project_resource('xchat')):
     # # 正在同步
     syncing = db.Column(db.Boolean, nullable=False, default=False)
 
+    migrate_pending = db.Column(db.Integer, nullable=False, default=0)
+    migrate_syncing = db.Column(db.Boolean, nullable=False, default=False)
+
     def __repr__(self):
         return "<ProjectXChat: {}<->{}>".format(self.project.app_biz_id, self.chat_id)
 
     @staticmethod
+    def get_pending(syncing='syncing'):
+        if syncing == 'migrate_syncing':
+            return ProjectXChat.migrate_pending
+        return ProjectXChat.pending
+
+    @staticmethod
     @dbs.transactional
-    def try_sync(id):
+    def try_sync(id, syncing='syncing'):
         """尝试同步"""
         # init -> running
-        if ProjectXChat.query.filter_by(id=id, syncing=False).update({'syncing': True}):
+        if ProjectXChat.query.filter_by(id=id, **{syncing: False}).update({syncing: True}):
             return True
         # running/running_with_pending -> running_with_pending
-        ProjectXChat.query.filter_by(id=id, syncing=True).update({ProjectXChat.pending: ProjectXChat.pending + 1})
+        pending = ProjectXChat.get_pending(syncing)
+        ProjectXChat.query.filter_by(id=id, **{syncing: True}).update({pending: pending + 1})
         return False
 
     @staticmethod
-    def current_pending(id):
+    def current_pending(id, syncing='syncing'):
         """当前pending"""
-        return dbs.session.query(ProjectXChat.pending).filter_by(id=id).one().pending
+        pending = ProjectXChat.get_pending(syncing)
+        return dbs.session.query(pending).filter_by(id=id).one()[0]
 
     @staticmethod
     @dbs.transactional
-    def done_sync(id, pending=0):
+    def done_sync(id, cur_pending=0, syncing='syncing'):
         """完成同步"""
+        pending = ProjectXChat.get_pending(syncing)
         # running_with_pending -> running
-        ProjectXChat.query.filter_by(id=id, syncing=True).filter(ProjectXChat.pending > 0) \
-            .update({ProjectXChat.pending: ProjectXChat.pending - pending})
+        ProjectXChat.query.filter_by(id=id, **{syncing: True}).filter(pending > 0) \
+            .update({pending: pending - cur_pending})
         # running -> init
-        return ProjectXChat.query.filter_by(id=id, syncing=True, pending=0).update({'syncing': False})
+        return ProjectXChat.query.filter_by(id=id, **{syncing: True}).filter(pending == 0).update({syncing: False})
 
     @staticmethod
     @dbs.transactional
-    def stop_sync(id):
+    def stop_sync(id, syncing='syncing'):
         """结束同步"""
         # running -> init
-        return ProjectXChat.query.filter_by(id=id, syncing=True).update({'syncing': False})
+        return ProjectXChat.query.filter_by(id=id, **{syncing: True}).update({syncing: False})
 
 
 class Session(base_model(), project_resource('sessions', backref_uselist=True)):
