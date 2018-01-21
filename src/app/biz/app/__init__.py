@@ -60,7 +60,7 @@ def create_project(app, data):
         project.domain = domain
         project.type = type
         project.biz_id = biz_id
-        # FIXME: 在存在活动会话时，尝试通知前端, 可能的项目域和类型变化
+        # TODO: FIXME: 在存在活动会话时，尝试通知前端, 可能的项目域和类型变化
 
     project = project or app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
     owner = app_m.create_or_update_customer(app, data['owner'])
@@ -75,9 +75,11 @@ def create_project(app, data):
         project.leader = leader
         project.customers = customers
 
-    # create or update xchat chat
-    chat_id = xchat_biz.create_chat(project)
-    project.create_or_update_xchat(chat_id, start_msg_id)
+    if project.xchat is None or id:
+        # 只有当没创建过或者指定了id才创建xchat chat
+        # create or update xchat chat
+        chat_id = xchat_biz.create_chat(project)
+        project.create_or_update_xchat(chat_id, start_msg_id)
 
     # tags
     project.update_tags(data.get('tags'))
@@ -99,9 +101,9 @@ def create_projects(app, data):
     return [create_project(app, d) for d in data]
 
 
-def batch_create_projects(app, data):
+def batch_create_projects(app, data, batch_size=100):
     projects = []
-    for split_data in batch_split(data, 100):
+    for split_data in batch_split(data, batch_size):
         projects.extend(create_projects(app, split_data))
     return projects
 
@@ -134,7 +136,8 @@ def update_project(project, data):
 @dbs.transactional
 def update_projects(app, data):
     for d in data:
-        project = get_project(app, d.get('id'), d.get('domain'), d.get('type'), d.get('biz_id'), none_if_not_exists=True)
+        project = get_project(app, d.get('id'), d.get('domain'), d.get('type'), d.get('biz_id'),
+                              none_if_not_exists=True)
         if project:
             update_project(project, d)
 
