@@ -110,6 +110,7 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
         q = q.filter(Message.msg_id < rid)
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
     msgs = q.all()
+    # has_more指本次请求是否未完成，no_more指集合是否还有数据
     has_more = False
     if origin_limit <= 0 or origin_limit > MAX_MSGS_FETCH_SIZE:
         # 没有指定limit或者指定范围超出的情况

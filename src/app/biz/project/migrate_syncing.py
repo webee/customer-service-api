@@ -21,8 +21,9 @@ def _sync_proj_xchat_migrated_msgs(proj):
         return synced_count
 
     try:
-        msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, rid=proj_xchat.start_msg_id + 1, limit=100000,
-                                                      desc=True)
+        msgs, has_more, no_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, rid=proj_xchat.start_msg_id + 1,
+                                                               limit=100000,
+                                                               desc=True)
         for split_msgs in batch_split(msgs, 200):
             _insert_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
         synced_count += len(msgs)
