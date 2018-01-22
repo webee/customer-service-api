@@ -9,6 +9,7 @@ from app.biz.notifies import task_project_notify
 from app.service.models import Project, ProjectXChat
 from app.utils.commons import batch_split
 from .proj import new_messages
+from .commons import syncing_proj_xchat_msgs
 
 logger = logging.getLogger(__name__)
 
@@ -34,40 +35,16 @@ def sync_xchat_msgs(msg):
 
 
 def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None, proj=None, proj_xchat=None):
-    if proj is not None:
-        proj_xchat_id = proj.xchat.id
-    elif proj_xchat is not None:
-        proj = proj_xchat.project
-        proj_xchat_id = proj_xchat.id
-    elif proj_id is not None:
-        proj = Project.query.filter_by(id=proj_id).one()
-        proj_xchat_id = proj.xchat.id
-    elif proj_xchat_id is not None:
-        proj_xchat = ProjectXChat.query.filter_by(id=proj_xchat_id).one()
-        proj = proj_xchat.project
-        proj_xchat_id = proj_xchat.id
-    else:
-        return
+    syncing_proj_xchat_msgs('syncing', _sync_proj_xchat_msgs, proj_id=proj_id, proj_xchat_id=proj_xchat_id, proj=proj,
+                            proj_xchat=proj_xchat,
+                            extra_sync_kwargs=dict(xchat_msg=xchat_msg), done_syncing_func=_done_syncing)
 
-    if ProjectXChat.try_sync(proj_xchat_id):
-        try:
-            synced_count = 0
-            while True:
-                pending = ProjectXChat.current_pending(proj_xchat_id)
-                synced_count += _sync_proj_xchat_msgs(proj, xchat_msg)
-                xchat_msg = None
-                if not ProjectXChat.done_sync(proj_xchat_id, cur_pending=pending):
-                    # 延时累积
-                    time.sleep(0.12)
-                    continue
-                break
-            # # notify client
-            if synced_count > 0 and proj.current_session_id is not None:
-                task_project_notify(proj, NotifyTypes.MSGS, dict(projectID=proj.id))
-                task_project_notify(proj, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=proj.current_session_id))
-        except:
-            logger.exception('sync xchat msg error: %d', proj_xchat_id)
-            ProjectXChat.stop_sync(proj_xchat_id)
+
+def _done_syncing(synced_count, proj):
+    # # notify client
+    if synced_count > 0 and proj.current_session_id is not None:
+        task_project_notify(proj, NotifyTypes.MSGS, dict(projectID=proj.id))
+        task_project_notify(proj, NotifyTypes.MY_HANDLING_SESSIONS, dict(sessionID=proj.current_session_id))
 
 
 def _sync_proj_xchat_msgs(proj, xchat_msg=None):
