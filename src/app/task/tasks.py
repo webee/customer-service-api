@@ -1,6 +1,7 @@
 import logging
 from . import app
-from app.biz.project import sync as proj_biz_sync
+from app.biz.project import syncing as proj_biz_sync
+from app.biz.project import migrate_syncing as proj_biz_migrate_sync
 from app.biz import app as app_biz
 from app.biz.app import client as app_client_biz
 from app.biz import notify as notify_biz
@@ -57,6 +58,17 @@ def try_sync_proj_xchat_msgs(proj_id=None, proj_xchat_id=None, xchat_msg=None):
     proj_biz_sync.try_sync_proj_xchat_msgs(proj_id=proj_id, proj_xchat_id=proj_xchat_id, xchat_msg=xchat_msg)
 
 
+@app.task(ignore_result=True, queue='sync_xchat_msgs', routing_key='sync_xchat_msgs')
+def try_sync_proj_xchat_migrated_msgs(proj_id=None, proj_xchat_id=None):
+    """
+    根据指定的project，同步相应的会话迁移消息
+    :param proj_id:
+    :param proj_xchat_id:
+    :return:
+    """
+    proj_biz_migrate_sync.try_sync_proj_xchat_migrated_msgs(proj_id=proj_id, proj_xchat_id=proj_xchat_id)
+
+
 @app.task(ignore_result=True, queue='notify_xchat_msgs', routing_key='notify_xchat_msgs')
 def notify_xchat_msgs(msg):
     """
@@ -68,7 +80,6 @@ def notify_xchat_msgs(msg):
 
 
 # TODO: 定时扫描可能需要同步的会话
-# TODO: 不同渠道之间的转发
 
 
 # sync user statuses

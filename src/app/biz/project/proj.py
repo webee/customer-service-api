@@ -132,13 +132,8 @@ def new_messages(proj_id, msgs=()):
     dbs.session.bulk_save_objects(messages)
 
     tasks.send_channel_msgs.delay(channel_msgs)
+
     # update project & session msg_id
-    return __next_msg_id(proj, msg_id=msg_id, handler_msg_id=handler_msg_id, has_user_msg=has_user_msg,
-                         activated_channel=activated_channel, channel_user_id=channel_user_id)
-
-
-def __next_msg_id(proj, msg_id=None, handler_msg_id=None, has_user_msg=False, activated_channel=None,
-                  channel_user_id=None):
     if msg_id is not None:
         proj.msg_id = msg_id
     dbs.session.add(proj)
@@ -150,5 +145,3 @@ def __next_msg_id(proj, msg_id=None, handler_msg_id=None, has_user_msg=False, ac
     if handler_msg_id is not None:
         proj.current_session.handler_msg_id = handler_msg_id
     dbs.session.add(proj.current_session)
-
-    return proj.msg_id

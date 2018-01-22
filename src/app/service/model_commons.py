@@ -26,8 +26,8 @@ def base_model(index_created=True, index_updated=True):
 BaseModel = base_model(False, False)
 
 
-def foreign_key(key, backref_uselist=False, index=True, type=db.BigInteger):
-    return db.Column(type, db.ForeignKey(key), index=index, nullable=False, unique=not backref_uselist)
+def foreign_key(key, backref_uselist=False, index=True, type=db.BigInteger, nullable=False):
+    return db.Column(type, db.ForeignKey(key), index=index, nullable=nullable, unique=not backref_uselist)
 
 
 def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None, backref_cascade=None):
@@ -91,13 +91,13 @@ def project_resource(name, backref_uselist=False, backref_lazy=None, backref_cas
     return ProjectResource
 
 
-def session_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None):
+def session_resource(name, backref_uselist=False, backref_lazy=None, backref_cascade=None, nullable=False):
     class SessionResource(object):
         """属于session的资源"""
 
         @declared_attr
         def session_id(cls):
-            return foreign_key('session.id', backref_uselist=backref_uselist)
+            return foreign_key('session.id', backref_uselist=backref_uselist, nullable=nullable)
 
         @declared_attr
         def session(cls):

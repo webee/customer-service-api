@@ -1,7 +1,7 @@
 class ChannelDomainPacker:
     @staticmethod
     def pack(domain, channel=None):
-        return f'{channel}/{domain}' if channel is not None else domain
+        return f'{channel}/{domain}' if channel else domain
 
     @staticmethod
     def unpack(p, default_channel=None):

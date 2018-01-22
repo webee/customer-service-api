@@ -128,5 +128,29 @@ test_projects_data = [
             {"type": "link", "value": {"value": "详情", "href": "https://www.baidu.com/"}, "label": "用户详情"},
             ["测试y", "value", "yyyyy"]
         ]
+    },
+    {
+        "domain": "test",
+        "type": "test",
+        "biz_id": "t_0004",
+        "start_msg_id": 100000,
+        "owner": {
+            "uid": "test",
+        },
+        "leader": {
+            "uid": "test"
+        },
+        "customers": [
+            {
+                "uid": "test",
+            }
+        ],
+        "tags": ['消息迁移测试'],
+        "scope_labels": [
+            ["all", "1.1"]
+        ],
+        "meta_data": [
+            {"value": True, "label": "是否有效"}
+        ]
     }
 ]
