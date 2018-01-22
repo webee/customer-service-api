@@ -54,7 +54,7 @@ def _sync_proj_xchat_msgs(proj, xchat_msg=None):
         synced_count += 1
 
     try:
-        msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=10000)
+        msgs, has_more, no_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=10000)
         for split_msgs in batch_split(msgs, 100):
             _new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
         synced_count += len(msgs)
