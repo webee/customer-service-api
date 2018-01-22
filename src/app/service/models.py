@@ -324,7 +324,7 @@ class Project(base_model(), app_resource('projects'), WithOnlineModel):
             assert chat_id == self.xchat.chat_id, 'chat_id should not change'
             return self.xchat
         else:
-            xchat = ProjectXChat(project=self, chat_id=chat_id, start_msg_id=start_msg_id)
+            xchat = ProjectXChat(project=self, chat_id=chat_id, start_msg_id=start_msg_id, msg_id=start_msg_id)
             dbs.session.add(xchat)
             return xchat
 
@@ -369,9 +369,10 @@ class ProjectXChat(base_model(), project_resource('xchat')):
     __tablename__ = 'project_xchat'
 
     chat_id = db.Column(db.String(32), nullable=False, unique=True)
-    # 起始消息id
+    # 同步消息范围start_msg_id < x <= msg_id
+    # 起始消息id, 不包含在已同步消息中
     start_msg_id = db.Column(db.BigInteger, nullable=False, default=0)
-    # 已接收最大消息id
+    # 已接收最大消息id, 默认=start_msg_id
     msg_id = db.Column(db.BigInteger, nullable=False, default=0)
 
     # 同步控制
@@ -476,6 +477,12 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
                                                          'active' if self.is_active else 'closed', self.unsynced_count,
                                                          self.unhandled_count, self.msg_count)
 
+    @property
+    def last_session_msg(self):
+        """本次会话的最后一条消息"""
+        if self.msg_id > self.start_msg_id:
+            return self.msg
+
     @hybrid_property
     def msg_count(self):
         if self.msg_id == 0:
@@ -516,7 +523,7 @@ class Session(base_model(), project_resource('sessions', backref_uselist=True)):
 
 
 class Message(base_model(False, False), project_resource('messages', backref_uselist=True),
-              session_resource('messages', backref_uselist=True)):
+              session_resource('messages', backref_uselist=True, nullable=True)):
     __tablename__ = 'message'
 
     # 消息通道: 除了来自客服系统自身和xchat的其它通道

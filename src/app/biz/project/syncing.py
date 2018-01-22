@@ -1,6 +1,4 @@
 import logging
-import time
-import traceback
 
 from app import dbs, xchat_client
 from app.biz.ds import parse_xchat_msg_from_data
@@ -52,24 +50,24 @@ def _sync_proj_xchat_msgs(proj, xchat_msg=None):
 
     synced_count = 0
     if xchat_msg and proj_xchat.msg_id + 1 == xchat_msg.id:
-        new_proj_xchat_msg(proj, (xchat_msg,))
+        _new_proj_xchat_msg(proj, (xchat_msg,))
         synced_count += 1
 
     try:
         msgs, has_more = xchat_client.fetch_chat_msgs(proj_xchat.chat_id, lid=proj_xchat.msg_id, limit=10000)
         for split_msgs in batch_split(msgs, 100):
-            new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
+            _new_proj_xchat_msg(proj, [parse_xchat_msg_from_data(msg) for msg in split_msgs])
         synced_count += len(msgs)
         if has_more:
             synced_count += _sync_proj_xchat_msgs(proj)
     except:
-        logging.error(traceback.format_exc())
+        logger.exception('sync proj msgs error: %d', proj.id)
 
     return synced_count
 
 
 @dbs.transactional
-def new_proj_xchat_msg(proj, xchat_msgs):
+def _new_proj_xchat_msg(proj, xchat_msgs):
     msgs = []
     max_msg_id = proj.xchat.msg_id
     for xchat_msg in xchat_msgs:
