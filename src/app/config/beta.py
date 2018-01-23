@@ -6,7 +6,7 @@ class App:
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs_dev:cs1234@localhost/cs_beta'
-    SQLALCHEMY_ECHO = os.environ.get('ENABLE_SQLALCHEMY_ECHO', False)
+    SQLALCHEMY_ECHO = os.environ.get('ENABLE_SQLALCHEMY_ECHO') is not None
 
     # cache
     CACHE = {
