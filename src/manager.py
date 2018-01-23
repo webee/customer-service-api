@@ -132,8 +132,10 @@ def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
     else:
         q.put((cur_key, msgs, start_msg_id, batch_size))
 
-    for p in processes:
+    for _ in processes:
         q.put(None)
+
+    for p in processes:
         p.join()
 
 
