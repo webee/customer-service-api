@@ -18,7 +18,7 @@ filter_funcs = {
 }
 
 
-def main(app_name, fin=sys.stdin, fout=sys.stdout):
+def main(fin=sys.stdin, fout=sys.stdout):
     bad_line = False
     domain, type, biz_id, channel, user_type, customer, staff, msg_type, content_ts = [None] * 9
     for line in fin:
@@ -59,15 +59,15 @@ def main(app_name, fin=sys.stdin, fout=sys.stdout):
             msg = TypeMsgPacker.pack(msg_type, content)
         uid = ''
         if user_type == 'c':
-            uid = f'{app_name}:customer:{customer}'
+            uid = f'customer:{customer}'
         elif user_type == 's':
-            uid = f'{app_name}:staff:{staff}'
+            uid = f'staff:{staff}'
 
-        fout.write(SEP.join([app_name, domain, type, biz_id, uid, msg_domain, msg, ts]))
+        fout.write(SEP.join([domain, type, biz_id, uid, msg_domain, msg, ts]))
         fout.write('\n')
     fout.flush()
     sys.stderr.flush()
 
 
 if __name__ == '__main__':
-    main('qqxb')
+    main()

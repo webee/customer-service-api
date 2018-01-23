@@ -10,4 +10,4 @@ source ${root}/venv/bin/activate
 export PYTHONPATH=${PYTHONPATH}:./src
 
 python ./src/data/transform_message_data.py <${fin} >${fout}
-<${fout} sort -t $'\t' -k1,4 -k8rn,8 >${fout}.sort
+<${fout} sort -t $'\t' -k1,3 -k7rn,7 >${fout}.sort
