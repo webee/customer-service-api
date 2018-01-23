@@ -547,13 +547,22 @@ class Message(base_model(False, False), project_resource('messages', backref_use
     domain = db.Column(db.String(16), nullable=False, default='')
     type = db.Column(db.String(24), nullable=False, default='')
     content = db.Column(db.Text)
+    state = db.Column(db.JSON, nullable=True)
 
     # 消息发生的时间，以来源通道为准，
     # msg_id和updated总是递增的，但由于不同渠道同步消息的延迟, 因此可能会出现ts不递增的情况
     ts = db.Column(db.DateTime(timezone=True), default=db.func.current_timestamp())
 
     # project_id, msg_id唯一
-    __table_args__ = (db.UniqueConstraint('project_id', 'msg_id', name='uniq_project_msg_id'),)
+    __table_args__ = (db.UniqueConstraint('project_id', 'msg_id', name='uniq_project_msg_id'),
+                      db.Index('idx_message_domain_type', "domain", "type"))
+
+    @ignore_none
+    @dbs.transactional
+    def update_state(self, state):
+        self.state = state
+        flag_modified(self, 'state')
+        db.session.add(self)
 
     def __repr__(self):
         return "<Message: {0}, [{1}, {2}, {3}]>".format(self.channel, self.msg_id, self.domain, self.type)
