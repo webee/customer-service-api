@@ -73,8 +73,11 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
 
     count = 0
     for split_msgs in batch_split(msgs, batch_size):
-        _, n = xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs, start_msg_id=start_msg_id)
-        count += n
+        ok, n = xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs)
+        if ok:
+            count += n
+        else:
+            break
     if count > 0:
         tasks.try_sync_proj_xchat_migrated_msgs.delay(proj.id)
     logger.info('do_migrate_msgs: %s, %s, %s', proj.id, xchat.chat_id, count)

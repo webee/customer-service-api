@@ -100,9 +100,16 @@ class XChatClient(object):
     def _request(self, method, url, data=None, **kwargs):
         logger.debug('request: %s, %s, %s', method, url, data)
         headers = {'Authorization': 'Bearer ' + self.token}
-        resp = requests.request(method, url, json=data, headers=headers, **kwargs)
-        logger.debug('response: %s, %s, %s, %s', method, url, resp.status_code, resp.headers)
-        return RequestResult(resp)
+
+        resp = None
+        try:
+            resp = requests.request(method, url, json=data, headers=headers, **kwargs)
+            return RequestResult(resp)
+        except:
+            logger.exception('request: %s, %s', method, url)
+        finally:
+            if resp:
+                logger.debug('response: %s, %s, %s, %s', method, url, resp.status_code, resp.headers)
 
     def _get(self, url, **kwargs):
         return self._request('get', url, **kwargs)
