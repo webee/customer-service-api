@@ -68,6 +68,7 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
 
     xchat = proj.xchat
     if xchat.start_msg_id < start_msg_id:
+        logger.info('do_migrate_msgs: migrated %s, %s', proj.id, xchat.chat_id)
         return
 
     count = 0
