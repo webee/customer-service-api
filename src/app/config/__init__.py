@@ -108,7 +108,7 @@ LOGGING = {
         },
         'app.utils': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('APP_UTILS_LOG_LEVEL', 'DEBUG'),
             'propagate': False
         },
     },

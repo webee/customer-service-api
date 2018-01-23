@@ -61,7 +61,7 @@ def create_projects(app_name, batch_size):
     app_biz.batch_create_projects(app, data, batch_size=batch_size)
 
 
-def do_migrate_msgs(proj, msgs, batch_size=200):
+def _migrate_proj_msgs(proj, msgs, batch_size=200):
     from app.utils.commons import batch_split
     from app import xchat_client
     from app.task import tasks
@@ -71,6 +71,16 @@ def do_migrate_msgs(proj, msgs, batch_size=200):
         xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs)
     tasks.try_sync_proj_xchat_migrated_msgs.delay(proj.id)
     logger.info('do_migrate_msgs: %s, %s, %s', proj.id, xchat.chat_id, len(msgs))
+
+
+def _do_migrate_msgs(app, key, msgs, batch_size):
+    if len(msgs) > 0:
+        domain, type, biz_id = key
+        proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+        if proj:
+            _migrate_proj_msgs(proj, msgs, batch_size)
+        else:
+            logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
 
 @manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
@@ -89,18 +99,13 @@ def migrate_messages(app_name, batch_size):
 
         key = (domain, type, biz_id)
         if key != cur_key:
-            if len(msgs) > 0:
-                domain, type, biz_id = cur_key
-                proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one()
-                do_migrate_msgs(proj, msgs, batch_size)
+            _do_migrate_msgs(app, cur_key, msgs, batch_size)
             msgs = []
             cur_key = key
         msgs.append(dict(uid=f'{app_name}:{uid}', domain=msg_domain, msg=msg, ts=ts))
     else:
-        if len(msgs) > 0:
-            domain, type, biz_id = cur_key
-            proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one()
-            do_migrate_msgs(proj, msgs, batch_size)
+        _do_migrate_msgs(app, cur_key, msgs, batch_size)
+
 
 if __name__ == '__main__':
     manager.run()
