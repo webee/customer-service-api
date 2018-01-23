@@ -93,16 +93,29 @@ def _do_migrate_msgs(app, key, msgs, start_msg_id, batch_size):
             logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
 
+def _migrate_msgs_worker(app, q):
+    t = q.get()
+    while t:
+        _do_migrate_msgs(app, *t)
+        t = q.get()
+
+
 @manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
+@manager.option('-c', '--concurrency', type=int, dest="concurrency", required=False, default=1, help='concurrency')
 @manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=200, help='batch size')
 @manager.option('-i', '--start_msg_id', type=int, dest="start_msg_id", required=False, default=1, help='default start msg id')
-def migrate_messages(app_name, batch_size, start_msg_id):
+def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
+    from multiprocessing import Process, Queue
     import sys
     from app.service.models import App
 
     app = App.query.filter_by(name=app_name).one()
 
-    cur_key = None
+    q = Queue()
+    processes = [Process(target=_migrate_msgs_worker, name=f'worker#{i}', args=(app, q,)) for i in range(concurrency)]
+    for p in processes:
+        p.start()
+
     msgs = []
     for line in sys.stdin:
         domain, type, biz_id, uid, msg_domain, msg, ts = line.split('\t')
@@ -110,12 +123,16 @@ def migrate_messages(app_name, batch_size, start_msg_id):
 
         key = (domain, type, biz_id)
         if key != cur_key:
-            _do_migrate_msgs(app, cur_key, msgs, start_msg_id, batch_size)
+            q.put((cur_key, msgs, start_msg_id, batch_size))
             msgs = []
             cur_key = key
         msgs.append(dict(uid=f'{app_name}:{uid}', domain=msg_domain, msg=msg, ts=ts))
     else:
-        _do_migrate_msgs(app, cur_key, msgs, start_msg_id, batch_size)
+        q.put((cur_key, msgs, start_msg_id, batch_size))
+
+    for p in processes:
+        q.put(None)
+        p.join()
 
 
 if __name__ == '__main__':
