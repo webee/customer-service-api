@@ -67,8 +67,7 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
     from app.task import tasks
 
     xchat = proj.xchat
-    start_msg_id = start_msg_id if start_msg_id < xchat.start_msg_id else xchat.start_msg_id
-    if start_msg_id <= 0:
+    if xchat.start_msg_id < start_msg_id:
         return
 
     count = 0
