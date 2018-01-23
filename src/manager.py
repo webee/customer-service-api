@@ -116,6 +116,7 @@ def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
     for p in processes:
         p.start()
 
+    cur_key = None
     msgs = []
     for line in sys.stdin:
         domain, type, biz_id, uid, msg_domain, msg, ts = line.split('\t')
