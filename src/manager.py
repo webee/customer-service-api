@@ -93,7 +93,11 @@ def _do_migrate_msgs(app, key, msgs, start_msg_id, batch_size):
             logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
 
-def _migrate_msgs_worker(app, q):
+def _migrate_msgs_worker(app_name, q):
+    from app.service.models import App
+
+    app = App.query.filter_by(name=app_name).one()
+
     t = q.get()
     while t:
         _do_migrate_msgs(app, *t)
@@ -107,12 +111,9 @@ def _migrate_msgs_worker(app, q):
 def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
     from multiprocessing import Process, Queue
     import sys
-    from app.service.models import App
-
-    app = App.query.filter_by(name=app_name).one()
 
     q = Queue()
-    processes = [Process(target=_migrate_msgs_worker, name=f'worker#{i}', args=(app, q,)) for i in range(concurrency)]
+    processes = [Process(target=_migrate_msgs_worker, name=f'worker#{i}', args=(app_name, q,)) for i in range(concurrency)]
     for p in processes:
         p.start()
 
