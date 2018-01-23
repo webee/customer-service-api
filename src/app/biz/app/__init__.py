@@ -1,5 +1,5 @@
 import re
-from sqlalchemy import or_
+from sqlalchemy import or_, orm
 from app import dbs
 from app import errors
 from app.errors import BizError
@@ -14,8 +14,10 @@ from .app import create_or_update_project_domain_type, create_or_update_project_
 NS_PT = re.compile(r':')
 
 
-def get_project(app, id=None, domain=None, type=None, biz_id=None, none_if_not_exists=False):
+def get_project(app, id=None, domain=None, type=None, biz_id=None, none_if_not_exists=False, need_sessions=False):
     q = app.projects
+    if need_sessions:
+        q = q.options(orm.joinedload('last_session'), orm.joinedload('current_session'))
     if id is not None:
         q = q.filter_by(id=id)
     elif domain is not None and type is not None:

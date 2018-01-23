@@ -20,8 +20,7 @@ def sync_xchat_msgs(msg):
         return
 
     proj = proj_xchat.project
-    app = proj.app
-    if xchat_msg.app_user_id.app_name != app.name:
+    if xchat_msg.app_user_id.app_name != proj.app_name:
         # app name不匹配
         return
 

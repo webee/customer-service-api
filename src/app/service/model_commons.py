@@ -30,7 +30,7 @@ def foreign_key(key, backref_uselist=False, index=True, type=db.BigInteger, null
     return db.Column(type, db.ForeignKey(key), index=index, nullable=nullable, unique=not backref_uselist)
 
 
-def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None, backref_cascade=None):
+def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=None, backref_cascade=None, lazy='joined'):
     backref_kwargs = dict(uselist=backref_uselist)
     if backref_uselist:
         backref_kwargs['lazy'] = 'dynamic'
@@ -39,10 +39,10 @@ def relationship(rel, name, foreign_keys, backref_uselist=False, backref_lazy=No
 
     if backref_cascade is not None:
         backref_kwargs['cascade'] = backref_cascade
-    return db.relationship(rel, lazy='joined', foreign_keys=foreign_keys, backref=db.backref(name, **backref_kwargs))
+    return db.relationship(rel, lazy=lazy, foreign_keys=foreign_keys, backref=db.backref(name, **backref_kwargs))
 
 
-def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=None):
+def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=None, lazy='joined'):
     class AppResource(object):
         """属于app的资源"""
 
@@ -52,7 +52,7 @@ def app_resource(name, backref_uselist=True, backref_lazy=None, backref_cascade=
 
         @declared_attr
         def app(cls):
-            return relationship('App', name, cls.app_name, backref_uselist, backref_lazy, backref_cascade)
+            return relationship('App', name, cls.app_name, backref_uselist, backref_lazy, backref_cascade, lazy=lazy)
 
     return AppResource
 
