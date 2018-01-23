@@ -61,14 +61,23 @@ def create_projects(app_name, batch_size):
     app_biz.batch_create_projects(app, data, batch_size=batch_size)
 
 
-def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
+def _migrate_proj_msgs(proj, msgs, start_msg_id=None, batch_size=200):
+    import arrow
     from app.utils.commons import batch_split
     from app import xchat_client
     from app.task import tasks
 
     xchat = proj.xchat
-    if xchat.start_msg_id < start_msg_id:
-        logger.info('do_migrate_msgs: migrated %s, %s', proj.id, xchat.chat_id)
+    if start_msg_id is not None:
+        if xchat.start_msg_id < start_msg_id:
+            logger.info('do_migrate_msgs: migrated %s, %s', proj.id, xchat.chat_id)
+            return
+
+    first_msg = proj.messages.filter_by(msg_id=proj.start_msg_id + 1).one_or_none()
+    if first_msg:
+        ts = arrow.get(first_msg.ts).timestamp
+        msgs = [msg for msg in msgs if msg['ts'] < ts]
+    if len(msgs) <= 0:
         return
 
     count = 0
@@ -84,13 +93,15 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
 
 
 def _do_migrate_msgs(app, key, msgs, start_msg_id, batch_size):
-    if len(msgs) > 0:
-        domain, type, biz_id = key
-        proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
-        if proj:
-            _migrate_proj_msgs(proj, msgs, start_msg_id, batch_size)
-        else:
-            logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
+    if len(msgs) <= 0:
+        return
+
+    domain, type, biz_id = key
+    proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+    if proj:
+        _migrate_proj_msgs(proj, msgs, start_msg_id, batch_size)
+    else:
+        logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
 
 def _migrate_msgs_worker(app_name, q):
@@ -107,13 +118,15 @@ def _migrate_msgs_worker(app_name, q):
 @manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
 @manager.option('-c', '--concurrency', type=int, dest="concurrency", required=False, default=1, help='concurrency')
 @manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=200, help='batch size')
-@manager.option('-i', '--start_msg_id', type=int, dest="start_msg_id", required=False, default=1, help='default start msg id')
+@manager.option('-i', '--start_msg_id', type=int, dest="start_msg_id", required=False, default=None,
+                help='default start msg id')
 def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
     from multiprocessing import Process, Queue
     import sys
 
-    q = Queue()
-    processes = [Process(target=_migrate_msgs_worker, name=f'worker#{i}', args=(app_name, q,)) for i in range(concurrency)]
+    q = Queue(maxsize=concurrency * 4)
+    processes = [Process(target=_migrate_msgs_worker, name=f'worker#{i}', args=(app_name, q,)) for i in
+                 range(concurrency)]
     for p in processes:
         p.start()
 
