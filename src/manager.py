@@ -61,31 +61,39 @@ def create_projects(app_name, batch_size):
     app_biz.batch_create_projects(app, data, batch_size=batch_size)
 
 
-def _migrate_proj_msgs(proj, msgs, batch_size=200):
+def _migrate_proj_msgs(proj, msgs, start_msg_id=1, batch_size=200):
     from app.utils.commons import batch_split
     from app import xchat_client
     from app.task import tasks
 
     xchat = proj.xchat
+    start_msg_id = start_msg_id if start_msg_id < xchat.start_msg_id else xchat.start_msg_id
+    if start_msg_id <= 0:
+        return
+
+    count = 0
     for split_msgs in batch_split(msgs, batch_size):
-        xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs)
-    tasks.try_sync_proj_xchat_migrated_msgs.delay(proj.id)
-    logger.info('do_migrate_msgs: %s, %s, %s', proj.id, xchat.chat_id, len(msgs))
+        _, n = xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs, start_msg_id=start_msg_id)
+        count += n
+    if count > 0:
+        tasks.try_sync_proj_xchat_migrated_msgs.delay(proj.id)
+    logger.info('do_migrate_msgs: %s, %s, %s', proj.id, xchat.chat_id, count)
 
 
-def _do_migrate_msgs(app, key, msgs, batch_size):
+def _do_migrate_msgs(app, key, msgs, start_msg_id, batch_size):
     if len(msgs) > 0:
         domain, type, biz_id = key
         proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
         if proj:
-            _migrate_proj_msgs(proj, msgs, batch_size)
+            _migrate_proj_msgs(proj, msgs, start_msg_id, batch_size)
         else:
             logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
 
 @manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
 @manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=200, help='batch size')
-def migrate_messages(app_name, batch_size):
+@manager.option('-i', '--start_msg_id', type=int, dest="start_msg_id", required=False, default=1, help='default start msg id')
+def migrate_messages(app_name, batch_size, start_msg_id):
     import sys
     from app.service.models import App
 
@@ -99,12 +107,12 @@ def migrate_messages(app_name, batch_size):
 
         key = (domain, type, biz_id)
         if key != cur_key:
-            _do_migrate_msgs(app, cur_key, msgs, batch_size)
+            _do_migrate_msgs(app, cur_key, msgs, start_msg_id, batch_size)
             msgs = []
             cur_key = key
         msgs.append(dict(uid=f'{app_name}:{uid}', domain=msg_domain, msg=msg, ts=ts))
     else:
-        _do_migrate_msgs(app, cur_key, msgs, batch_size)
+        _do_migrate_msgs(app, cur_key, msgs, start_msg_id, batch_size)
 
 
 if __name__ == '__main__':
