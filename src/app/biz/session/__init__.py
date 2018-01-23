@@ -177,4 +177,4 @@ def _query_session(app, staff, domain, type, is_active, context_label=None, hand
     if is_online is not None:
         q = q.filter(Session.project.has(Project.is_online == is_online))
 
-    return q.options(orm.lazyload('project'))
+    return q
