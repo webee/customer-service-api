@@ -16,7 +16,7 @@ def staff_fetch_staffs(app, staff, page, per_page, q_staff=None, context_label=N
     q = app.staffs.options(orm.undefer('context_labels')).filter(
         func.x_targets_match_ctxes(path_labels.get_targets(staff.uid, staff.context_labels), Staff.uid,
                                    Staff.context_labels))
-    if q_staff is not None:
+    if q_staff:
         s = f'%{q_staff}%'
         q = q.filter(or_(Staff.name.like(s), Staff.uid.like(s)))
     if context_label is not None:
