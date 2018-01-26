@@ -153,6 +153,49 @@ CREATE OR REPLACE FUNCTION x_scopes_match_ctxes(scopes text[][], uid text, ctxes
     END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+-- 单context匹配单scope
+CREATE OR REPLACE FUNCTION x_ctx_match_scope(uid text, ctx_type text, ctx_path text, scope_type text, scope_path text) RETURNS BOOLEAN AS $$
+    BEGIN
+        return case ctx_type when 'self+' then path_match_target(scope_type, scope_path, ctx_path) or path_match_target(scope_type, scope_path, ctx_path||':'||uid) or path_match_target(scope_type, scope_path, ctx_path||'='||uid)
+                    when 'self' then path_match_target(scope_type, scope_path, ctx_path) or path_match_target(scope_type, scope_path, ctx_path||'='||uid)
+                    when 'self.' then path_match_target(scope_type, scope_path, ctx_path||':'||uid)
+                    else false
+        end;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- 多contextes匹配单scope
+CREATE OR REPLACE FUNCTION x_ctxes_match_scope(uid text, ctxes text[][], scope_type text, scope_path text) RETURNS BOOLEAN AS $$
+    DECLARE
+        ctx text[];
+    BEGIN
+        foreach ctx slice 1 in array ctxes
+        loop
+            if x_ctx_match_scope(uid, ctx[1], ctx[2], scope_type, scope_type) then
+                return true;
+            end if;
+        end loop;
+        return false;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- 多contextes匹配多scopes
+CREATE OR REPLACE FUNCTION x_ctxes_match_scopes(uid text, ctxes text[][], scopes text[][]) RETURNS BOOLEAN AS $$
+    DECLARE
+        scope text[];
+    BEGIN
+        foreach scope slice 1 in array scopes
+        loop
+            if x_ctxes_match_scope(uid, ctxes, scope[1], scope[2]) then
+                return true;
+            end if;
+        end loop;
+        return false;
+    END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
 
 -- 单context匹配单路径
 CREATE OR REPLACE FUNCTION x_target_match_ctx(target text, uid text, type text, path text) RETURNS BOOLEAN AS $$
