@@ -1,5 +1,6 @@
 from functools import wraps
 from .path_labels import LabelType
+from .path_labels import ctx_label_key
 
 LABEL_TYPE_MAP = {
     'up': LabelType.UP,
@@ -31,7 +32,7 @@ def normalize_labels(labels, type_map=LABEL_TYPE_MAP):
 
 
 def normalize_context_labels(labels):
-    return normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP)
+    return sorted(normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP), key=ctx_label_key)
 
 
 def _get_alias_to(label):
