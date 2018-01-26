@@ -50,7 +50,9 @@ def try_open_session(proj_id, handler=None):
             if last_session.msg_id > 0:
                 # 有发送过消息
                 proj.current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
-                                               sync_msg_id=proj.msg_id)
+                                               sync_msg_id=proj.msg_id,
+                                               activated_channel=last_session.activated_channel,
+                                               channel_user_id=last_session.channel_user_id)
             else:
                 # 没有发送过消息
                 # 则重新打开上一次的会话
