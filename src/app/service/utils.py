@@ -32,6 +32,8 @@ def normalize_labels(labels, type_map=LABEL_TYPE_MAP):
 
 
 def normalize_context_labels(labels):
+    if labels == [[None, None]]:
+        return None
     return sorted(normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP), key=ctx_label_key)
 
 
