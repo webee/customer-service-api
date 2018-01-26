@@ -47,6 +47,19 @@ def sync_proj_msgs(proj_ids):
 
 
 @manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
+@manager.option('-u', '--uid', type=str, dest="uid", required=True, help='user id')
+def new_staff_token(app_name, uid):
+    from app.service.models import App
+    from app import jwt
+
+    app = App.query.filter_by(name=app_name).one()
+    staff = app.staffs.filter_by(uid=uid).one()
+
+    token = jwt.encode_token('staff', staff)
+    logger.info('token: %s', token)
+
+
+@manager.option('-a', '--app_name', type=str, dest="app_name", required=True, help='app name')
 @manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=100, help='batch size')
 def create_projects(app_name, batch_size):
     import sys
