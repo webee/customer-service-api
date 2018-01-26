@@ -1,3 +1,4 @@
+from functools import cmp_to_key
 from typing import Dict, Tuple, List
 
 # types
@@ -47,8 +48,8 @@ def empty_targets_generator(*args, **kwargs):
 
 
 ctx_targets_generators = {
-    LabelType.SELF: lambda uid, path: [path, path + '=' + uid],
     LabelType.SELF_PLUS: lambda uid, path: [path, path + ':' + uid, path + '=' + uid],
+    LabelType.SELF: lambda uid, path: [path, path + '=' + uid],
     LabelType.MEMBER: lambda uid, path: [path + ':' + uid],
 }
 
@@ -89,3 +90,40 @@ def scopes_match_target(scopes: t_path_labels, target: str):
 
 def path_match_target(type: str, path: str, target: str):
     return matchers.get(type, false_matcher)(path, target)
+
+
+# compare context labels
+ctx_target_length_getter = {
+    LabelType.SELF_PLUS: lambda path: len(path),
+    LabelType.SELF: lambda path: len(path),
+    LabelType.MEMBER: lambda path: len(path) + 1
+}
+
+
+def empty_target_length_getter(*args, **kwargs):
+    return 1024
+
+
+ctx_type_length_getter = {
+    LabelType.SELF_PLUS: 0,
+    LabelType.SELF: 1,
+    LabelType.MEMBER: 2
+}
+
+
+def cmp_ctx_label(ctx1: t_path_label, ctx2: t_path_label):
+    t1, p1 = ctx1
+    t2, p2 = ctx2
+    l1 = ctx_target_length_getter.get(t1, empty_target_length_getter)(p1)
+    l2 = ctx_target_length_getter.get(t1, empty_target_length_getter)(p2)
+    if l1 < l2:
+        return -1
+    elif l1 > l2:
+        return 1
+
+    tl1 = ctx_type_length_getter.get(t1, 1024)
+    tl2 = ctx_type_length_getter.get(t2, 1024)
+    return tl1 - tl2
+
+
+ctx_label_key = cmp_to_key(cmp_ctx_label)
