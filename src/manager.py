@@ -168,7 +168,7 @@ def migrate_messages(app_name, concurrency, batch_size, start_msg_id, start_delt
             cur_key = key
         msgs.append(dict(uid=f'{app_name}:{uid}', domain=msg_domain, msg=msg, ts=ts))
     else:
-        q.put((cur_key, msgs, start_msg_id, batch_size))
+        q.put((cur_key, msgs, start_msg_id, start_delta, batch_size))
 
     for _ in processes:
         q.put(None)
