@@ -182,14 +182,19 @@ class XChatClient(object):
         if res.is_success():
             return res.data['ok']
 
-    def insert_chat_msgs(self, chat_id, msgs=(), start_msg_id=1):
+    def insert_chat_msgs(self, chat_id, msgs=(), start_msg_id=None, start_delta=None):
         """ 往会话前面插入消息
         :param chat_id: 会话id
         :param msgs: [{uid, msg, ts, domain}, ...]
         :param start_msg_id: 提示的开始消息id，如果实际小于此，则不会插入
+        :param start_delta: 开始msg_id的差数
         :return: 是否成功，成功插入条数
         """
         data = {'msgs': msgs, 'start_msg_id': start_msg_id}
+        if start_msg_id is not None:
+            data['start_msg_id'] = start_msg_id
+        if start_delta is not None:
+            data['start_delta'] = start_delta
         url = self._build_url(self.config.INSERT_CHAT_MESSAGES_PATH, dict(chat_id=chat_id))
         res = self._post(url, data)
         if res.is_success():

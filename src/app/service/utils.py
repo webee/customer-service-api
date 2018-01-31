@@ -23,8 +23,12 @@ CONTEXT_LABEL_TYPE_MAP = {
     'self+': LabelType.SELF_PLUS
 }
 
+NULL_LABELS = [[None, None]]
+
 
 def normalize_labels(labels, type_map=LABEL_TYPE_MAP):
+    if labels == NULL_LABELS:
+        return None
     if labels:
         return [[type_map[l[0]], l[1]] if isinstance(l, list) else [type_map[l['type']], l['path']]
                 for l in labels]
@@ -32,7 +36,7 @@ def normalize_labels(labels, type_map=LABEL_TYPE_MAP):
 
 
 def normalize_context_labels(labels):
-    if labels == [[None, None]]:
+    if labels == NULL_LABELS:
         return None
     return sorted(normalize_labels(labels, type_map=CONTEXT_LABEL_TYPE_MAP), key=ctx_label_key)
 

@@ -38,36 +38,41 @@ def _sync_proj_xchat_migrated_msgs(proj):
 @dbs.transactional
 def _insert_proj_xchat_msg(proj, xchat_msgs):
     msgs = []
+
+    is_serial = False
     min_msg_id = proj.xchat.start_msg_id
     for xchat_msg in xchat_msgs:
         _, user_type, uid = xchat_msg.app_user_id
         channel, domain, type, content = xchat_msg.msg_data
         msgs.append((xchat_msg.id, channel, domain, type, content, user_type, uid, xchat_msg.ts))
 
+        if xchat_msg.id == proj.xchat.start_msg_id:
+            is_serial = True
+
         if xchat_msg.id < min_msg_id:
             min_msg_id = xchat_msg.id
 
-    _insert_messages(proj, msgs)
+    _insert_messages(proj, msgs, is_serial=is_serial)
 
-    # update project xchat msg id
-    ProjectXChat.query.filter_by(id=proj.xchat.id).filter(ProjectXChat.start_msg_id >= min_msg_id).update(
-        {'start_msg_id': min_msg_id - 1})
+    if is_serial:
+        # update project xchat msg id
+        ProjectXChat.query.filter_by(id=proj.xchat.id).filter(ProjectXChat.start_msg_id >= min_msg_id).update(
+            {'start_msg_id': min_msg_id - 1})
 
 
-def _insert_messages(proj, msgs=()):
+def _insert_messages(proj, msgs=(), is_serial=False):
     messages = []
     msg_id = None
-    for i, msg in enumerate(msgs, 0):
+    for msg in msgs:
         id, channel, domain, type, content, user_type, user_id, ts = msg
         message = Message(project_id=proj.id, rx_key=id, user_type=user_type, user_id=user_id,
-                          msg_id=proj.start_msg_id - i,
-                          channel=channel, domain=domain, type=type, content=content, ts=ts)
+                          msg_id=id, channel=channel, domain=domain, type=type, content=content, ts=ts)
         messages.append(message)
         msg_id = message.msg_id
 
     dbs.session.bulk_save_objects(messages)
 
-    # update project start_msg_id
-    if msg_id is not None:
+    if is_serial and msg_id is not None:
+        # update project start_msg_id
         proj.start_msg_id = msg_id - 1
         dbs.session.add(proj)
