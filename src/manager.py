@@ -70,8 +70,12 @@ def create_projects(app_name, batch_size):
     app = App.query.filter_by(name=app_name).one()
 
     data = [json.loads(line) for line in sys.stdin.readlines()]
+    logger.info('create projects: %d', len(data))
 
-    app_biz.batch_create_projects(app, data, batch_size=batch_size)
+    def action(projs):
+        logger.info('created projects: %d', len(projs))
+
+    app_biz.batch_create_projects(app, data, batch_size=batch_size, is_create=True, action=action)
 
 
 def _migrate_proj_msgs(proj, msgs, start_msg_id=None, start_delta=None, batch_size=200):

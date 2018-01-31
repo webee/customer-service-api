@@ -46,7 +46,7 @@ def is_project_exists(app, id=None, domain=None, type=None, biz_id=None):
 
 
 @dbs.transactional
-def create_project(app, data):
+def create_project(app, data, is_create=False):
     project_domain_type_tree = app.project_domain_type_tree
     domain = data['domain']
     type = data['type']
@@ -65,6 +65,10 @@ def create_project(app, data):
         # TODO: FIXME: 在存在活动会话时，尝试通知前端, 可能的项目域和类型变化
 
     project = project or app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
+    if project and is_create:
+        # 只是创建
+        return project
+
     owner = app_m.create_or_update_customer(app, data['owner'])
     leader = app_m.create_or_update_staff(app, data['leader'])
     customers = app_m.create_or_update_customers(app, data['customers'])
@@ -99,14 +103,17 @@ def create_project(app, data):
 
 
 @dbs.transactional
-def create_projects(app, data):
-    return [create_project(app, d) for d in data]
+def create_projects(app, data, is_create=False):
+    return [create_project(app, d, is_create=is_create) for d in data]
 
 
-def batch_create_projects(app, data, batch_size=100):
+def batch_create_projects(app, data, batch_size=100, is_create=False, action=None):
     projects = []
     for split_data in batch_split(data, batch_size):
-        projects.extend(create_projects(app, split_data))
+        projs = create_projects(app, split_data, is_create=is_create)
+        projects.extend(projs)
+        if action:
+            action(projs)
     return projects
 
 
