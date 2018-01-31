@@ -5,7 +5,8 @@ import json
 def main(fin=sys.stdin, fout=sys.stdout):
     for line in fin:
         proj = json.loads(line)
-        del proj['id']
+        if 'id' in proj:
+            del proj['id']
         proj['start_msg_id'] = 300000
         fout.write(json.dumps(proj, ensure_ascii=False))
         fout.write('\n')
