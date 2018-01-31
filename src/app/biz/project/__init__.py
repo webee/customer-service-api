@@ -107,7 +107,7 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     # 这里不需要用到Session
     # TODO: 研究生成复杂sql的原因是什么？
     # q = project.messages.options(lazyload('project'), lazyload('session')).filter(Message.msg_id > lid)
-    q = Message.query.options(lazyload('project', 'session')).filter_by(project_id=project.id).filter(Message.msg_id > lid)
+    q = Message.query.options(lazyload('project'), lazyload('session')).filter_by(project_id=project.id).filter(Message.msg_id > lid)
     if rid > 0:
         q = q.filter(Message.msg_id < rid)
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
