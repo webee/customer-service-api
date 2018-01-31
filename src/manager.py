@@ -103,7 +103,7 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=None, start_delta=None, batch_si
     if lt_msg and rt_msg:
         l_ts = arrow.get(lt_msg.ts).timestamp
         r_ts = arrow.get(rt_msg.ts).timestamp
-        msgs = [msg for msg in msgs if not (l_ts <= msg['ts'] <= r_ts)]
+        msgs = [msg for msg in msgs if not (l_ts <= int(msg['ts']) <= r_ts)]
 
     if len(msgs) <= 0:
         return
