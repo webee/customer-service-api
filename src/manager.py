@@ -74,10 +74,12 @@ def create_projects(app_name, batch_size):
     app_biz.batch_create_projects(app, data, batch_size=batch_size)
 
 
-def _migrate_proj_msgs(proj, msgs, start_msg_id=None, batch_size=200):
+def _migrate_proj_msgs(proj, msgs, start_msg_id=None, start_delta=None, batch_size=200):
     import arrow
+    from sqlalchemy import desc
     from app.utils.commons import batch_split
     from app import xchat_client
+    from app.service.models import Message
     from app.task import tasks
 
     xchat = proj.xchat
@@ -86,16 +88,24 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=None, batch_size=200):
             logger.info('do_migrate_msgs: migrated %s, %s', proj.id, xchat.chat_id)
             return
 
-    first_msg = proj.messages.filter_by(msg_id=proj.start_msg_id + 1).one_or_none()
-    if first_msg:
-        ts = arrow.get(first_msg.ts).timestamp
-        msgs = [msg for msg in msgs if msg['ts'] < ts]
+    rt = arrow.get(msgs[0].ts).datetime
+    lt = arrow.get(msgs[-1].ts).datetime
+
+    # 根据时间去掉时间段重复的消息
+    lt_msg = proj.messages.filter(Message.ts >= lt, Message.ts <= rt).order_by(Message.ts).first()
+    rt_msg = proj.messages.filter(Message.ts >= lt, Message.ts <= rt).order_by(desc(Message.ts)).first()
+    if lt_msg and rt_msg:
+        l_ts = arrow.get(lt_msg.ts).timestamp
+        r_ts = arrow.get(rt_msg.ts).timestamp
+        msgs = [msg for msg in msgs if not (l_ts <= msg['ts'] <= r_ts)]
+
     if len(msgs) <= 0:
         return
 
     count = 0
     for split_msgs in batch_split(msgs, batch_size):
-        ok, n = xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs)
+        ok, n = xchat_client.insert_chat_msgs(xchat.chat_id, split_msgs, start_delta=start_delta)
+        start_delta += len(split_msgs)
         if ok:
             count += n
         else:
@@ -105,14 +115,14 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=None, batch_size=200):
     logger.info('do_migrate_msgs: %s, %s, %s', proj.id, xchat.chat_id, count)
 
 
-def _do_migrate_msgs(app, key, msgs, start_msg_id, batch_size):
+def _do_migrate_msgs(app, key, msgs, start_msg_id, start_delta, batch_size):
     if len(msgs) <= 0:
         return
 
     domain, type, biz_id = key
     proj = app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).one_or_none()
     if proj:
-        _migrate_proj_msgs(proj, msgs, start_msg_id, batch_size)
+        _migrate_proj_msgs(proj, msgs, start_msg_id, start_delta, batch_size)
     else:
         logger.warning('proj not exists: %s, %s, %s', domain, type, biz_id)
 
@@ -133,7 +143,9 @@ def _migrate_msgs_worker(app_name, q):
 @manager.option('-b', '--batch_size', type=int, dest="batch_size", required=False, default=200, help='batch size')
 @manager.option('-i', '--start_msg_id', type=int, dest="start_msg_id", required=False, default=None,
                 help='default start msg id')
-def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
+@manager.option('-d', '--start_delta', type=int, dest="start_delta", required=False, default=None,
+                help='default start delta')
+def migrate_messages(app_name, concurrency, batch_size, start_msg_id, start_delta):
     from multiprocessing import Process, Queue
     import sys
 
@@ -151,7 +163,7 @@ def migrate_messages(app_name, concurrency, batch_size, start_msg_id):
 
         key = (domain, type, biz_id)
         if key != cur_key:
-            q.put((cur_key, msgs, start_msg_id, batch_size))
+            q.put((cur_key, msgs, start_msg_id, start_delta, batch_size))
             msgs = []
             cur_key = key
         msgs.append(dict(uid=f'{app_name}:{uid}', domain=msg_domain, msg=msg, ts=ts))
