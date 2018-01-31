@@ -88,8 +88,8 @@ def _migrate_proj_msgs(proj, msgs, start_msg_id=None, start_delta=None, batch_si
             logger.info('do_migrate_msgs: migrated %s, %s', proj.id, xchat.chat_id)
             return
 
-    rt = arrow.get(msgs[0].ts).datetime
-    lt = arrow.get(msgs[-1].ts).datetime
+    rt = arrow.get(msgs[0]['ts']).datetime
+    lt = arrow.get(msgs[-1]['ts']).datetime
 
     # 根据时间去掉时间段重复的消息
     lt_msg = proj.messages.filter(Message.ts >= lt, Message.ts <= rt).order_by(Message.ts).first()
