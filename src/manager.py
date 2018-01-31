@@ -64,18 +64,20 @@ def new_staff_token(app_name, uid):
 def create_projects(app_name, batch_size):
     import sys
     import json
+    from app.utils.commons import batch_split
     from app.service.models import App
     from app.biz import app as app_biz
 
     app = App.query.filter_by(name=app_name).one()
 
-    data = [json.loads(line) for line in sys.stdin.readlines()]
-    logger.info('create projects: %d', len(data))
-
     def action(projs):
         logger.info('created projects: %d', len(projs))
 
-    app_biz.batch_create_projects(app, data, batch_size=batch_size, is_create=True, action=action)
+    for lines in batch_split(sys.stdin.readlines(), batch_size=batch_size * 100):
+        data = [json.loads(line) for line in lines]
+        logger.info('create projects: %d', len(data))
+
+        app_biz.batch_create_projects(app, data, batch_size=batch_size, is_create=True, action=action)
 
 
 def _migrate_proj_msgs(proj, msgs, start_msg_id=None, start_delta=None, batch_size=200):
