@@ -190,7 +190,7 @@ class XChatClient(object):
         :param start_delta: 开始msg_id的差数
         :return: 是否成功，成功插入条数
         """
-        data = {'msgs': msgs, 'start_msg_id': start_msg_id}
+        data = {'msgs': msgs}
         if start_msg_id is not None:
             data['start_msg_id'] = start_msg_id
         if start_delta is not None:
