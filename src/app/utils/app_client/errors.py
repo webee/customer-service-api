@@ -6,7 +6,7 @@ class MethodTypeNotSupportedError(Exception):
 
 
 class RequestError(Exception):
-    """http请求错误"""
+    """http请求错误, status code不是>=200 and < 300"""
 
     def __init__(self, resp):
         self.resp = resp

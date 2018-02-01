@@ -3,6 +3,7 @@ class MethodType:
     GET_EXT_DATA = 'getExtData'
     ACCESS_FUNCTION = 'accessFunction'
     SEND_CHANNEL_MSG = 'sendChannelMsg'
+    PUSH_MSG = 'pushMsg'
 
 
 PARAM_HEADER_MAP = {
