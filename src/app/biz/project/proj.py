@@ -34,43 +34,41 @@ def try_handle_project(proj, handler):
 @dbs.transactional
 def try_open_session(proj_id, handler=None):
     # 锁住project
-    proj = lock_project(proj_id, options=[orm.joinedload('last_session'), orm.joinedload('current_session')])
+    proj = lock_project(proj_id, options=[orm.lazyload('last_session'), orm.lazyload('current_session')])
     prev_handler = None
-    if proj.current_session is None:
+    if proj.current_session_id is None:
         handler = proj.leader if handler is None else handler
-        last_session = proj.last_session
-        if last_session is None:
+        if proj.last_session_id is None:
             # 没有上次session
-            proj.current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
-                                           sync_msg_id=proj.msg_id)
-
-            dbs.session.add(proj)
-        elif arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
-            # 上次session已经超过存活时间
-            if last_session.msg_id > 0:
-                # 有发送过消息
-                proj.current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
-                                               sync_msg_id=proj.msg_id,
-                                               activated_channel=last_session.activated_channel,
-                                               channel_user_id=last_session.channel_user_id)
+            current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id, sync_msg_id=proj.msg_id)
+        else:
+            last_session = proj.last_session
+            if arrow.now() - arrow.get(last_session.closed) > config.Biz.CLOSED_SESSION_ALIVE_TIME:
+                # 上次session已经超过存活时间
+                if last_session.msg_id > 0:
+                    # 有发送过消息
+                    current_session = Session(project=proj, handler=handler, start_msg_id=proj.msg_id,
+                                              sync_msg_id=proj.msg_id,
+                                              activated_channel=last_session.activated_channel,
+                                              channel_user_id=last_session.channel_user_id)
+                else:
+                    # 没有发送过消息
+                    # 则重新打开上一次的会话
+                    last_session.closed = None
+                    last_session.is_active = True
+                    last_session.handler = handler
+                    last_session.created = db.func.current_timestamp()
+                    current_session = last_session
             else:
-                # 没有发送过消息
-                # 则重新打开上一次的会话
+                # 重新打开上一次的会话
                 last_session.closed = None
                 last_session.is_active = True
-                last_session.handler = handler
-                last_session.created = db.func.current_timestamp()
-                proj.current_session = last_session
-            dbs.session.add(proj)
-        else:
-            # 重新打开上一次的会话
-            last_session.closed = None
-            last_session.is_active = True
-            if handler is not None:
-                last_session.handler = handler
-            proj.current_session = last_session
+                if handler is not None:
+                    last_session.handler = handler
+                current_session = last_session
 
-            dbs.session.add(proj)
+        proj.current_session = current_session
+        dbs.session.add(proj)
     elif handler is not None:
         current_session = proj.current_session
         prev_handler = current_session.handler
@@ -83,10 +81,10 @@ def try_open_session(proj_id, handler=None):
 @dbs.transactional
 def close_current_session(proj_id, session_id=None):
     # 锁住project
-    proj = lock_project(proj_id, options=[orm.joinedload('current_session')])
+    proj = lock_project(proj_id, options=[orm.lazyload('current_session')])
 
-    current_session = proj.current_session
-    if current_session is not None and current_session.id == session_id:
+    if proj.current_session_id is not None and proj.current_session_id == session_id:
+        current_session = proj.current_session
         current_session.is_active = False
         current_session.closed = db.func.current_timestamp()
         dbs.session.add(current_session)
