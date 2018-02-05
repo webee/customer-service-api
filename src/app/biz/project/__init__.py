@@ -77,7 +77,7 @@ def finish_session(staff, session):
                             handler=staff)
 
 
-def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
+def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None, domain=None, type=None):
     if lid is None:
         lid = 0
         if desc is None:
@@ -110,6 +110,11 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None):
     q = Message.query.options(lazyload('project'), lazyload('session')).filter_by(project_id=project.id).filter(Message.msg_id > lid)
     if rid > 0:
         q = q.filter(Message.msg_id < rid)
+    if domain is not None:
+        q = q.filter_by(domain=domain)
+        if type is not None:
+            q = q.filter_by(type=type)
+
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
     msgs = q.all()
     # has_more指本次请求是否未完成，no_more指集合是否还有数据

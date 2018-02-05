@@ -104,11 +104,7 @@ class ProjectMsgs(Resource):
                                   dict(uid=staff.uid, id=proj.id))
 
         args = fetch_msgs_arguments.parse_args()
-        lid = args['lid']
-        rid = args['rid']
-        limit = args['limit']
-        desc = args['desc']
-        msgs, has_more, no_more = proj_biz.fetch_project_msgs(proj, lid, rid, limit, desc)
+        msgs, has_more, no_more = proj_biz.fetch_project_msgs(proj, **args)
         return dict(msgs=msgs, has_more=has_more, no_more=no_more)
 
 
