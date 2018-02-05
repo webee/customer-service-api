@@ -77,7 +77,7 @@ def finish_session(staff, session):
                             handler=staff)
 
 
-def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None, domain=None, type=None):
+def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None, domain=None, types=None):
     if lid is None:
         lid = 0
         if desc is None:
@@ -111,9 +111,11 @@ def fetch_project_msgs(project, lid=None, rid=None, limit=None, desc=None, domai
     if rid > 0:
         q = q.filter(Message.msg_id < rid)
     if domain is not None:
+        if domain == 'cs':
+            domain = ''
         q = q.filter_by(domain=domain)
-        if type is not None:
-            q = q.filter_by(type=type)
+        if types:
+            q = q.filter(Message.type.in_(types))
 
     q = q.order_by(order_desc(Message.msg_id) if desc else Message.msg_id).limit(limit)
     msgs = q.all()
