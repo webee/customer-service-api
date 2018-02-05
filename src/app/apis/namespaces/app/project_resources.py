@@ -36,7 +36,7 @@ class ProjectCollection(Resource):
     @require_app
     @api.expect([new_project])
     @api.marshal_list_with(new_project_result)
-    @api.response(201, 'project is created')
+    @api.response(201, 'projects are created')
     def put(self):
         """批量创建项目"""
         app = current_application

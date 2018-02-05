@@ -547,6 +547,7 @@ class Message(base_model(False, False), project_resource('messages', backref_use
     domain = db.Column(db.String(16), nullable=False, default='')
     type = db.Column(db.String(24), nullable=False, default='')
     content = db.Column(db.Text)
+    # 消息的状态, isTerminal=true
     state = db.Column(db.JSON, nullable=True)
 
     # 消息发生的时间，以来源通道为准，
