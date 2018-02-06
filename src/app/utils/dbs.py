@@ -3,13 +3,11 @@ from functools import wraps
 
 
 db = None
-session = None
 
 
 def init_app(app, _db):
-    global db, session
+    global db
     db = _db
-    session = _db.session
 
 
 @contextmanager

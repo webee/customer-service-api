@@ -1,6 +1,6 @@
 import logging
 
-from app import dbs, xchat_client
+from app import db, dbs, xchat_client
 from app.biz.ds import parse_xchat_msg_from_data
 from app.service.models import ProjectXChat, Message
 from app.utils.commons import batch_split
@@ -70,9 +70,9 @@ def _insert_messages(proj, msgs=(), is_serial=False):
         messages.append(message)
         msg_id = message.msg_id
 
-    dbs.session.bulk_save_objects(messages)
+    db.session.bulk_save_objects(messages)
 
     if is_serial and msg_id is not None:
         # update project start_msg_id
         proj.start_msg_id = msg_id - 1
-        dbs.session.add(proj)
+        db.session.add(proj)

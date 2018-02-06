@@ -18,7 +18,7 @@ def base_model(index_created=True, index_updated=True):
 
         @classproperty
         def t_query(cls):
-            return dbs.session.query(cls)
+            return db.session.query(cls)
 
     return BaseModel
 

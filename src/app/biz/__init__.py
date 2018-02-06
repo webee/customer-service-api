@@ -1,6 +1,5 @@
-from app import db
+from app import db, dbs
 from app.service.models import App
-from app.utils import dbs
 from . import app as app_biz
 
 
@@ -43,6 +42,6 @@ def update_app(app, data):
     app.update_staff_label_tree(data.get('staff_label_tree'))
     app.update_configs(data.get('configs'))
 
-    dbs.session.add(app)
+    db.session.add(app)
 
     return app

@@ -140,7 +140,7 @@ class App(base_model()):
         if name is not None:
             staff.name = name
         staff.update_context_labels(context_labels)
-        dbs.session.add(staff)
+        db.session.add(staff)
 
         return staff
 
@@ -237,7 +237,7 @@ class Staff(base_model(), app_user(UserType.staff, 'staffs'), WithOnlineModel):
     def update_context_labels(self, context_labels):
         self.context_labels = normalize_context_labels(context_labels) or DEFAULT_LABELS
         flag_modified(self, 'context_labels')
-        dbs.session.add(self)
+        db.session.add(self)
 
 
 # many to many helpers
@@ -325,7 +325,7 @@ class Project(base_model(), app_resource('projects', lazy='select'), WithOnlineM
             return self.xchat
         else:
             xchat = ProjectXChat(project=self, chat_id=chat_id, start_msg_id=start_msg_id, msg_id=start_msg_id)
-            dbs.session.add(xchat)
+            db.session.add(xchat)
             return xchat
 
     @ignore_none
@@ -412,7 +412,7 @@ class ProjectXChat(base_model(), project_resource('xchat')):
     def current_pending(id, syncing='syncing'):
         """当前pending"""
         pending = ProjectXChat.get_pending(syncing)
-        return dbs.session.query(pending).filter_by(id=id).one()[0]
+        return db.session.query(pending).filter_by(id=id).one()[0]
 
     @staticmethod
     @dbs.transactional

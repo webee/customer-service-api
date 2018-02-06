@@ -1,6 +1,6 @@
 import re
 from sqlalchemy import or_, orm
-from app import dbs
+from app import db, dbs
 from app import errors
 from app.errors import BizError
 from app.service.models import App, UserType, Project
@@ -38,9 +38,9 @@ def get_user_project(app, user, id=None, domain=None, type=None, biz_id=None):
 
 def is_project_exists(app, id=None, domain=None, type=None, biz_id=None):
     if id is not None:
-        return dbs.session.query(app.projects.filter_by(id=id).exists()).scalar()
+        return db.session.query(app.projects.filter_by(id=id).exists()).scalar()
     elif domain is not None and type is not None:
-        return dbs.session.query(
+        return db.session.query(
             app.projects.filter_by(domain=domain, type=type, biz_id=biz_id).exists()).scalar()
     return False
 
@@ -96,7 +96,7 @@ def create_project(app, data, is_create=False):
     # meta data
     project.update_meta_data(data.get('meta_data'))
 
-    dbs.session.add(project)
+    db.session.add(project)
 
     # FIXME: 在存在活动会话时，尝试通知前端, 可能的标签、元数据变化
     return project
@@ -136,7 +136,7 @@ def update_project(project, data):
     # meta data
     project.update_meta_data(data.get('meta_data'))
 
-    dbs.session.add(project)
+    db.session.add(project)
 
     # FIXME: 在存在活动会话时，尝试通知前端
     return project
