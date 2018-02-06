@@ -10,7 +10,7 @@ from app.biz.notifies import task_project_notify
 def lock_project(id, options=None, read=False):
     options = [] if options is None else list(options)
     options.append(orm.lazyload('*'))
-    return Project.query.options(*options).with_for_update(read=read, of=Project).filter_by(id=id).one()
+    return db.session.query(Project).options(*options).populate_existing().with_for_update(read=read, of=Project).filter_by(id=id).one()
 
 
 def try_handle_project(proj, handler):
@@ -34,7 +34,7 @@ def try_handle_project(proj, handler):
 @dbs.transactional
 def try_open_session(proj_id, handler=None):
     # 锁住project
-    proj = lock_project(proj_id, options=[orm.lazyload('last_session'), orm.lazyload('current_session')])
+    proj = lock_project(proj_id)
     prev_handler = None
     if proj.current_session_id is None:
         handler = proj.leader if handler is None else handler
@@ -68,12 +68,12 @@ def try_open_session(proj_id, handler=None):
                 current_session = last_session
 
         proj.current_session = current_session
-        dbs.session.add(proj)
+        db.session.add(proj)
     elif handler is not None:
         current_session = proj.current_session
         prev_handler = current_session.handler
         current_session.handler = handler
-        dbs.session.add(current_session)
+        db.session.add(current_session)
 
     return prev_handler, proj
 
@@ -81,17 +81,17 @@ def try_open_session(proj_id, handler=None):
 @dbs.transactional
 def close_current_session(proj_id, session_id=None):
     # 锁住project
-    proj = lock_project(proj_id, options=[orm.lazyload('current_session')])
+    proj = lock_project(proj_id)
 
     if proj.current_session_id is not None and proj.current_session_id == session_id:
         current_session = proj.current_session
         current_session.is_active = False
         current_session.closed = db.func.current_timestamp()
-        dbs.session.add(current_session)
+        db.session.add(current_session)
 
         proj.last_session = current_session
         proj.current_session = None
-        dbs.session.add(proj)
+        db.session.add(proj)
         return True
     return False
 
@@ -131,14 +131,14 @@ def new_messages(proj_id, msgs=()):
             else:
                 channel_user_id = None
 
-    dbs.session.bulk_save_objects(messages)
+    db.session.bulk_save_objects(messages)
 
     tasks.send_channel_msgs.delay(channel_msgs)
 
     # update project & session msg_id
     if msg_id is not None:
         proj.msg_id = msg_id
-    dbs.session.add(proj)
+    db.session.add(proj)
 
     if has_user_msg:
         proj.current_session.activated_channel = activated_channel
@@ -146,4 +146,4 @@ def new_messages(proj_id, msgs=()):
     proj.current_session.msg_id = proj.msg_id
     if handler_msg_id is not None:
         proj.current_session.handler_msg_id = handler_msg_id
-    dbs.session.add(proj.current_session)
+    db.session.add(proj.current_session)

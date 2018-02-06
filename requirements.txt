@@ -17,6 +17,7 @@ Flask-Cors
 # deploy
 gevent
 gunicorn
+psycogreen
 
 # celery
 celery[redis]

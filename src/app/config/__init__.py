@@ -15,6 +15,7 @@ class App:
 
     # sqlalchemy
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs_dev:cs1234@localhost/cs_dev'
+    SQLALCHEMY_POOL_SIZE = 30
     SQLALCHEMY_ECHO = not (os.environ.get('DISABLE_SQLALCHEMY_ECHO', False) or os.environ.get('CELERY_RUNNING', False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

@@ -23,6 +23,8 @@ if [ -f ${ENV_FILE} ]; then
     source ${ENV_FILE}
 fi
 
+export USE_GEVENT=1
+
 exec gunicorn main:app \
   --name ${NAME} \
   -c ${PROJ_ROOT}/deploy/gunicorn.conf.py \

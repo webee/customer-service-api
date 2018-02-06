@@ -15,6 +15,13 @@ from pytoolbox.util import pmc_config
 from .utils.xchat_client import XChatClient
 from .utils.app_client import AppClients
 
+
+if 'USE_GEVENT' in os.environ:
+    from gevent.monkey import patch_all
+    patch_all()
+    from psycogreen.gevent import patch_psycopg
+    patch_psycopg()
+
 # extensions
 profiler = Profiler()
 jwt = JWT()

@@ -9,6 +9,7 @@ class App:
     # sqlalchemy
     # FIXME: load from config file
     SQLALCHEMY_DATABASE_URI = 'postgresql://cs:cs271828@l-im1.biz.nc2/cs'
+    SQLALCHEMY_POOL_SIZE = 60
     SQLALCHEMY_ECHO = os.environ.get('ENABLE_SQLALCHEMY_ECHO') is not None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
