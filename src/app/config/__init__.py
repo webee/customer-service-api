@@ -77,7 +77,7 @@ class XChatClient:
 class XFiles:
     JWT_KEY = "xfiles@qqxb@2017"
     JWT_ALGORITHM = 'HS256'
-    JWT_EXPIRATION_DELTA = timedelta(days=2)
+    JWT_EXPIRATION_DELTA = timedelta(days=4)
 
 
 LOGGING = {
