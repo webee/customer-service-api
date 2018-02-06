@@ -126,8 +126,10 @@ def new_messages(proj_id, msgs=()):
         elif user_type == UserType.customer:
             has_user_msg = True
             activated_channel = channel
-            if channel is not None:
+            if activated_channel is not None:
                 channel_user_id = user_id
+            else:
+                channel_user_id = None
 
     dbs.session.bulk_save_objects(messages)
 
