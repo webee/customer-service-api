@@ -53,8 +53,6 @@ class SyncSessionMsgID(Resource):
 @api.route('/sessions/<int:project_id>/<int:session_id>/finish_handling')
 class FinishHandling(Resource):
     @require_staff
-    @api.response(403, 'you are not the session handler')
-    @api.response(403, 'session is not active')
     @api.response(204, 'finished successfully')
     def post(self, project_id, session_id):
         """结束接待会话"""
@@ -62,9 +60,9 @@ class FinishHandling(Resource):
 
         session = staff.get_handling_session(session_id)
         if session is None:
-            abort(403, 'you are not the session handler')
+            return dict(code=403, reason='you are not the session handler'), 202
         if not session.is_active:
-            abort(403, 'session is not active')
+            return dict(code=403, reason='session is not active'), 202
 
         proj_biz.finish_session(staff, session)
         return None, 204
