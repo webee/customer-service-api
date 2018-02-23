@@ -7,6 +7,9 @@ _ContextLabel = namedtuple('ContextLabel', ['path', 'uids'])
 class ContextLabel(object):
     def __call__(self, value):
         try:
+            if not value:
+                return None
+
             parts = value.split(',')
             if len(parts) == 1:
                 return _ContextLabel(parts[0], [])
